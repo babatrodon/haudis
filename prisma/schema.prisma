@@ -1,8 +1,9 @@
-// Datenmodell Haudi's Fahrschule.
+// Datenmodell Haudi's Fahrschule, siehe PLAN.md Abschnitt 4.
 //
-// Sprint 0 enthaelt ausschliesslich die Auth-Tabellen. Das vollstaendige
-// Domaenenmodell (CourseType, Course, CourseSession, Booking, Instructor,
-// Setting, SmsLog) folgt in Sprint 1, siehe PLAN.md Abschnitt 4.
+// Betraege durchgehend als Decimal(8,2) in CHF, Anzeige de-CH.
+// Datum und Zeit werden UTC gespeichert und in Europe/Zurich angezeigt.
+// Uhrzeiten einer Kurslektion sind Strings ("18:00"), weil sie zum Kurstag
+// gehoeren und keine eigene Zeitzone haben.
 //
 // Prisma 7: Die Verbindung steht nicht im datasource-Block. Die CLI liest sie
 // aus prisma.config.ts (DIRECT_URL), zur Laufzeit verbindet der Neon-Adapter in
@@ -23,24 +24,58 @@ enum Role {
   INSTRUCTOR
 }
 
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  ARCHIVED
+}
+
+enum BookingSource {
+  ONLINE
+  PHONE
+}
+
+/// WAITLIST ist bereits vorgesehen (PLAN.md Abschnitt 14), der Flow kommt in
+/// Sprint 7. Bis dahin entstehen ausschliesslich CONFIRMED-Buchungen.
+enum BookingStatus {
+  CONFIRMED
+  CANCELLED
+  WAITLIST
+}
+
+/// Welle 2: Online-Zahlung ueber Payrexx. Bar bleibt immer waehlbar.
+enum PaymentMethod {
+  BAR
+  TWINT
+  KARTE
+}
+
+enum PaymentStatus {
+  OFFEN
+  BEZAHLT
+  ERSTATTET
+}
+
 /// Team-Login. Ein User ist nie automatisch Instruktor: das Instruktoren-Profil
 /// ist ein eigenes Modell und verweist optional auf einen User
-/// (Geschaeftsregel 11, Modell folgt in Sprint 1).
+/// (Geschaeftsregel 11).
 ///
 /// Das Passwort steht NICHT hier, sondern in Account.password mit
 /// providerId "credential". So verlangt es Better Auth.
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  emailVerified Boolean   @default(false)
+  id            String      @id @default(cuid())
+  email         String      @unique
+  emailVerified Boolean     @default(false)
   name          String
   image         String?
   role          Role
-  active        Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  active        Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
   sessions      Session[]
   accounts      Account[]
+  instructor    Instructor?
 
   @@map("user")
 }
@@ -90,4 +125,185 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+/// Kursleiter und Fahrlehrer.
+///
+/// Geschaeftsregel 11: Instruktor und User sind getrennte Konzepte. Die meisten
+/// Instruktoren haben kein Login, deshalb ist userId optional. Wird ein Login
+/// geloescht, bleibt das Profil bestehen (onDelete: SetNull) - die Person
+/// arbeitet weiter, sie meldet sich nur nicht mehr an.
+///
+/// Kursleiter-Dropdowns und der Einsatzplan lesen ausschliesslich dieses
+/// Modell, nie die User-Tabelle. Im Altsystem erschien sonst der Admin-Account
+/// "LOLIT" als waehlbarer Kursleiter.
+model Instructor {
+  id                  String          @id @default(cuid())
+  userId              String?         @unique
+  user                User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  firstName           String
+  lastName            String
+  /// Kuerzel wie "HaAu" oder "VaSh", erscheint in der Buchungsansicht.
+  shortCode           String          @unique
+  phone               String?
+  provisionPerBooking Decimal         @default(50) @db.Decimal(8, 2)
+  active              Boolean         @default(true)
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  sessions            CourseSession[]
+  referredBookings    Booking[]
+
+  @@index([active, lastName])
+  @@map("instructor")
+}
+
+/// Kursart mit den Standardwerten. Der einzelne Kurs kann Preis, Material und
+/// Online-Limit ueberschreiben, weil zum Beispiel der Weekend-VKU mehr kostet.
+model CourseType {
+  id            String   @id @default(cuid())
+  /// VKU, NH, NHI, BTU, MOT_A1_A, MOT_A1, MOT_A, BOEGLE
+  code          String   @unique
+  name          String
+  slug          String   @unique
+  description   String   @db.Text
+  basePrice     Decimal  @db.Decimal(8, 2)
+  materialPrice Decimal  @default(0) @db.Decimal(8, 2)
+  onlineLimit   Int      @default(12)
+  /// Nur VKU: Lernfahrausweis obligatorisch.
+  requiresLfa   Boolean  @default(false)
+  /// Boegle ist gratis und ohne Anmeldung, also nicht buchbar.
+  bookable      Boolean  @default(true)
+  sortOrder     Int      @default(0)
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  courses       Course[]
+
+  @@index([active, sortOrder])
+  @@map("course_type")
+}
+
+/// Eine konkrete Kursdurchfuehrung mit ihren Terminen.
+model Course {
+  id                String          @id @default(cuid())
+  courseTypeId      String
+  courseType        CourseType      @relation(fields: [courseTypeId], references: [id], onDelete: Restrict)
+  price             Decimal         @db.Decimal(8, 2)
+  materialPrice     Decimal         @db.Decimal(8, 2)
+  onlineLimit       Int
+  earlyBirdDiscount Decimal?        @db.Decimal(8, 2)
+  /// Geschaeftsregel 3: Der Rabatt gilt fuer die ersten N Buchungen des Kurses,
+  /// nicht bis zu einem Datum.
+  earlyBirdSlots    Int?
+  status            CourseStatus    @default(DRAFT)
+  notes             String?
+  printedAt         DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  sessions          CourseSession[]
+  bookings          Booking[]
+
+  @@index([status, courseTypeId])
+  @@map("course")
+}
+
+/// Ein Kursblock, zum Beispiel "Di 18:00-20:00". Ein VKU besteht aus vier
+/// Bloecken, ein Nothelfer Intensiv aus dreien.
+model CourseSession {
+  id           String      @id @default(cuid())
+  courseId     String
+  course       Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  date         DateTime    @db.Date
+  startTime    String
+  endTime      String
+  /// null bedeutet "Noch nicht bestimmt". Zuweisung ausschliesslich durch den
+  /// Admin (Geschaeftsregel 10).
+  instructorId String?
+  instructor   Instructor? @relation(fields: [instructorId], references: [id], onDelete: SetNull)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([courseId, date])
+  @@index([date])
+  /// Traegt die Konfliktwarnung im Einsatzplan.
+  @@index([instructorId, date])
+  @@map("course_session")
+}
+
+/// Eine Anmeldung. Immer Gast-Checkout, es gibt keine Kundenkonten
+/// (Geschaeftsregel 9).
+///
+/// Geschaeftsregel 1: genau diese Felder, Telefon ist Pflicht, ein Kanton-Feld
+/// gibt es bewusst nicht.
+model Booking {
+  id            String        @id @default(cuid())
+  courseId      String
+  course        Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  salutation    String
+  firstName     String
+  lastName      String
+  street        String
+  zip           String
+  city          String
+  birthDate     DateTime      @db.Date
+  phone         String
+  email         String
+  /// Lernfahrausweis-Nummer, in Schritt 2 erfassbar und spaeter nachreichbar.
+  lfaNumber     String?
+  agbAcceptedAt DateTime?
+  smsReminder   Boolean       @default(false)
+  smsPhone      String?
+  /// PHONE bedeutet telefonische Anmeldung: zaehlt zur Kapazitaet, loest aber
+  /// kein Bestaetigungsmail aus (Geschaeftsregel 4).
+  source        BookingSource @default(ONLINE)
+  status        BookingStatus @default(CONFIRMED)
+  priceCharged  Decimal       @db.Decimal(8, 2)
+  earlyBird     Boolean       @default(false)
+  /// Zuweisender Fahrlehrer, Grundlage der Provision (Geschaeftsregel 5).
+  referredById  String?
+  referredBy    Instructor?   @relation(fields: [referredById], references: [id], onDelete: SetNull)
+  /// Welle 2, PLAN.md Abschnitt 14. Bis Sprint 7 immer BAR und OFFEN.
+  paymentMethod PaymentMethod @default(BAR)
+  paymentStatus PaymentStatus @default(OFFEN)
+  paidAt        DateTime?
+  payrexxRef    String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  smsLogs       SmsLog[]
+
+  /// Zaehlt die belegten Plaetze fuer die Ampel (Geschaeftsregel 2).
+  @@index([courseId, status])
+  /// Traegt den Doppelbuchungsschutz: gleiche E-Mail, gleicher Kurs, 10 Minuten
+  /// (Geschaeftsregel 8).
+  @@index([email, courseId, createdAt])
+  @@index([referredById, createdAt])
+  /// Globale Suche im Admin nach Name und Telefon.
+  @@index([lastName])
+  @@index([phone])
+  @@map("booking")
+}
+
+/// Schluessel-Wert-Speicher fuer die Einstellungen (PLAN.md Abschnitt 6.8).
+/// Gelesen wird ueber lib/einstellungen.ts, das auf die Defaults zurueckfaellt.
+model Setting {
+  key       String   @id
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+
+  @@map("setting")
+}
+
+/// Protokoll jeder versendeten SMS-Erinnerung (PLAN.md Abschnitt 8).
+model SmsLog {
+  id        String   @id @default(cuid())
+  bookingId String
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  to        String
+  body      String   @db.Text
+  status    String
+  sentAt    DateTime @default(now())
+
+  @@index([bookingId])
+  @@index([sentAt])
+  @@map("sms_log")
 }

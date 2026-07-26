@@ -14,10 +14,25 @@ Better Auth (Rollen ADMIN, INSTRUCTOR, nur Team-Login), Resend, ASPSMS.
 ## Commands
 
 pnpm dev | pnpm build | pnpm typecheck | pnpm lint
-pnpm db:migrate | pnpm db:seed | pnpm db:studio
+pnpm db:migrate | pnpm db:seed | pnpm db:verify | pnpm db:studio
+pnpm db:seed:demo | pnpm db:seed:demo:purge
+
+`db:migrate` und `db:deploy` hängen `prisma generate` an. Prisma 7 generiert
+nach einer Migration nicht mehr von selbst, und ein veralteter Client fällt erst
+beim Typecheck auf.
 
 `pnpm test:e2e` gibt es noch nicht. Playwright kommt in Sprint 3 zusammen mit dem
-Smoke-Test für den Buchungsflow.
+Smoke-Test für den Buchungsflow. Bis dahin prüft `pnpm db:verify` die
+Zusicherungen des Seeds, unter anderem Geschäftsregel 11.
+
+### Seed
+
+- `db:seed` schreibt nur Referenzdaten: Kursarten, Instruktoren, Team-Logins,
+  Einstellungen. Gegen die Produktivdatenbank ungefährlich, mehrfaches
+  Ausführen ändert nichts. Ein gesetztes Passwort wird nie überschrieben.
+- `db:seed:demo` legt Beispielkurse und erfundene Buchungen an. Kurse tragen
+  IDs mit Präfix `demo-`, Buchungen laufen auf `@example.invalid`. Vor dem
+  Go-Live mit `db:seed:demo:purge` entfernen.
 
 ## Konventionen
 
@@ -39,6 +54,11 @@ Smoke-Test für den Buchungsflow.
 - Kursleiter-Dropdowns zeigen nur Instruktoren-Profile, User sind nie automatisch Instruktoren
 
 ### Wo diese Regeln im Code verankert sind
+
+- **Geld**: [lib/format.ts](lib/format.ts) formatiert nur für die Anzeige.
+  Gerechnet wird nie über `Number`. Provisionen, Abrechnungssummen und
+  Kurstotale bleiben `Decimal` bis zum letzten Renderschritt, sonst entstehen
+  Rappendifferenzen. Details im Kopfkommentar der Datei.
 
 - **Kein Kunden-Login**: `disableSignUp: true` in [lib/auth.ts](lib/auth.ts). Die
   Registrierungs-Endpunkte antworten mit `EMAIL_PASSWORD_SIGN_UP_DISABLED`.
@@ -97,9 +117,20 @@ Siehe [.env.example](.env.example). `DATABASE_URL` ist die gepoolte Neon-URL
 
 ## Stand
 
-Sprint 0 abgeschlossen: Scaffold, Prisma und Neon, Better Auth, ein geseedeter
-Admin, Vercel-tauglich. Das Datenmodell enthält bewusst nur die Auth-Tabellen.
-Kurse, Buchungen, Instruktoren, Settings und der vollständige Instruktoren-Pool
-folgen in Sprint 1.
+Sprint 0 und 1 abgeschlossen: Scaffold, Prisma und Neon, Better Auth,
+vollständiges Datenmodell aus PLAN.md Abschnitt 4, Referenz-Seed.
+
+Offen gegenüber PLAN.md, mit Ausilia zu klären:
+
+- Preise für Nothelfer (NH, NHI) und die drei Motorrad-Grundkurse. Diese
+  Kursarten stehen deshalb auf `active: false` und erscheinen nicht öffentlich.
+- Ob die Motorrad-Grundkurse einen Lernfahrausweis verlangen. `requiresLfa` ist
+  nur beim VKU gesetzt, weil PLAN.md nur dort davon spricht.
+- Vollständigkeit des Instruktoren-Pools und die Kürzel. Die Liste steht in
+  [prisma/seed-data/instruktoren.ts](prisma/seed-data/instruktoren.ts), eine
+  Korrektur ist eine Zeile. Kürzel-Regel: Nachname+Vorname je zwei Buchstaben,
+  Ausnahme `VaSh` für Shala Valon wie im Altsystem.
+- Fahrstunden-Preise für Motorrad, Lastwagen und Anhänger BE. In den
+  Einstellungen leer, die Seite zeigt dafür später "auf Anfrage".
 
 @AGENTS.md

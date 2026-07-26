@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import type { AngemeldeterBenutzer } from "@/lib/auth";
 import type { Role } from "@/lib/db";
+import { instruktorProfilZuBenutzer } from "@/lib/instruktoren";
 
 export const LOGIN_PFAD = "/team/login";
 
@@ -49,4 +50,19 @@ export async function requireRole(rolle: Role): Promise<AngemeldeterBenutzer> {
  */
 export function startseiteFuerRolle(rolle: string): string {
   return rolle === "ADMIN" ? "/admin" : "/portal";
+}
+
+/**
+ * Loest das angemeldete Konto auf sein Instruktoren-Profil auf.
+ *
+ * Geschaeftsregel 11: Ein User ist nie automatisch Instruktor. Ein Konto mit
+ * der Rolle INSTRUCTOR kann deshalb ohne Profil existieren. Das Portal zeigt
+ * dann keinen leeren Einsatzplan, sondern sagt, was fehlt: Die Admin muss das
+ * Konto einem Profil zuordnen.
+ */
+export async function requireInstruktorProfil() {
+  const benutzer = await requireRole("INSTRUCTOR");
+  const profil = await instruktorProfilZuBenutzer(benutzer.id);
+
+  return { benutzer, profil };
 }
