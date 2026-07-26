@@ -36,7 +36,10 @@ export function Bildplatzhalter({
         className,
       )}
     >
-      <span className="font-heading text-xs font-semibold uppercase tracking-widest text-grau-text-hell">
+      {/* Bewusst --grau-text und nicht --grau-text-hell: das hellere Grau
+          erreicht auf dieser Flaeche nur einen Kontrast von 2.86 und faellt
+          damit unter die geforderten 4.5 fuer kleine Schrift. */}
+      <span className="font-heading text-xs font-semibold uppercase tracking-widest text-grau-text">
         Bild folgt
       </span>
       <span className="max-w-[28ch] text-sm text-grau-text">

@@ -73,7 +73,13 @@ export default async function KursdatenSeite({
         </ul>
       </nav>
 
-      <div className="mt-10">
+      <section aria-labelledby="ergebnis-titel" className="mt-10">
+        {/* Ueberschrift nur fuer Screenreader: sichtbar traegt die Zaehlzeile
+            darunter dieselbe Information. Ohne sie spraenge die Gliederung von
+            h1 direkt auf die h3 der Kurskarten. */}
+        <h2 id="ergebnis-titel" className="sr-only">
+          Ausgeschriebene Kurse
+        </h2>
         {kurse.length > 0 ? (
           <>
             <p className="text-sm text-muted-foreground" aria-live="polite">
@@ -110,7 +116,7 @@ export default async function KursdatenSeite({
             ) : null}
           </div>
         )}
-      </div>
+      </section>
 
       <div className="mt-16">
         <KontaktStreifen zeiten={zeiten} whatsappUrl={kontaktUrl} />

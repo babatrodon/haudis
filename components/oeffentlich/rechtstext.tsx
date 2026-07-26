@@ -9,6 +9,19 @@ import { AlertTriangle } from "lucide-react";
  * Freigabe und die fehlenden Firmenangaben der Kundin. Ein Entwurf, der wie
  * ein fertiges Dokument aussieht, ist gefaehrlicher als gar keiner.
  */
+/**
+ * Entwuerfe gehoeren nicht in den Suchindex. Ein ungeprueftes AGB- oder
+ * Datenschutz-Dokument, das ueber Google auffindbar ist, wirkt verbindlich,
+ * obwohl es niemand freigegeben hat.
+ *
+ * Lighthouse zieht dafuer den SEO-Wert dieser drei Seiten auf 60. Das ist der
+ * gewollte Preis, kein Fehler.
+ *
+ * ENTFERNEN, sobald die Texte juristisch freigegeben sind: dann sollen AGB,
+ * Datenschutzerklaerung und Impressum ganz normal auffindbar sein.
+ */
+export const RECHTSTEXT_ROBOTS = { index: false, follow: true } as const;
+
 export function Rechtstext({
   titel,
   stand,

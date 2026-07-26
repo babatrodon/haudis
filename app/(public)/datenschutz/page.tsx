@@ -4,12 +4,13 @@ import {
   Abschnitt,
   Offen,
   Rechtstext,
+  RECHTSTEXT_ROBOTS,
 } from "@/components/oeffentlich/rechtstext";
 import { ADRESSE } from "@/lib/kontakt";
 
 export const metadata: Metadata = {
   title: "Datenschutzerklärung | Haudi's Fahrschule Baden",
-  robots: { index: false, follow: true },
+  robots: RECHTSTEXT_ROBOTS,
 };
 
 /**
