@@ -1,4 +1,6 @@
 import "dotenv/config";
+import { Decimal } from "../lib/decimal";
+import { aufFuenfRappen, preisBerechnen } from "../lib/preis";
 import { EINSTELLUNG_DEFAULTS } from "../lib/einstellungen-defaults";
 import { INSTRUKTOREN } from "./seed-data/instruktoren";
 import { KURSARTEN } from "./seed-data/kursarten";
@@ -30,8 +32,10 @@ async function main() {
 
   try {
     await kursartenPruefen(prisma);
+    preisberechnungPruefen();
     await instruktorenPruefen(prisma);
     await regelElfPruefen(prisma);
+    await kontenPruefen(prisma);
     await einstellungenPruefen(prisma);
     await demodatenPruefen(prisma);
   } finally {
@@ -81,6 +85,72 @@ async function kursartenPruefen(prisma: PrismaSeedClient) {
     offeneAktiv.length === 0,
     "keine aktive buchbare Kursart mit Preis 0",
     offeneAktiv.map((k) => k.code).join(", "),
+  );
+
+  // Von der Kundin am 26.07.2026 bestaetigte Preise.
+  for (const code of ["NHI", "NH", "MOT_A1_A"]) {
+    const kursart = kursarten.find((k) => k.code === code);
+    pruefe(
+      kursart?.active === true && kursart.basePrice.toString() === "120",
+      `${code} aktiv mit Preis 120`,
+      `aktiv=${kursart?.active} preis=${kursart?.basePrice.toString()}`,
+    );
+  }
+
+  // Preis widersprüchlich (480 gegen 120), deshalb nicht öffentlich.
+  for (const code of ["MOT_A1", "MOT_A"]) {
+    const kursart = kursarten.find((k) => k.code === code);
+    pruefe(
+      kursart?.active === false,
+      `${code} bleibt inaktiv bis zur schriftlichen Bestätigung`,
+      `aktiv=${kursart?.active}`,
+    );
+  }
+
+  const motorrad = kursarten.filter((k) => k.code.startsWith("MOT_"));
+  pruefe(
+    motorrad.every((k) => !k.requiresLfa),
+    "Motorrad-Grundkurse verlangen keinen Lernfahrausweis",
+  );
+}
+
+/**
+ * Geschaeftsregel 3, Kundenentscheid 26.07.2026: 10 % auf den Gesamtbetrag
+ * inklusive Lehrmittel, erste fuenf Anmeldungen, kaufmaennisch auf 5 Rappen.
+ * Der Kontrollfall aus PLAN.md ist der VKU: 170.00 wird zu 153.00.
+ */
+function preisberechnungPruefen() {
+  console.log("Preisberechnung");
+
+  const vku = {
+    price: new Decimal("140.00"),
+    materialPrice: new Decimal("30.00"),
+    earlyBirdPercent: new Decimal("10.00"),
+    earlyBirdSlots: 5,
+  };
+
+  pruefe(
+    preisBerechnen(vku, 0).total.toString() === "153",
+    "VKU erste Buchung: 170 wird zu 153.00",
+    preisBerechnen(vku, 0).total.toString(),
+  );
+  pruefe(
+    preisBerechnen(vku, 4).total.toString() === "153",
+    "fünfte Buchung noch rabattiert",
+  );
+  pruefe(
+    preisBerechnen(vku, 5).total.toString() === "170" &&
+      !preisBerechnen(vku, 5).fruehbucher,
+    "sechste Buchung zahlt voll, Rabatte ausgeschöpft",
+  );
+  pruefe(
+    aufFuenfRappen(new Decimal("153.27")).toString() === "153.25" &&
+      aufFuenfRappen(new Decimal("153.28")).toString() === "153.3",
+    "Rundung auf 5 Rappen, kaufmännisch",
+  );
+  pruefe(
+    new Decimal("0.1").plus(new Decimal("0.2")).toString() === "0.3",
+    "Decimal rechnet exakt, kein Float",
   );
 }
 
@@ -178,6 +248,35 @@ async function regelElfPruefen(prisma: PrismaSeedClient) {
   );
 }
 
+/**
+ * Kontoverwaltung nach PLAN.md Abschnitt 15.1: die Kursleiter bekommen ihr
+ * Startpasswort von Hand, also muss der Wechsel beim ersten Login erzwungen
+ * sein. Der Entwickler-Admin hat sein Passwort selbst gesetzt.
+ */
+async function kontenPruefen(prisma: PrismaSeedClient) {
+  console.log("Konten");
+
+  const konten = await prisma.user.findMany({
+    select: { email: true, mustChangePassword: true },
+  });
+
+  const uebergeben = konten.filter((k) => k.email.endsWith("@haudi.ch"));
+  pruefe(
+    uebergeben.length > 0 && uebergeben.every((k) => k.mustChangePassword),
+    "alle @haudi.ch-Konten erzwingen den Passwortwechsel",
+    uebergeben
+      .filter((k) => !k.mustChangePassword)
+      .map((k) => k.email)
+      .join(", "),
+  );
+
+  const dev = konten.find((k) => k.email === process.env.SEED_ADMIN_EMAIL);
+  pruefe(
+    dev === undefined || !dev.mustChangePassword,
+    "Entwickler-Admin ohne erzwungenen Wechsel",
+  );
+}
+
 async function einstellungenPruefen(prisma: PrismaSeedClient) {
   console.log("Einstellungen");
   const zeilen = await prisma.setting.findMany();
@@ -256,6 +355,21 @@ async function demodatenPruefen(prisma: PrismaSeedClient) {
     rabattiert === fruehbucher?.earlyBirdSlots,
     "Weekend-VKU: Frühbucherplätze ausgeschöpft",
     `${rabattiert} von ${fruehbucher?.earlyBirdSlots}`,
+  );
+
+  // Der gespeicherte Betrag muss dem entsprechen, was lib/preis.ts rechnet.
+  // 180 + 30 = 210, minus 10 % = 189.00 fuer die ersten fuenf.
+  const rabattierte = fruehbucher?.bookings.filter((b) => b.earlyBird) ?? [];
+  const volle = fruehbucher?.bookings.filter((b) => !b.earlyBird) ?? [];
+  pruefe(
+    rabattierte.every((b) => b.priceCharged.toString() === "189"),
+    "rabattierte Buchungen mit 189.00 gespeichert",
+    rabattierte.map((b) => b.priceCharged.toString()).join(", "),
+  );
+  pruefe(
+    volle.every((b) => b.priceCharged.toString() === "210"),
+    "Buchung nach dem fünften Platz mit 210.00 gespeichert",
+    volle.map((b) => b.priceCharged.toString()).join(", "),
   );
 
   pruefe(

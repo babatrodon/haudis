@@ -1,4 +1,5 @@
-import { betterAuth } from "better-auth";
+import { betterAuth, APIError } from "better-auth";
+import { createAuthMiddleware } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { prismaAdapter } from "@better-auth/prisma-adapter";
 import { prisma } from "@/lib/db";
@@ -40,6 +41,15 @@ export const auth = betterAuth({
         defaultValue: true,
         input: false,
       },
+      // Wird nur vom Seed und ab Sprint 4 von der Kontoverwaltung gesetzt,
+      // nie ueber einen API-Aufruf. Sonst koennte sich jemand den erzwungenen
+      // Passwortwechsel selbst abschalten.
+      mustChangePassword: {
+        type: "boolean",
+        required: false,
+        defaultValue: false,
+        input: false,
+      },
     },
   },
 
@@ -62,6 +72,35 @@ export const auth = betterAuth({
       "/forget-password": { window: 60, max: 3 },
       "/reset-password": { window: 60, max: 5 },
     },
+  },
+
+  hooks: {
+    /**
+     * Loescht mustChangePassword nach jedem erfolgreichen Passwortwechsel.
+     *
+     * Bewusst hier und nicht in der Server Action der Passwortseite: sonst
+     * bliebe das Flag stehen, wenn jemand den Endpunkt direkt aufruft. Die
+     * Person haette dann ein neues Passwort, waere aber weiterhin auf die
+     * Passwortseite gesperrt und muesste raten, welches Passwort gilt.
+     * Der Zwang endet dort, wo das Passwort tatsaechlich wechselt.
+     */
+    after: createAuthMiddleware(async (ctx) => {
+      const gewechselt =
+        ctx.path === "/change-password" || ctx.path === "/reset-password";
+      if (!gewechselt || ctx.context.returned instanceof APIError) {
+        return;
+      }
+
+      const benutzerId = ctx.context.session?.user.id;
+      if (!benutzerId) {
+        return;
+      }
+
+      await prisma.user.updateMany({
+        where: { id: benutzerId, mustChangePassword: true },
+        data: { mustChangePassword: false },
+      });
+    }),
   },
 
   // nextCookies muss das letzte Plugin bleiben.

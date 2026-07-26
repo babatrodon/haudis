@@ -47,7 +47,13 @@ export const EINSTELLUNG_DEFAULTS = {
   "ampel.schwelleGruen": "4",
   "ampel.schwelleGelb": "1",
 
-  // Fahrstunden, PLAN.md Abschnitt 5. Auto und Taxi haben dieselbe Struktur.
+  // Fahrstunden, PLAN.md Abschnitt 5.
+  //
+  // Ein leerer Wert bedeutet "auf Anfrage": die Seite zeigt dann statt einer
+  // Preiskarte den Hinweis mit Telefon- und WhatsApp-Kontakt. So kann Ausilia
+  // einen Preis nachtragen, ohne dass jemand Code anfassen muss.
+
+  // Auto und Taxi, bestätigt 26.07.2026.
   "fahrstunden.auto.einzel": "95.00",
   "fahrstunden.auto.abo5": "90.00",
   "fahrstunden.auto.abo10": "88.00",
@@ -57,14 +63,20 @@ export const EINSTELLUNG_DEFAULTS = {
   // Einmalig bei der ersten Lektion, Anteil Versicherung und Administration.
   "fahrstunden.adminGebuehr": "100.00",
 
-  // TODO Preise mit Ausilia klären (PLAN.md Entscheidung 2). Leer heisst:
-  // die Seite zeigt "auf Anfrage" statt einer erfundenen Zahl.
-  // Altsystem nannte für den Lastwagen CHF 140 praktisch und CHF 25 Theorie.
-  // Diese Werte sind unbestätigt und deshalb bewusst nicht eingetragen.
+  // Lastwagen, bestätigt 26.07.2026. Eigene Kartenform ohne Abo-Staffel.
+  "fahrstunden.lkw.praktisch": "140.00",
+  "fahrstunden.lkw.theorie": "25.00",
+
+  // TODO Motorrad und Anhänger BE: Preise werden von der Kundin abgeklärt
+  // (PLAN.md Abschnitt 12, offener Punkt 2). Abschnitt 5 nennt zwar dieselben
+  // Ansätze wie Auto und Taxi, der spätere Eintrag vom 27.07.2026 stellt beide
+  // aber auf "auf Anfrage". Bis zur Bestätigung bleibt das hier leer.
   "fahrstunden.motorrad.einzel": "",
-  "fahrstunden.lkw.praktisch": "",
-  "fahrstunden.lkw.theorie": "",
+  "fahrstunden.motorrad.abo5": "",
+  "fahrstunden.motorrad.abo10": "",
   "fahrstunden.anhaenger.einzel": "",
+  "fahrstunden.anhaenger.abo5": "",
+  "fahrstunden.anhaenger.abo10": "",
 
   // Gutscheincode für den WAB-Kurs beim TCS, PLAN.md Abschnitt 5 Schritt 7.
   "wab.gutscheincode": "Ausilia20",

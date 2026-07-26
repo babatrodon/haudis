@@ -1,4 +1,6 @@
 import "dotenv/config";
+import { Decimal } from "../lib/decimal";
+import { preisBerechnen } from "../lib/preis";
 import { prismaOeffnen, type PrismaSeedClient } from "./seed-lib";
 
 /**
@@ -36,7 +38,9 @@ type DemoBuchung = {
   lfaNummer?: string;
   quelle?: "ONLINE" | "PHONE";
   status?: "CONFIRMED" | "CANCELLED" | "WAITLIST";
-  fruehbucher?: boolean;
+  // Ob eine Buchung den Frühbucherrabatt bekommt, entscheidet nicht diese
+  // Liste, sondern lib/preis.ts anhand der Reihenfolge. Genau wie im echten
+  // Buchungsflow, sonst prueft der Demo-Seed etwas anderes als die Anwendung.
   /** Kuerzel des zuweisenden Fahrlehrers, Grundlage der Provision. */
   vermitteltVon?: string;
 };
@@ -138,7 +142,7 @@ type DemoKurs = {
   onlineLimit: number;
   status: "DRAFT" | "PUBLISHED" | "CANCELLED" | "ARCHIVED";
   notiz: string;
-  fruehbucherRabatt?: string;
+  fruehbucherProzent?: string;
   fruehbucherPlaetze?: number;
   /** Bloecke als [Wochentag, Tagesversatz, Start, Ende]. */
   bloecke: [number, number, string, string][];
@@ -214,8 +218,9 @@ function demoKurse(): DemoKurs[] {
       onlineLimit: 12,
       status: "PUBLISHED",
       notiz: "Demo: Weekend-Variante, Frühbucherrabatte ausgeschöpft",
-      fruehbucherRabatt: "20.00",
-      fruehbucherPlaetze: 3,
+      // Geschäftsregel 3: 10 % auf den Gesamtbetrag, erste 5 Anmeldungen.
+      fruehbucherProzent: "10.00",
+      fruehbucherPlaetze: 5,
       // Weekend-Muster: Fr zwei Bloecke, Sa zwei Bloecke.
       bloecke: [
         [5, 0, "18:00", "20:00"],
@@ -223,12 +228,9 @@ function demoKurse(): DemoKurs[] {
         [6, 1, "08:30", "10:30"],
         [6, 1, "10:30", "12:30"],
       ],
-      buchungen: teilnehmer(4, 70).map((b, i) => ({
-        ...b,
-        // Die ersten drei haben den Rabatt bekommen, damit ist er
-        // ausgeschoepft (Geschaeftsregel 3).
-        fruehbucher: i < 3,
-      })),
+      // Sechs Anmeldungen: die ersten fuenf mit Rabatt, die sechste voll.
+      // Damit zeigt der Kurs den Zustand "Frühbucherrabatte ausgeschöpft".
+      buchungen: teilnehmer(6, 70),
     },
     {
       id: `${DEMO_PRAEFIX}btu`,
@@ -304,7 +306,7 @@ async function schreiben(prisma: PrismaSeedClient) {
       onlineLimit: kurs.onlineLimit,
       status: kurs.status,
       notes: kurs.notiz,
-      earlyBirdDiscount: kurs.fruehbucherRabatt ?? null,
+      earlyBirdPercent: kurs.fruehbucherProzent ?? null,
       earlyBirdSlots: kurs.fruehbucherPlaetze ?? null,
     };
 
@@ -335,12 +337,26 @@ async function schreiben(prisma: PrismaSeedClient) {
       });
     }
 
+    // Zaehlt die bereits bestaetigten Anmeldungen, damit der Frühbucherrabatt
+    // genauso vergeben wird wie spaeter im echten Buchungsflow.
+    let bestaetigte = 0;
+
+    const preisDaten = {
+      price: new Decimal(kurs.preis),
+      materialPrice: new Decimal(kurs.materialpreis),
+      earlyBirdPercent: kurs.fruehbucherProzent
+        ? new Decimal(kurs.fruehbucherProzent)
+        : null,
+      earlyBirdSlots: kurs.fruehbucherPlaetze ?? null,
+    };
+
     for (const [index, buchung] of kurs.buchungen.entries()) {
-      const rabatt = buchung.fruehbucher
-        ? Number(kurs.fruehbucherRabatt ?? "0")
-        : 0;
-      const gesamt =
-        Number(kurs.preis) + Number(kurs.materialpreis) - rabatt;
+      const status = buchung.status ?? "CONFIRMED";
+      // Dieselbe Funktion, die Sprint 3 bei jeder echten Buchung aufruft.
+      const preis = preisBerechnen(preisDaten, bestaetigte);
+      if (status === "CONFIRMED") {
+        bestaetigte += 1;
+      }
 
       await prisma.booking.create({
         data: {
@@ -357,9 +373,9 @@ async function schreiben(prisma: PrismaSeedClient) {
           lfaNumber: buchung.lfaNummer ?? null,
           agbAcceptedAt: new Date(),
           source: buchung.quelle ?? "ONLINE",
-          status: buchung.status ?? "CONFIRMED",
-          priceCharged: gesamt.toFixed(2),
-          earlyBird: buchung.fruehbucher ?? false,
+          status,
+          priceCharged: preis.total,
+          earlyBird: preis.fruehbucher,
           referredById: buchung.vermitteltVon
             ? (instruktorNachKuerzel.get(buchung.vermitteltVon) ?? null)
             : null,

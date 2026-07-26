@@ -35,3 +35,8 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 export type { Role } from "@/lib/generated/prisma/enums";
+
+export { Prisma } from "@/lib/generated/prisma/client";
+
+/** Decimal liegt in lib/decimal.ts, damit reine Rechenmodule ohne Verbindung auskommen. */
+export { Decimal } from "@/lib/decimal";

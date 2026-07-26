@@ -68,23 +68,19 @@ export const KURSARTEN: KursartSaat[] = [
     reihenfolge: 30,
   },
 
-  // ---------------------------------------------------------------------
-  // Ab hier: Preis noch offen (PLAN.md Entscheidung 2), deshalb inaktiv.
-  // ---------------------------------------------------------------------
   {
     code: "NHI",
     name: "Nothelferkurs Intensiv",
     slug: "nothelfer-intensiv",
     beschreibung:
-      "Nothelferkurs am Freitagabend und Samstag. Der Ausweis ist sechs Jahre gültig und dem Gesuch beizulegen.",
-    // TODO Preis mit Ausilia klären. Offen ist auch, ob die Fahrschule den
-    // Nothelferkurs selbst durchführt (PLAN.md Entscheidung 6).
-    grundpreis: "0.00",
+      "Nothelferkurs am Freitagabend und Samstag, ein Tag mit vorbereitendem eLearning. Der Ausweis ist sechs Jahre gültig und dem Gesuch um den Lernfahrausweis beizulegen.",
+    // Preis von der Kundin bestätigt am 26.07.2026.
+    grundpreis: "120.00",
     materialpreis: "0.00",
     onlineLimit: 12,
     lernfahrausweisNoetig: false,
     buchbar: true,
-    aktiv: false,
+    aktiv: true,
     reihenfolge: 40,
   },
   {
@@ -92,38 +88,51 @@ export const KURSARTEN: KursartSaat[] = [
     name: "Nothelferkurs Abendkurs",
     slug: "nothelfer",
     beschreibung:
-      "Nothelferkurs über mehrere Abende verteilt. Der Ausweis ist sechs Jahre gültig und dem Gesuch beizulegen.",
-    // TODO Preis mit Ausilia klären, siehe NHI.
-    grundpreis: "0.00",
+      "Nothelferkurs über mehrere Abende verteilt. Der Ausweis ist sechs Jahre gültig und dem Gesuch um den Lernfahrausweis beizulegen.",
+    // Preis von der Kundin bestätigt am 26.07.2026.
+    grundpreis: "120.00",
     materialpreis: "0.00",
     onlineLimit: 12,
     lernfahrausweisNoetig: false,
     buchbar: true,
-    aktiv: false,
+    aktiv: true,
     reihenfolge: 50,
   },
   {
     code: "MOT_A1_A",
     name: "Motorrad-Grundkurs A1 zu A",
     slug: "motorrad-a1-zu-a",
-    beschreibung: "Motorrad-Grundschulung für den Umstieg von A1 auf A.",
-    // TODO Preis mit Ausilia klären. Ebenfalls offen: ob für die
-    // Motorrad-Grundkurse ein Lernfahrausweis verlangt wird. PLAN.md nennt
-    // diese Pflicht nur beim VKU, deshalb steht hier false.
-    grundpreis: "0.00",
+    beschreibung:
+      "Aufsteigerkurs von der Kategorie A1 auf A, rund vier Stunden. Für die Anmeldung ist kein Lernfahrausweis nötig.",
+    // Preis von der Kundin bestätigt am 26.07.2026.
+    grundpreis: "120.00",
     materialpreis: "0.00",
     onlineLimit: 12,
+    // Kundin bestätigt 26.07.2026: Motorrad-Grundkurse verlangen keinen
+    // Lernfahrausweis zur Anmeldung.
     lernfahrausweisNoetig: false,
     buchbar: true,
-    aktiv: false,
+    aktiv: true,
     reihenfolge: 60,
   },
+
+  // ---------------------------------------------------------------------
+  // Preis widersprüchlich, deshalb inaktiv und nicht öffentlich sichtbar.
+  //
+  // Die Kundin nannte zuerst rund CHF 480, in der zweiten Antwort CHF 120 für
+  // zwölf Stunden praktische Grundschulung. Das wären CHF 10 pro Stunde.
+  // Ein publizierter Preis mit Onlinebuchung ist ein verbindliches Angebot,
+  // deshalb bleiben diese beiden Kursarten aus, bis die Kundin den Preis
+  // schriftlich bestätigt (PLAN.md Abschnitt 5 und Abschnitt 12, offener
+  // Punkt 1). Danach genügt: Preis eintragen, aktiv auf true.
+  // ---------------------------------------------------------------------
   {
     code: "MOT_A1",
     name: "Motorrad-Grundkurs A1",
     slug: "motorrad-a1",
-    beschreibung: "Motorrad-Grundschulung für die Kategorie A1.",
-    // TODO Preis mit Ausilia klären, siehe MOT_A1_A.
+    beschreibung:
+      "Zwölf Stunden Grundschulung für die Kategorie A1. Für die Anmeldung ist kein Lernfahrausweis nötig.",
+    // TODO Preis schriftlich bestätigen lassen, siehe Kommentar oben.
     grundpreis: "0.00",
     materialpreis: "0.00",
     onlineLimit: 12,
@@ -137,8 +146,8 @@ export const KURSARTEN: KursartSaat[] = [
     name: "Motorrad-Grundkurs A",
     slug: "motorrad-a",
     beschreibung:
-      "Zwölf Stunden Grundschulung für die Kategorie A, verteilt auf mehrere Kurstage.",
-    // TODO Preis mit Ausilia klären, siehe MOT_A1_A.
+      "Zwölf Stunden Grundschulung für die Kategorie A, verteilt auf mehrere Kurstage. Für die Anmeldung ist kein Lernfahrausweis nötig.",
+    // TODO Preis schriftlich bestätigen lassen, siehe Kommentar oben.
     grundpreis: "0.00",
     materialpreis: "0.00",
     onlineLimit: 12,

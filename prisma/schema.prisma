@@ -71,6 +71,12 @@ model User {
   image         String?
   role          Role
   active        Boolean     @default(true)
+  /// Erzwingt den Passwortwechsel beim naechsten Login.
+  ///
+  /// Die Kursleiter erhalten provisorische @haudi.ch-Adressen ohne Postfach,
+  /// Passwoerter verteilt Ausilia persoenlich (PLAN.md Abschnitt 15.1). Ein
+  /// von Hand weitergegebenes Passwort darf nicht dauerhaft in Umlauf bleiben.
+  mustChangePassword Boolean @default(false)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   sessions      Session[]
@@ -191,9 +197,11 @@ model Course {
   price             Decimal         @db.Decimal(8, 2)
   materialPrice     Decimal         @db.Decimal(8, 2)
   onlineLimit       Int
-  earlyBirdDiscount Decimal?        @db.Decimal(8, 2)
+  /// Prozentsatz, 10.00 bedeutet 10 % (Kundenentscheid 26.07.2026).
+  /// Der Rabatt gilt auf den Gesamtbetrag inklusive Lehrmittel.
+  earlyBirdPercent  Decimal?        @db.Decimal(5, 2)
   /// Geschaeftsregel 3: Der Rabatt gilt fuer die ersten N Buchungen des Kurses,
-  /// nicht bis zu einem Datum.
+  /// nicht bis zu einem Datum. Kundenentscheid: 5 Plaetze.
   earlyBirdSlots    Int?
   status            CourseStatus    @default(DRAFT)
   notes             String?

@@ -113,6 +113,9 @@ async function instruktorenSchreiben(prisma: PrismaSeedClient) {
         name: person.login.anzeigename,
         rolle: person.login.rolle,
         passwortEnv: person.login.passwortEnv,
+        // Startpasswoerter der Kursleiter werden von Hand weitergegeben,
+        // deshalb ist der Wechsel beim ersten Login Pflicht.
+        passwortWechselErzwingen: true,
       });
       userId = konto.userId;
       mitLogin += 1;
@@ -173,6 +176,9 @@ async function devAdminSchreiben(prisma: PrismaSeedClient) {
     name: process.env.SEED_ADMIN_NAME ?? "Administration",
     rolle: "ADMIN",
     passwortEnv: "SEED_ADMIN_PASSWORD",
+    // Kein Zwang: dieses Passwort hat der Entwickler selbst gesetzt, es wurde
+    // nicht von Hand weitergegeben.
+    passwortWechselErzwingen: false,
   });
 
   console.log(

@@ -38,7 +38,21 @@ export type PrismaSeedClient = ReturnType<typeof prismaOeffnen>;
  */
 export async function kontoAnlegen(
   prisma: PrismaSeedClient,
-  konto: { email: string; name: string; rolle: Role; passwortEnv: string },
+  konto: {
+    email: string;
+    name: string;
+    rolle: Role;
+    passwortEnv: string;
+    /**
+     * Setzt mustChangePassword beim Anlegen. Fuer Konten, deren Startpasswort
+     * von Hand weitergegeben wird (PLAN.md Abschnitt 15.1).
+     *
+     * Wird nur beim Anlegen gesetzt, nie bei einem erneuten Seed-Lauf: wer
+     * sein Passwort laengst gewechselt hat, soll nicht wieder dazu gezwungen
+     * werden.
+     */
+    passwortWechselErzwingen?: boolean;
+  },
 ): Promise<{ userId: string; neu: boolean }> {
   const passwort = process.env[konto.passwortEnv];
 
@@ -50,6 +64,7 @@ export async function kontoAnlegen(
       name: konto.name,
       role: konto.rolle,
       emailVerified: true,
+      mustChangePassword: konto.passwortWechselErzwingen ?? false,
     },
   });
 
