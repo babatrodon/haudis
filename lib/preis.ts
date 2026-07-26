@@ -17,6 +17,12 @@ import { Decimal } from "@/lib/decimal";
  * die Warnung im Kopf von lib/format.ts.
  */
 
+/**
+ * Die Vorbelegung fuer neue Kurse steht in lib/inhalte/kursmuster.ts, nicht
+ * hier: sie wird vom Wizard im Browser gebraucht, und diese Datei kann dorthin
+ * nicht importiert werden, weil Decimal aus dem Prisma-Client stammt.
+ */
+
 /** Kaufmaennische Rundung, halbe Rappen werden aufgerundet. */
 const AUFRUNDEN = Decimal.ROUND_HALF_UP;
 

@@ -16,7 +16,7 @@ Better Auth (Rollen ADMIN, INSTRUCTOR, nur Team-Login), Resend, ASPSMS.
 pnpm dev | pnpm build | pnpm typecheck | pnpm lint
 pnpm db:migrate | pnpm db:seed | pnpm db:verify | pnpm db:studio
 pnpm db:seed:demo | pnpm db:seed:demo:purge
-pnpm test:e2e | pnpm verify:buchung
+pnpm test:e2e | pnpm verify:buchung | pnpm verify:kurse
 
 `db:migrate` und `db:deploy` hängen `prisma generate` an. Prisma 7 generiert
 nach einer Migration nicht mehr von selbst, und ein veralteter Client fällt erst
@@ -29,6 +29,9 @@ beim Typecheck auf.
 - `pnpm verify:buchung` prüft, was der Browser nicht kann: gleichzeitige
   Anmeldungen auf denselben letzten Platz, die Frühbuchergrenze, den
   Doppelbuchungsschutz. Legt Wegwerf-Kurse an und räumt sie wieder ab.
+- `pnpm verify:kurse` prüft die Kursverwaltung: dass eine Absage die Buchungen
+  mitnimmt, dass ein Duplikat jeden Termin um dieselbe Spanne verschiebt und
+  dass Bearbeiten die Kursleiter-Zuweisungen behält.
 - `pnpm db:verify` prüft die Zusicherungen des Seeds, unter anderem
   Geschäftsregel 11.
 
@@ -111,6 +114,18 @@ in der Datenbank steht, muss der Wert einmalig von Hand nachgezogen werden.
   Eine Längenprüfung würde die Eingabe abweisen und dem Bot verraten, woran es
   lag. Die Entscheidung fällt in der Server Action, die nach aussen Erfolg
   meldet und nichts speichert.
+- **Kursabsage** nimmt die Buchungen mit und sperrt dabei dieselbe Kurszeile wie
+  eine Anmeldung. Ohne die Sperre könnte zwischen dem Lesen der Betroffenen und
+  dem Absagen noch jemand buchen: die Buchung wäre storniert, die Person nie
+  benachrichtigt.
+- **Öffentlicher Cache**: `app/(public)/layout.tsx` steht auf einer Stunde. Jede
+  Aktion, die einen Kurs anlegt, ändert, veröffentlicht oder absagt, ruft
+  `revalidatePath("/", "layout")` auf — sonst zeigt die Website bis zu eine
+  Stunde den alten Stand.
+- **Kein `lib/preis.ts` in Client-Komponenten.** Über `Decimal` hängt daran der
+  Prisma-Client, und der lässt sich nicht ins Browser-Bundle packen (Turbopack
+  bricht mit `node:module` ab). Werte, die das Formular im Browser braucht,
+  stehen in [lib/inhalte/kursmuster.ts](lib/inhalte/kursmuster.ts).
 
 ## Abweichungen von der Prisma-Skizze in PLAN.md Abschnitt 4
 

@@ -5,9 +5,10 @@ import {
   Buchungsbestaetigung,
   type BestaetigungDaten,
 } from "@/emails/buchungsbestaetigung";
+import { Kursabsage } from "@/emails/kursabsage";
 import { einstellungenLesen } from "@/lib/einstellungen";
 import { chf, datumLang } from "@/lib/format";
-import { ADRESSE } from "@/lib/kontakt";
+import { ADRESSE, TELEFONNUMMERN } from "@/lib/kontakt";
 import type { BuchungMitKurs } from "@/lib/buchung";
 
 /**
@@ -146,6 +147,49 @@ export async function bestaetigungSenden(
     betreff: `Anmeldung bestätigt: ${inhalt.kursName}`,
     html,
     text: textfassung(inhalt),
+  });
+}
+
+/**
+ * Absage an eine angemeldete Person.
+ *
+ * Anders als die Bestaetigung geht diese Mail auch an telefonisch Angemeldete:
+ * Geschaeftsregel 4 verbietet die Bestaetigung, nicht die Absage — wer nicht
+ * erfaehrt, dass sein Kurs ausfaellt, steht vor verschlossener Tuer. Wer keine
+ * brauchbare Adresse hinterlegt hat, wird angerufen; deshalb zeigt der Dialog
+ * die Nummern.
+ */
+export async function absageSenden(daten: {
+  an: string;
+  vorname: string;
+  kursName: string;
+  termine: { datum: string; von: string; bis: string }[];
+  grund: string;
+}): Promise<VersandErgebnis> {
+  const element = Kursabsage({
+    vorname: daten.vorname,
+    kursName: daten.kursName,
+    termine: daten.termine,
+    grund: daten.grund,
+  });
+  const html = await render(element);
+
+  const text = [
+    `Hoi ${daten.vorname}, der ${daten.kursName} findet leider nicht statt.`,
+    ...(daten.grund ? ["", daten.grund] : []),
+    "",
+    "Diese Termine fallen aus:",
+    ...daten.termine.map((t) => `  ${t.datum}, ${t.von} bis ${t.bis} Uhr`),
+    "",
+    "Ruf uns an, wir suchen Dir einen Platz im nächsten Kurs:",
+    ...TELEFONNUMMERN.map((nummer) => `  ${nummer.anzeige}`),
+  ].join("\n");
+
+  return senden({
+    an: daten.an,
+    betreff: `Abgesagt: ${daten.kursName}`,
+    html,
+    text,
   });
 }
 
