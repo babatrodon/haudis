@@ -34,6 +34,16 @@ Zusicherungen des Seeds, unter anderem Geschäftsregel 11.
   IDs mit Präfix `demo-`, Buchungen laufen auf `@example.invalid`. Vor dem
   Go-Live mit `db:seed:demo:purge` entfernen.
 
+**Nach dem Hinzufügen eines Einstellungs-Schlüssels immer `pnpm db:seed`
+ausführen**, sonst steht der Wert nur im Code. Die Anwendung fällt auf den
+Default zurück und sieht deshalb richtig aus, aber die Admin kann den Wert
+nicht bearbeiten, weil die Zeile in der Datenbank fehlt. `pnpm db:verify`
+schlägt in diesem Fall an.
+
+Der Seed überschreibt bestehende Einstellungen nie, damit er Anpassungen der
+Admin nicht zurücksetzt. Ändert sich ein Default für einen Schlüssel, der schon
+in der Datenbank steht, muss der Wert einmalig von Hand nachgezogen werden.
+
 ## Konventionen
 
 - Server Components lesen, Server Actions schreiben, Zod-Validierung in jeder Action
