@@ -129,8 +129,16 @@ export default function DatenschutzSeite() {
       <Abschnitt titel="Cookies">
         <p>
           Die öffentliche Website setzt keine Cookies zu Analyse- oder
-          Werbezwecken. Ein technisch notwendiges Cookie wird nur im internen
-          Team-Login gesetzt, der für Kundinnen und Kunden nicht zugänglich ist.
+          Werbezwecken. Es gibt keine Zählpixel, kein Tracking und keine
+          Weitergabe an Werbenetzwerke.
+        </p>
+        <p>
+          Zwei technisch notwendige Cookies kommen vor. Während einer
+          Kursanmeldung wird ein Cookie gesetzt, das Deine Anmeldung über die
+          beiden Schritte hinweg zuordnet; es enthält nur eine zufällige
+          Kennung, läuft nach 30 Minuten ab und lässt sich nicht auslesen. Und
+          im internen Team-Login wird ein Sitzungscookie gesetzt, der für
+          Kundinnen und Kunden nicht zugänglich ist.
         </p>
       </Abschnitt>
 

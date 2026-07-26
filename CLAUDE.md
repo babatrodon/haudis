@@ -16,14 +16,25 @@ Better Auth (Rollen ADMIN, INSTRUCTOR, nur Team-Login), Resend, ASPSMS.
 pnpm dev | pnpm build | pnpm typecheck | pnpm lint
 pnpm db:migrate | pnpm db:seed | pnpm db:verify | pnpm db:studio
 pnpm db:seed:demo | pnpm db:seed:demo:purge
+pnpm test:e2e | pnpm verify:buchung
 
 `db:migrate` und `db:deploy` hängen `prisma generate` an. Prisma 7 generiert
 nach einer Migration nicht mehr von selbst, und ein veralteter Client fällt erst
 beim Typecheck auf.
 
-`pnpm test:e2e` gibt es noch nicht. Playwright kommt in Sprint 3 zusammen mit dem
-Smoke-Test für den Buchungsflow. Bis dahin prüft `pnpm db:verify` die
-Zusicherungen des Seeds, unter anderem Geschäftsregel 11.
+### Tests
+
+- `pnpm test:e2e` fährt den Buchungsweg im Browser durch, gegen den
+  Produktionsbuild. `globalSetup` setzt vorher die Demodaten zurück.
+- `pnpm verify:buchung` prüft, was der Browser nicht kann: gleichzeitige
+  Anmeldungen auf denselben letzten Platz, die Frühbuchergrenze, den
+  Doppelbuchungsschutz. Legt Wegwerf-Kurse an und räumt sie wieder ab.
+- `pnpm db:verify` prüft die Zusicherungen des Seeds, unter anderem
+  Geschäftsregel 11.
+
+**Nach `pnpm test:e2e` einmal `pnpm db:seed:demo` laufen lassen.** Jeder
+Testlauf legt eine echte Buchung auf dem grünen Demokurs an, danach stimmen die
+Zahlen von `db:verify` nicht mehr. Der Demo-Seed stellt sie wieder her.
 
 ### Seed
 
@@ -86,6 +97,20 @@ in der Datenbank steht, muss der Wert einmalig von Hand nachgezogen werden.
 - **Ampel-Farben**: als Tokens in [app/globals.css](app/globals.css) hinterlegt
   (`--ampel-gruen`, `--ampel-gelb`, `--ampel-rot` je mit Hintergrund und Linie),
   abgelesen aus der Designvorlage.
+- **Kapazität**: [lib/buchung.ts](lib/buchung.ts) sperrt die Kurszeile mit
+  `SELECT … FOR UPDATE`, bevor es zählt und schreibt. Ohne diese Sperre nehmen
+  zwei gleichzeitige Anmeldungen denselben letzten Platz. Wer dort etwas
+  ändert, lässt danach `pnpm verify:buchung` laufen.
+- **Preis**: entsteht ausschliesslich in [lib/preis.ts](lib/preis.ts) und wird
+  innerhalb derselben Transaktion berechnet, in der gezählt wird. Nur so gilt
+  der Frühbucherrabatt für exakt die ersten fünf.
+- **Mailversand** steht ausserhalb der Transaktion und darf eine Buchung nie
+  umwerfen: der Platz ist vergeben, auch wenn Resend ausfällt. Ohne
+  `RESEND_API_KEY` wird die Mail nur protokolliert.
+- **Honigtopf**: das Feld `webseite` ist im Zod-Schema absichtlich unbegrenzt.
+  Eine Längenprüfung würde die Eingabe abweisen und dem Bot verraten, woran es
+  lag. Die Entscheidung fällt in der Server Action, die nach aussen Erfolg
+  meldet und nichts speichert.
 
 ## Abweichungen von der Prisma-Skizze in PLAN.md Abschnitt 4
 
@@ -111,7 +136,11 @@ technisch erzwungene Abweichungen und keine offene Diskussion.
 
 ## Routen
 
-- `/` öffentlich, Platzhalter bis Sprint 2
+- `/` öffentlich
+- `/anmeldung/[courseId]` Anmeldung Schritt 1, `/schritt-2` Ergänzungen,
+  `/bestaetigung` Erfolgsseite. Alle drei auf `noindex`: die Seiten sind
+  transaktional und die Bestätigung zeigt Personendaten. Lighthouse zieht
+  dafür den SEO-Wert auf 60, das ist gewollt.
 - `/team/login` Team-Login, `/team` verteilt nach Rolle
 - `/admin` Rolle ADMIN, `/portal` Rolle INSTRUCTOR
 - `/api/auth/[...all]` Better Auth
@@ -127,8 +156,9 @@ Siehe [.env.example](.env.example). `DATABASE_URL` ist die gepoolte Neon-URL
 
 ## Stand
 
-Sprint 0 und 1 abgeschlossen: Scaffold, Prisma und Neon, Better Auth,
-vollständiges Datenmodell aus PLAN.md Abschnitt 4, Referenz-Seed.
+Sprint 0 bis 3 abgeschlossen: Scaffold, Datenmodell, Auth, öffentliche Website
+und die Onlineanmeldung mit Bestätigungsmail. Offen für den Versand: ein
+`RESEND_API_KEY` und die verifizierte Domain haudi.ch.
 
 Offen gegenüber PLAN.md, mit Ausilia zu klären:
 
