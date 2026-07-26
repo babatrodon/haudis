@@ -30,4 +30,23 @@ export const EXTERNE_LINKS = {
    */
   tcsWabKurs:
     "https://www.tcs.ch/de/kurse-fahrzeugchecks/kurse-fahrtrainings/auto/wab-kurs.php",
+
+  /** Basis-Theoriepruefung, Zahlen und Ablauf des Kantons Aargau. */
+  basisTheoriepruefungAargau:
+    "https://www.ag.ch/de/verwaltung/dvi/strassenverkehr/fuehrerpruefung/theoriepruefung/basis-theoriepruefung",
+
+  /** Uebersicht Theoriepruefung des Kantons Aargau. */
+  theoriepruefungAargau:
+    "https://www.ag.ch/de/verwaltung/dvi/strassenverkehr/fuehrerpruefung/theoriepruefung",
+
+  /** Bundesportal zum Fuehrerausweis, Grundlage der Vorschriftenseiten. */
+  chFuehrerausweis:
+    "https://www.ch.ch/de/fahrzeuge-und-verkehr/fuhrerausweis/autofahren-lernen/",
+
+  /** Fuehrerausweis auf Probe, Bundesportal. */
+  chProbefuehrerausweis: "https://www.ch.ch/de/fuhrerausweis-auf-probe/",
+
+  /** BFU zur Kategorie A1. */
+  bfuKategorieA1:
+    "https://www.bfu.ch/de/services/rechtsfragen/fuehrerausweis-kategorie-a1-was-gilt",
 } as const;
