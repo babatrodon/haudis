@@ -413,12 +413,12 @@ pnpm dev | pnpm build | pnpm prisma migrate dev | pnpm prisma db seed | pnpm tes
 - Frühbucherrabatt: 10 % auf den Gesamtbetrag inkl. Lehrmittel, erste 5 Anmeldungen pro Kurs (VKU: 170 wird zu 153).
 - Preise: Nothelfer Intensiv und Abendkurs je CHF 120, Grundkurs A1 zu A CHF 120, LKW CHF 140 praktisch und CHF 25 Theorie.
 - Kursleiter-Konten: provisorische @haudi.ch-Adressen, Passwörter verteilt Ausilia persönlich, deshalb Passwortvergabe im Admin-Panel statt per Mail (siehe Abschnitt 15).
-- Datenübernahme: CSV von der Kundin, künftige und vergangene Anmeldungen, Lieferung kurz vor dem Launch.
+- Datenübernahme: ÜBERHOLT durch den Entscheid vom 27.07.2026. Die Kundin verfügt über keinen Export, es wird ohne Altdaten gestartet. Verbindlich gilt Abschnitt 15.2.
 - BTU-Aktion mit 8 Gratis-Stunden Bögle bleibt aktiv.
 - Warteliste: nur Benachrichtigung mit Buchungslink, KEIN automatisches Nachrücken.
 - Payrexx: Abklärung läuft kundenseitig, Zahlung bleibt in Welle 2.
 - Systemzugang: ALLE 36 Kursleiter erhalten ein Login (Änderung gegenüber dem früheren Plan mit drei Logins).
-- Bestehende Anmeldungen aus dem Altsystem werden übernommen (neuer Arbeitsblock, siehe Abschnitt 15).
+- Bestehende Anmeldungen: ÜBERHOLT, siehe Abschnitt 15.2. Start ohne Altdaten, spätere Übernahme wird separat geprüft.
 
 ### Offen, blockiert aber nichts mehr (Stand 27.07.2026)
 
