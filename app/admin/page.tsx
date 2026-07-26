@@ -1,39 +1,71 @@
+import { SeitenKopf } from "@/components/admin/admin-huelle";
 import { requireRole } from "@/lib/auth-guard";
 
 /**
- * Platzhalter. Das Dashboard mit Kursen, Buchungen, Einsatzplan und Abrechnung
- * entsteht in Sprint 4, PLAN.md Abschnitt 6.
+ * Uebersicht.
+ *
+ * Die Kennzahlen und Listen entstehen im zweiten Teil von Block A, sobald die
+ * Navigation abgenommen ist. Bis dahin steht hier, was kommt: so laesst sich
+ * die Huelle bei allen Breiten beurteilen, ohne dass halbfertige Widgets den
+ * Blick auf die Navigation verstellen.
  */
-export default async function AdminStart() {
+export default async function AdminUebersicht() {
   const benutzer = await requireRole("ADMIN");
 
-  return (
-    <div className="border border-border bg-card p-8">
-      <h1 className="font-heading text-2xl font-bold">Angemeldet</h1>
-      <p className="mt-2 text-muted-foreground">
-        Das Admin-Panel wird in Sprint 4 gebaut.
-      </p>
+  const geplant = [
+    {
+      titel: "Nächste sieben Tage",
+      text: "Alle Termine mit Kursart, Zeit und zugewiesenem Kursleiter. Wo noch niemand zugewiesen ist, fällt es hier auf.",
+    },
+    {
+      titel: "Füllstand pro Kurs",
+      text: "Balken je ausgeschriebenem Kurs, mit denselben Ampelschwellen wie auf der öffentlichen Seite.",
+    },
+    {
+      titel: "Anmeldungen heute und diese Woche",
+      text: "Getrennt nach online und telefonisch.",
+    },
+    {
+      titel: "Umsatz des Monats",
+      text: "Zwei Zahlen: nach Anmeldedatum und nach Kursdatum, beide beschriftet.",
+    },
+    {
+      titel: "Schnellzugriff",
+      text: "Neuer Kurs und telefonische Anmeldung, ohne Umweg über die Listen.",
+    },
+  ];
 
-      <dl className="mt-8 grid gap-px border border-border bg-border sm:grid-cols-3">
-        <div className="bg-card p-4">
-          <dt className="text-xs uppercase tracking-wider text-muted-foreground">
-            Name
-          </dt>
-          <dd className="mt-1 font-medium">{benutzer.name}</dd>
-        </div>
-        <div className="bg-card p-4">
-          <dt className="text-xs uppercase tracking-wider text-muted-foreground">
-            E-Mail
-          </dt>
-          <dd className="mt-1 font-medium break-all">{benutzer.email}</dd>
-        </div>
-        <div className="bg-card p-4">
-          <dt className="text-xs uppercase tracking-wider text-muted-foreground">
-            Rolle
-          </dt>
-          <dd className="mt-1 font-medium">{benutzer.role}</dd>
-        </div>
-      </dl>
-    </div>
+  return (
+    <>
+      <SeitenKopf
+        titel={`Grüezi ${benutzer.name.split(" ")[0]}`}
+        beschreibung="Übersicht über die kommenden Tage und die laufenden Anmeldungen."
+      />
+
+      <div className="border border-dashed border-linie-stark bg-flaeche-2 p-6">
+        <p className="font-heading text-lg font-bold">
+          Die Kennzahlen folgen gleich
+        </p>
+        <p className="mt-2 max-w-prose text-muted-foreground">
+          Zuerst steht die Navigation zur Abnahme an. Sobald sie passt, kommen
+          an dieser Stelle die folgenden Bereiche.
+        </p>
+      </div>
+
+      {/*
+        Eigene Rahmen statt der Rasterlinie aus bg-border und gap-px: bei
+        ungerader Anzahl bleibt sonst die letzte Zelle leer und zeigt die
+        Rahmenfarbe als grauen Block. Die Kacheln des Dashboards sind nie
+        garantiert vollzaehlig, deshalb hier die robustere Variante.
+      */}
+      <ul className="mt-6 grid gap-4 sm:grid-cols-2">
+        {geplant.map((eintrag) => (
+          <li key={eintrag.titel} className="border border-border bg-card p-5">
+            <h2 className="font-heading font-bold">{eintrag.titel}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{eintrag.text}</p>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }

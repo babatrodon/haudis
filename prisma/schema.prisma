@@ -206,6 +206,18 @@ model Course {
   status            CourseStatus    @default(DRAFT)
   notes             String?
   printedAt         DateTime?
+  /// Wann der Kurs im SARI-Portal der asa eingetragen wurde.
+  /// Frist: 24 Stunden vor Kursbeginn.
+  sariAngemeldetAm  DateTime?
+  /// Wann die Kursbestaetigung in SARI abgeschlossen wurde.
+  /// Frist: 24 Stunden nach dem letzten VKU-Termin.
+  ///
+  /// Beide Felder werden in Sprint 4 nur gesetzt und angezeigt. Die
+  /// Erinnerung, die aus ihnen und den Terminen faellige Fristen errechnet,
+  /// kommt spaeter. Sie stehen jetzt schon hier, weil eine verpasste
+  /// SARI-Bestaetigung fuer die Fahrschule ein echtes Problem ist und die
+  /// Erinnerung sonst ohne Datengrundlage dastuende.
+  sariBestaetigtAm  DateTime?
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
   sessions          CourseSession[]

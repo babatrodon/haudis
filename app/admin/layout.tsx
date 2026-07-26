@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { AdminHuelle } from "@/components/admin/admin-huelle";
 import { requireRole } from "@/lib/auth-guard";
-import { TeamHuelle } from "@/components/team-huelle";
 
 export const metadata: Metadata = {
   title: "Administration | Haudi's Fahrschule",
@@ -16,9 +16,5 @@ export default async function AdminLayout({
   // Echte Autorisierung. proxy.ts leitet nur frueher um.
   const benutzer = await requireRole("ADMIN");
 
-  return (
-    <TeamHuelle bereich="Administration" benutzer={benutzer}>
-      {children}
-    </TeamHuelle>
-  );
+  return <AdminHuelle benutzer={benutzer}>{children}</AdminHuelle>;
 }
