@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AmpelChip } from "@/components/ampel-chip";
 import { Button } from "@/components/ui/button";
 import { chf, datumLang } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import type { KursOeffentlich } from "@/lib/kurse";
 
 /**
@@ -13,22 +14,36 @@ import type { KursOeffentlich } from "@/lib/kurse";
  */
 export function Kurskarte({ kurs }: { kurs: KursOeffentlich }) {
   const rabattiert = kurs.naechsterPreis.lt(kurs.gesamtpreis);
+  const ausgebucht = !kurs.verfuegbarkeit.buchbar;
 
   return (
-    <article className="flex flex-col border border-border bg-card">
-      <div className="flex items-start justify-between gap-4 border-b border-border p-5">
-        <div>
-          <h3 className="font-heading text-lg font-bold">{kurs.kursart.name}</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {kurs.termine.length}{" "}
-            {kurs.termine.length === 1 ? "Termin" : "Termine"}
-          </p>
-        </div>
+    <article
+      className={cn(
+        "flex flex-col border border-border",
+        // Ausgebuchte Kurse treten zurueck: gedaempfte Flaeche statt weiss.
+        // Bewusst keine Transparenz auf der ganzen Karte, das wuerde auch den
+        // roten Chip aufhellen, der die eigentliche Information traegt.
+        ausgebucht ? "bg-flaeche-2" : "bg-card",
+      )}
+    >
+      {/*
+        Chip auf eigener Zeile ueber dem Titel. Nebeneinander gestellt haben
+        sich beide um dieselbe Breite gestritten: "Verkehrskundeunterricht" ist
+        ein einziges langes Wort und laesst sich nicht umbrechen, also wurde der
+        Chip aus der Karte gedraengt und abgeschnitten.
+      */}
+      <div className="border-b border-flaeche-3 p-5">
         <AmpelChip
           zustand={kurs.verfuegbarkeit.zustand}
           text={kurs.verfuegbarkeit.text}
-          className="shrink-0"
         />
+        <h3 className="mt-3 font-heading text-lg font-bold hyphens-auto" lang="de">
+          {kurs.kursart.name}
+        </h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {kurs.termine.length}{" "}
+          {kurs.termine.length === 1 ? "Termin" : "Termine"}
+        </p>
       </div>
 
       <div className="flex-1 p-5">
@@ -36,7 +51,7 @@ export function Kurskarte({ kurs }: { kurs: KursOeffentlich }) {
           {kurs.termine.map((termin, index) => (
             <li
               key={`${termin.datum.toISOString()}-${termin.von}-${index}`}
-              className="flex flex-wrap items-baseline justify-between gap-2 border-b border-border pb-2 last:border-b-0 last:pb-0"
+              className="flex flex-wrap items-baseline justify-between gap-2 border-b border-flaeche-3 pb-2 last:border-b-0 last:pb-0"
             >
               <span className="font-medium">{datumLang(termin.datum)}</span>
               <span className="tabular-nums text-muted-foreground">
@@ -53,7 +68,7 @@ export function Kurskarte({ kurs }: { kurs: KursOeffentlich }) {
         ) : null}
       </div>
 
-      <div className="border-t border-border p-5">
+      <div className="border-t border-flaeche-3 p-5">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div>
             {rabattiert ? (
@@ -66,7 +81,14 @@ export function Kurskarte({ kurs }: { kurs: KursOeffentlich }) {
                 </span>
               </>
             ) : (
-              <span className="font-heading text-2xl font-bold">
+              <span
+                className={cn(
+                  "font-heading text-2xl font-bold",
+                  // Beim ausgebuchten Kurs ist der Preis nicht mehr die
+                  // Information, auf die es ankommt.
+                  ausgebucht && "text-muted-foreground",
+                )}
+              >
                 {chf(kurs.gesamtpreis)}
               </span>
             )}
@@ -94,7 +116,10 @@ export function Kurskarte({ kurs }: { kurs: KursOeffentlich }) {
               <Link href={`/anmeldung/${kurs.id}`}>Jetzt anmelden</Link>
             </Button>
           ) : (
-            <p className="border border-border bg-flaeche-2 p-3 text-center text-sm text-muted-foreground">
+            // bg-card statt bg-flaeche-2: die Karte selbst ist beim
+            // ausgebuchten Kurs schon gedaempft, ein Hinweis in derselben
+            // Farbe waere darauf nicht mehr zu sehen.
+            <p className="border border-flaeche-3 bg-card p-3 text-center text-sm text-muted-foreground">
               Dieser Kurs ist ausgebucht. Ruf uns an, wir sagen Dir, wann der
               nächste startet.
             </p>

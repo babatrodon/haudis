@@ -40,7 +40,11 @@ export function AmpelChip({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-2 border px-3 py-2 text-sm font-semibold",
+        // max-w-full ist keine Kosmetik: ohne die Begrenzung waechst ein
+        // inline-flex ueber seinen Container hinaus, statt umzubrechen. In
+        // einer schmalen Kurskarte ragte der Chip dadurch aus der Karte heraus
+        // und wurde am Rand abgeschnitten.
+        "inline-flex max-w-full items-center gap-2 border px-3 py-2 text-sm font-semibold",
         stil.rahmen,
         className,
       )}
