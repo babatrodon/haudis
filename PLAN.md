@@ -33,7 +33,7 @@ Neu: eine massgeschneiderte Plattform aus einem Guss.
 | Framework | Next.js (App Router, latest stable) + TypeScript strict | Eine Codebase für Site + Admin + Portal. Server Actions statt API-Boilerplate. Bekannt aus dem Finance-Tracker-Projekt. |
 | UI | Tailwind CSS + shadcn/ui | Schnell, konsistent, responsive Patterns out of the box |
 | DB | PostgreSQL auf Neon (Region eu-central) + Prisma | Bekannter Stack, Point-in-time Recovery, Free Tier reicht fürs Volumen (~30 Buchungen/Monat) |
-| Auth | Better Auth, E-Mail/Passwort, Rollen ADMIN / INSTRUCTOR (nur Team, kein Kunden-Login) | ClaudeKit liefert einen Better-Auth-Skill, damit arbeitet Claude Code am zuverlässigsten. Login mit Rate-Limit, Argon2/bcrypt |
+| Auth | Better Auth, E-Mail/Passwort, Rollen ADMIN / INSTRUCTOR (nur Team, kein Kunden-Login) | ClaudeKit liefert einen Better-Auth-Skill, damit arbeitet Claude Code am zuverlässigsten. Login mit Rate-Limit. Passwort-Hashing: Better-Auth-Standard scrypt (memory-hard, OWASP-konform, keine nativen Abhängigkeiten auf Windows-Dev und Vercel-Build) |
 | E-Mail | Resend + React Email (Fallback: Hostinger SMTP + Nodemailer) | Domain-Versand ab haudi.ch mit SPF/DKIM |
 | SMS | ASPSMS.ch (Schweizer Anbieter, Prepaid-Credits, HTTP-API) | Günstig, zuverlässig in CH. Alternative: Twilio |
 | WhatsApp | `wa.me` Deep Links mit vorbefülltem Text | Keine API, keine Kosten, kein Meta-Approval nötig |
@@ -123,7 +123,7 @@ model Course {
   price             Decimal @db.Decimal(8,2)   // Weekend-VKU kostet mehr, deshalb pro Kurs
   materialPrice     Decimal @db.Decimal(8,2)
   onlineLimit       Int
-  earlyBirdDiscount Decimal? @db.Decimal(8,2)
+  earlyBirdPercent  Decimal? @db.Decimal(5,2)  // 10.00 = 10 %, Kundenentscheid 26.07.2026
   earlyBirdSlots    Int?     // die ersten N Buchungen erhalten den Rabatt
   status            CourseStatus @default(DRAFT)
   notes             String?
@@ -177,7 +177,7 @@ model SmsLog  { id String @id @default(cuid())  bookingId String  to String  bod
    - frei >= 4: Grün, "Noch viele Plätze frei"
    - frei 1-3: Gelb, "Nur noch wenige Plätze frei"
    - frei 0: Rot, "Kurs ausgebucht", Anmelden-Button ausblenden
-3. **Frühbucherrabatt** gilt für die ersten `earlyBirdSlots` Buchungen eines Kurses (Mengen-basiert wie im Altsystem, "Frühbucherrabatte ausgeschöpft"), nicht datumsbasiert.
+3. **Frühbucherrabatt**: 10 % auf den Gesamtbetrag inklusive Lehrmittel, für die ersten 5 Anmeldungen pro Kurs (bestätigt 26.07.2026). Mengen-basiert wie im Altsystem ("Frühbucherrabatte ausgeschöpft"), nicht datumsbasiert. Beispiel VKU: 170.00 minus 10 % = 153.00. Berechnung in Decimal, kaufmännische Rundung auf 5 Rappen, `priceCharged` speichert den tatsächlich verrechneten Betrag.
 4. **Telefonische Anmeldungen** (source PHONE): kein Bestätigungsmail, zählt zur Kapazität, im Admin klar als "ohne Bestätigung" markiert.
 5. **Provision**: `booking.referredBy -> instructor.provisionPerBooking`, Default CHF 50, pro Instruktor überschreibbar.
 6. **Beide Telefonnummern überall**: 079 604 44 44 und 079 202 97 97. Header, Footer, Kontakt. Klick = `tel:` Link.
@@ -224,15 +224,17 @@ Der Alteintrag "LOLIT LOLIT" wird NICHT übernommen (Admin-User, kein Kursleiter
   `https://wa.me/41796044444?text=Hoi%20Ausilia!%20Ich%20m%C3%B6chte%20gerne%20eine%20gratis%20Probelektion%20(Auto)%20vereinbaren.%20Mein%20Name:%20`
   Nummer und Texte in Settings pflegbar. Pro Kategorie eigener Text (Auto, Taxi, Motorrad, ...).
 
-**Motorrad-Fahrlektionen, LKW-Fahrlektionen, Anhänger-Ausbildung BE**: gleiche Kartenstruktur, Preise TBD (Altsystem LKW: CHF 140 praktisch / CHF 25 Theorie pro Lektion). Platzhalter einbauen, Werte über Settings pflegbar.
+**LKW-Fahrlektionen**: praktische Lektion CHF 140.00, Theorielektion CHF 25.00 (bestätigt 26.07.2026, deckt sich mit dem Altsystem). Eigene Kartenstruktur ohne Abo-Staffel.
+
+**Motorrad-Fahrlektionen und Anhänger-Ausbildung BE**: laut Kundin dieselben Ansätze wie Auto und Taxi (95 / 90 / 88). Da sich die LKW-Angabe in derselben Antwort als falsch erwiesen hat, vor Publikation kurz gegenprüfen, insbesondere Anhänger BE. Alle Werte über Settings pflegbar.
 
 ### Kurse (Startwerte aus Altsystem, alle pro Kurs überschreibbar)
 
 - **VKU**: 4 Doppellektionen, Standard CHF 140 + CHF 30 Lehrmittel = CHF 170 total. Weekend-Variante CHF 210 total. Lernfahrausweis obligatorisch (Buchung Schritt 2 + am Kurstag). Online-Limit 12.
-- **Nothelfer**: Intensivkurs Fr 19-22h + Sa 09-12h und 13-17h, oder Abendkurs. Ausweis 6 Jahre gültig. Preis TBD.
+- **Nothelfer**: Intensivkurs Fr 19-22h + Sa 09-12h und 13-17h (1 Tag mit eLearning), oder Abendkurs. Ausweis 6 Jahre gültig. Preis laut Kundin 26.07.2026: je CHF 120. Plausibel (erste Schätzung lag bei 110 bzw. 99-130), kann publiziert werden.
 - **BTU**: Di + Mi 19-21h, CHF 200 inkl. Material. Aktion "+ 8 Stunden Bögle gratis" (Flag in Settings).
 - **Bögle/PFB**: Mo 19-21h, gratis, keine Anmeldung. Nur Infoseite, nicht buchbar.
-- **Motorrad-Grundkurse**: A1 zu A, A1, A (12h Grundschulung). Preise TBD.
+- **Motorrad-Grundkurse**: A1 zu A (Aufsteigerkurs, ca. 4h) CHF 120, bestätigt und publizierbar. A1 (12h) und A (12h) laut zweiter Antwort ebenfalls CHF 120, WIDERSPRUCH zur ersten Antwort derselben Kundin (je ca. CHF 480). CHF 120 für 12 Stunden praktische Grundschulung entspricht CHF 10 pro Stunde und ist betriebswirtschaftlich nicht haltbar. Vermutung: die Rückfrage nach "einem festen Betrag" wurde als "ein Betrag für alle" gelesen. Diese beiden Kursarten bleiben `active: false` bis zur schriftlichen Bestätigung. Rechtlicher Grund: ein publizierter Preis mit Onlinebuchung ist ein verbindliches Angebot. Kein Lernfahrausweis für die Anmeldung nötig (`requiresLfa: false`, bestätigt 26.07.2026).
 
 ### Die 7 Schritte zum Führerausweis (finale Copy)
 
@@ -401,22 +403,35 @@ pnpm dev | pnpm build | pnpm prisma migrate dev | pnpm prisma db seed | pnpm tes
 - [ ] 10-Min-Loom für Ausilia: Kurs anlegen, Buchung erfassen, Abrechnung ziehen
 - [ ] Parallelbetrieb: 1 Woche Testbuchungen intern, erst dann DNS
 
-## 12. Entscheidungen vor Sprint 2 (Kunde)
+## 12. Entscheidungen (Stand 26.07.2026)
 
-1. Online-Zahlung: v1 bleibt "bar am ersten Kurstag". TWINT/Karte via Payrexx als v2. Einverstanden?
-2. Finale Preise: Nothelfer, Motorrad-Grundkurse (A1 zu A / A1 / A), LKW, Anhänger BE. VKU 170 Standard / 210 Weekend bestätigen. BTU 200 + Bögle-Aktion noch gültig?
-3. ENTSCHIEDEN (26.07.2026): WhatsApp für Probelektionen und Buchungsfragen läuft über 079 604 44 44 (`wa.me/41796044444`). Offen bleibt: Wem gehört 079 202 97 97? Bis auf Weiteres nur `tel:`-Link, kein WhatsApp auf dieser Nummer.
-4. Frühbucherrabatt: Betrag + Anzahl Slots pro Kurs?
-5. Provision: CHF 50 flach für alle Kursarten und alle Fahrlehrer, oder Unterschiede?
-6. Nothelfer: selbst durchführen oder aktuell ausgelagert? (Altsystem zeigt keine Daten)
-7. Bestehende/künftige Buchungen aus dem Altsystem manuell übernehmen oder frisch starten?
-8. Hosting-Eigentum + Abrechnung: LoliT Managed Hosting empfohlen (siehe 13)
-9. Zahlung: Payrexx-Konto läuft auf die Fahrschule (KYC, Auszahlungskonto). Ausilia startet das Onboarding sofort, es dauert mehrere Tage. TWINT + Karte ab Go-Live 1 oder erst mit Welle 2? Bar bleibt immer wählbar.
-10. ENTSCHIEDEN (26.07.2026): kein Kunden-Login, kein Schülerportal, keine öffentliche Slot-Buchung, keine Fahrlehrer-Wahl durch Kunden. Fahrstunden laufen über WhatsApp/Telefon, die Verwaltung intern über die Schülerkartei (Abschnitt 14). Offen nur noch: Standard-Lektionsdauer für die interne Erfassung (45 oder 90 Min?).
-11. Datenpflege-Commitment: Fahrlehrer markieren jede absolvierte Lektion und tragen bestandene praktische Prüfungen ein. Ohne diese Pflege stimmen Abo-Stände nicht und die WAB-Erinnerung bleibt stumm.
-12. Übersetzungen: SQ liefert Loli, IT und EN werden von wem gegengelesen? Nur UI + Kernseiten übersetzen oder auch alle Kursbeschreibungen?
-13. Warteliste: bei Storno automatisch nachrücken und Zahlungsfrist setzen, oder nur Benachrichtigung mit Buchungslink?
-14. Instruktoren-Pool: Namensliste aus Abschnitt 4 auf Vollständigkeit prüfen. Wer bekommt ein Login? Vorschlag: nur Ausilia (Admin + Instruktorin), Luca und Bernadette, der Rest bleibt zuweisbares Profil ohne Login. Kürzel pro Instruktor bestätigen. Erhalten alle Kursleiter dieselbe Provision von CHF 50 (hängt an Entscheidung 5)?
+### Beantwortet von Ausilia am 26.07.2026
+
+- Motorrad-Grundkurse verlangen KEINEN Lernfahrausweis zur Anmeldung (`requiresLfa: false`).
+- Instruktoren-Pool: 36 Namen vollständig, Kürzel bestätigt.
+- Provision: CHF 50 pro Anmeldung, flach für alle Kursleiter.
+- Frühbucherrabatt: 10 % auf den Gesamtbetrag inkl. Lehrmittel, erste 5 Anmeldungen pro Kurs (VKU: 170 wird zu 153).
+- Preise: Nothelfer Intensiv und Abendkurs je CHF 120, Grundkurs A1 zu A CHF 120, LKW CHF 140 praktisch und CHF 25 Theorie.
+- Kursleiter-Konten: provisorische @haudi.ch-Adressen, Passwörter verteilt Ausilia persönlich, deshalb Passwortvergabe im Admin-Panel statt per Mail (siehe Abschnitt 15).
+- Datenübernahme: CSV von der Kundin, künftige und vergangene Anmeldungen, Lieferung kurz vor dem Launch.
+- BTU-Aktion mit 8 Gratis-Stunden Bögle bleibt aktiv.
+- Warteliste: nur Benachrichtigung mit Buchungslink, KEIN automatisches Nachrücken.
+- Payrexx: Abklärung läuft kundenseitig, Zahlung bleibt in Welle 2.
+- Systemzugang: ALLE 36 Kursleiter erhalten ein Login (Änderung gegenüber dem früheren Plan mit drei Logins).
+- Bestehende Anmeldungen aus dem Altsystem werden übernommen (neuer Arbeitsblock, siehe Abschnitt 15).
+
+### Offen, blockiert aber nichts mehr (Stand 27.07.2026)
+
+1. **Motorrad-Grundkurse A1 und A**: definitive Preise werden von der Kundin abgeklärt. Bis dahin `active: false`, also nicht öffentlich sichtbar.
+2. **Motorrad-Fahrlektionen und Anhänger-Ausbildung BE**: Preise werden abgeklärt. Bis dahin auf der Fahrstunden-Seite "auf Anfrage" mit Telefon- und WhatsApp-Kontakt.
+
+Beides sind Inhalte, keine Bausteine. Sprint 2 und die Buchung laufen unabhängig davon weiter, die Werte werden später im Admin nachgetragen.
+
+### Weiterhin offen, nicht blockierend
+
+6. Lektionsdauer für die interne Erfassung (45 oder 90 Minuten).
+7. Übersetzungen: SQ liefert Loli, wer liest EN und IT gegen? Nur UI und Kernseiten oder auch alle Kursbeschreibungen?
+8. Hosting-Eigentum und Abrechnung: LoliT Managed Hosting empfohlen (siehe Abschnitt 13).
 
 ## 13. Kommerziell (LoliT, intern)
 
@@ -500,3 +515,39 @@ model Lesson {
 | 9 WAB + Reviews (1 T) | Prüfungsdatum-Erfassung, WAB-Cron, Reviews-Widget | Test-Erinnerung ausgelöst und geloggt, Widget live |
 | 10 Mehrsprachigkeit (2-3 T) | next-intl, Übersetzungen EN/IT/SQ, Sprachumschalter, hreflang, Sitemap pro Sprache | Alle Kernseiten in 4 Sprachen, SEO-Tags korrekt |
 | Go-Live 2 (0.5 T) | Feature-Ankündigung, Schulung Ausilia + Fahrlehrer | Volle Plattform live |
+
+---
+
+## 15. Neuer Arbeitsblock: 36 Logins und Datenübernahme (Kundenentscheid 26.07.2026)
+
+Zwei Antworten der Kundin erweitern den Umfang. Beide sind machbar, keine davon ist Tagesarbeit.
+
+### 15.1 Logins für alle 36 Kursleiter
+
+Bisher geplant: drei Logins. Neu: alle. Das ändert nicht die Rollen (weiterhin nur ADMIN und INSTRUCTOR, kein Kunden-Login), aber es ändert die Kontoverwaltung.
+
+Nicht machbar ist der bisherige Weg über Seed-Passwörter in `.env`. 36 Passwörter in einer Datei zu pflegen und einzeln zu verteilen ist fehleranfällig und unsicher. Stattdessen:
+
+- **Kein E-Mail-abhängiger Flow.** Kundenentscheid 26.07.2026: die Kursleiter erhalten provisorische @haudi.ch-Adressen ohne echtes Postfach, Passwörter verteilt Ausilia persönlich. Ein Einladungs- oder Reset-Link per Mail würde ins Leere laufen. Deshalb: **Passwortvergabe direkt im Admin-Panel**. Ausilia legt ein Konto an, das System zeigt ein einmalig generiertes Passwort im Panel an (kopierbar, danach nur noch als Hash gespeichert), sie gibt es weiter. Gleiches gilt für "Passwort zurücksetzen".
+- **Erzwungener Wechsel beim ersten Login** (`mustChangePassword`), damit das von Ausilia verteilte Passwort nicht dauerhaft in Umlauf bleibt.
+- **E-Mail-Adresse pro Konto im Admin änderbar**, damit die echten Adressen später ohne Datenverlust nachgezogen werden. Sobald echte Postfächer existieren, kann der Reset-per-Mail-Flow nachgerüstet werden.
+- **Keine Instruktoren-Benachrichtigungen** an diese Adressen verdrahten, solange die Postfächer nicht existieren. Mailversand betrifft in Welle 1 ausschliesslich Kunden und die Adresse info@haudi.ch.
+- **Onboarding gestaffelt**: zuerst Ausilia, Luca und Bernadette, dann der Rest nach dem Go-Live. Ein Rollout an 36 Personen gleichzeitig erzeugt Supportlast beim Start.
+- **Konten deaktivieren statt löschen**: `Instructor.active` und `User.active` steuern Sichtbarkeit und Zugang getrennt.
+- **Sicherheitsfolge**: 36 Konten sind 36 mögliche Einstiegspunkte. Rate-Limit am Login bleibt, zusätzlich Session-Laufzeit begrenzen und im Admin eine Liste "letzter Login" führen, damit ungenutzte Konten auffallen.
+
+Aufwand: rund 1 Tag (Einladungs-Flow, Kontoverwaltung im Admin, Mailvorlage).
+
+### 15.2 Datenübernahme aus dem Altsystem: ZURÜCKGESTELLT (27.07.2026)
+
+Die Kundin verfügt aktuell über keinen Export. Entscheid: Start ohne Altdaten, das neue System beginnt mit neuen Kursen und Anmeldungen. Eine spätere Übernahme wird separat geprüft.
+
+Folgen für Welle 1: kein Importskript, kein Feldabgleich, kein Abgleichlauf. Der Aufwand von 1 bis 3 Tagen entfällt.
+
+Falls die Übernahme später doch kommt, gilt unverändert: zuerst eine Musterdatei mit 10 bis 20 Zeilen anfordern, Importskript idempotent mit Trockenlauf und Protokoll bauen, importierte Buchungen markieren, alte Kursleiter-Kürzel auf `Instructor.shortCode` mappen und unbekannte Kürzel protokollieren statt still verwerfen. Personendaten inklusive Geburtsdatum und Ausweisnummer, deshalb Aufbewahrungsfrist in der Datenschutzerklärung festhalten und Exportdateien nach dem Import löschen.
+
+Praktische Konsequenz für den Launch: da keine Altdaten übernommen werden, muss beim Umschalten der DNS klar sein, welche Kurse im Altsystem noch offene Anmeldungen haben. Diese Teilnehmer werden vom Altsystem aus bedient oder manuell im neuen System erfasst. Vor Go-Live 1 mit Ausilia durchgehen.
+
+### 15.3 Auswirkung auf Zeitplan und Offerte
+
+Nach dem Wegfall der Datenübernahme bleibt als Zusatzumfang nur die Kontoverwaltung für 36 Kursleiter, rund 1 Tag. Neuer Gesamtaufwand rund 18 bis 23 Tage. Die Kontoverwaltung gehört als eigene Position in die Offerte. Die Datenübernahme wird als optionale Position mit Aufwand nach Aufwand ausgewiesen, falls sie später kommt.
