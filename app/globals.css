@@ -1,0 +1,160 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-heading: var(--font-space-grotesk);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  /* Markenfarben aus design/haudis-design.dc.html, vgl. PLAN.md Abschnitt 9.
+     Gelb ist Akzent, nie Vollflaeche. */
+  --color-brand-gelb: var(--brand-gelb);
+  --color-brand-gelb-dunkel: var(--brand-gelb-dunkel);
+  --color-brand-rot: var(--brand-rot);
+  --color-brand-rot-dunkel: var(--brand-rot-dunkel);
+  --color-brand-schwarz: var(--brand-schwarz);
+  --color-brand-schwarz-weich: var(--brand-schwarz-weich);
+  --color-papier: var(--papier);
+  --color-flaeche-1: var(--flaeche-1);
+  --color-flaeche-2: var(--flaeche-2);
+  --color-flaeche-3: var(--flaeche-3);
+  --color-grau-text: var(--grau-text);
+  --color-grau-text-hell: var(--grau-text-hell);
+  --color-linie: var(--linie);
+  --color-linie-stark: var(--linie-stark);
+
+  /* Verfuegbarkeits-Ampel, Geschaeftsregel 2 in PLAN.md */
+  --color-ampel-gruen: var(--ampel-gruen);
+  --color-ampel-gruen-bg: var(--ampel-gruen-bg);
+  --color-ampel-gruen-linie: var(--ampel-gruen-linie);
+  --color-ampel-gruen-punkt: var(--ampel-gruen-punkt);
+  --color-ampel-gelb: var(--ampel-gelb);
+  --color-ampel-gelb-bg: var(--ampel-gelb-bg);
+  --color-ampel-gelb-linie: var(--ampel-gelb-linie);
+  --color-ampel-rot: var(--ampel-rot);
+  --color-ampel-rot-bg: var(--ampel-rot-bg);
+  --color-ampel-rot-linie: var(--ampel-rot-linie);
+  --color-ampel-rot-punkt: var(--ampel-rot-punkt);
+
+  --radius-sm: var(--radius);
+  --radius-md: var(--radius);
+  --radius-lg: var(--radius);
+  --radius-xl: var(--radius);
+  --radius-2xl: var(--radius);
+  --radius-3xl: var(--radius);
+  --radius-4xl: var(--radius);
+}
+
+:root {
+  /* Kantige Ecken: die Designvorlage verwendet durchgehend border-radius 0. */
+  --radius: 0rem;
+
+  --brand-gelb: #ffe500;
+  --brand-gelb-dunkel: #e0c900;
+  --brand-rot: #e3001b;
+  --brand-rot-dunkel: #b00016;
+  --brand-schwarz: #121212;
+  --brand-schwarz-weich: #2a2825;
+  --papier: #efede8;
+  --flaeche-1: #faf9f7;
+  --flaeche-2: #f2f0ec;
+  --flaeche-3: #e6e3dc;
+  --grau-text: #56524b;
+  --grau-text-hell: #8a857c;
+  --linie: #dad6ce;
+  --linie-stark: #c9c5bc;
+
+  --ampel-gruen: #14682f;
+  --ampel-gruen-bg: #e8f5ec;
+  --ampel-gruen-linie: #bfe0c9;
+  --ampel-gruen-punkt: #1e8e3e;
+  --ampel-gelb: #121212;
+  --ampel-gelb-bg: #ffe500;
+  --ampel-gelb-linie: #e0c900;
+  --ampel-rot: #b00016;
+  --ampel-rot-bg: #fde7e9;
+  --ampel-rot-linie: #f3c3c9;
+  --ampel-rot-punkt: #e3001b;
+
+  --background: var(--flaeche-1);
+  --foreground: var(--brand-schwarz);
+  --card: #ffffff;
+  --card-foreground: var(--brand-schwarz);
+  --popover: #ffffff;
+  --popover-foreground: var(--brand-schwarz);
+  --primary: var(--brand-schwarz);
+  --primary-foreground: var(--flaeche-1);
+  --secondary: var(--flaeche-2);
+  --secondary-foreground: var(--brand-schwarz);
+  --muted: var(--flaeche-2);
+  --muted-foreground: var(--grau-text);
+  --accent: var(--brand-gelb);
+  --accent-foreground: var(--brand-schwarz);
+  --destructive: var(--brand-rot);
+  --border: var(--linie);
+  --input: var(--linie-stark);
+  --ring: var(--brand-schwarz);
+  --chart-1: var(--brand-gelb);
+  --chart-2: var(--brand-schwarz);
+  --chart-3: var(--grau-text);
+  --chart-4: var(--grau-text-hell);
+  --chart-5: var(--linie-stark);
+  --sidebar: var(--flaeche-2);
+  --sidebar-foreground: var(--brand-schwarz);
+  --sidebar-primary: var(--brand-schwarz);
+  --sidebar-primary-foreground: var(--flaeche-1);
+  --sidebar-accent: var(--flaeche-3);
+  --sidebar-accent-foreground: var(--brand-schwarz);
+  --sidebar-border: var(--linie);
+  --sidebar-ring: var(--brand-schwarz);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-heading;
+  }
+}

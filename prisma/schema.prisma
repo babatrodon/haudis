@@ -1,0 +1,93 @@
+// Datenmodell Haudi's Fahrschule.
+//
+// Sprint 0 enthaelt ausschliesslich die Auth-Tabellen. Das vollstaendige
+// Domaenenmodell (CourseType, Course, CourseSession, Booking, Instructor,
+// Setting, SmsLog) folgt in Sprint 1, siehe PLAN.md Abschnitt 4.
+//
+// Prisma 7: Die Verbindung steht nicht im datasource-Block. Die CLI liest sie
+// aus prisma.config.ts (DIRECT_URL), zur Laufzeit verbindet der Neon-Adapter in
+// lib/db.ts ueber die gepoolte DATABASE_URL.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Nur Team-Rollen. Es gibt keine Kundenkonten (Geschaeftsregel 9).
+enum Role {
+  ADMIN
+  INSTRUCTOR
+}
+
+/// Team-Login. Ein User ist nie automatisch Instruktor: das Instruktoren-Profil
+/// ist ein eigenes Modell und verweist optional auf einen User
+/// (Geschaeftsregel 11, Modell folgt in Sprint 1).
+///
+/// Das Passwort steht NICHT hier, sondern in Account.password mit
+/// providerId "credential". So verlangt es Better Auth.
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  name          String
+  image         String?
+  role          Role
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
