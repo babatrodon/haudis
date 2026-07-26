@@ -22,21 +22,21 @@ export function AdminHuelle({
     <div className="flex min-h-dvh flex-col lg:flex-row">
       <Seitenleiste benutzer={benutzer} />
 
-      {/* Kopf nur auf schmalen Screens: auf dem Desktop steht der Name in der
-          Seitenleiste, ein zweites Mal oben waere doppelt. */}
+      {/*
+        Kopf nur auf schmalen Screens. Bewusst ohne den Titel "Administration":
+        wo man ist, sagt die Tab-Leiste unten, und auf 390px sind zwei Zeilen
+        Rahmenwerk zwei Zeilen weniger Inhalt. Es bleibt, was man sonst nirgends
+        sieht: mit welchem Konto man arbeitet.
+      */}
       <header className="sticky top-0 z-30 border-b border-border bg-card lg:hidden">
-        <div className="flex min-h-14 items-center justify-between gap-4 px-4">
-          <div>
-            <p className="font-heading text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              Haudi&apos;s
-            </p>
-            <p className="font-heading text-base font-bold leading-tight">
-              Administration
-            </p>
-          </div>
-          <p className="truncate text-sm text-muted-foreground">
-            {benutzer.name}
-          </p>
+        <div className="flex min-h-12 items-center gap-3 px-4">
+          <span className="font-heading text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Haudi&apos;s
+          </span>
+          <span aria-hidden="true" className="text-linie-stark">
+            ·
+          </span>
+          <span className="truncate text-sm font-medium">{benutzer.name}</span>
         </div>
       </header>
 
