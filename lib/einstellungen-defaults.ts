@@ -26,6 +26,30 @@ export const EINSTELLUNG_DEFAULTS = {
   "kontakt.telefon2Tel": telefon2.tel,
   "kontakt.email": ADRESSE.email,
 
+  // Öffnungszeiten, von der Kundin bestätigt. "tage" ist bewusst im
+  // schema.org-Format, damit die strukturierten Daten und die deutsche Anzeige
+  // aus derselben Quelle entstehen.
+  "oeffnungszeiten.tage": "Mo-Sa",
+  "oeffnungszeiten.von": "07:00",
+  "oeffnungszeiten.bis": "21:00",
+  "oeffnungszeiten.hinweis": "Sonntag geschlossen",
+
+  // Google Business Profile. Rating und Anzahl sind eine Momentaufnahme und
+  // veralten; sie stehen hier, damit Ausilia sie nachziehen kann, ohne dass
+  // jemand Code anfasst. Leeres Rating blendet die Bewertungsanzeige aus.
+  "google.placeId": "ChIJVbLcuMdskEcRInP1_C6eaPU",
+  "google.bewertung": "4.8",
+  "google.anzahlBewertungen": "59",
+  "geo.breitengrad": "47.4773158",
+  "geo.laengengrad": "8.3046988",
+
+  // Optionale Zitate aus Bewertungen, als JSON-Array:
+  // [{ "name": "...", "sterne": 5, "text": "...", "datum": "2026-05-01" }]
+  // Bewusst leer. Rezensionstexte gehören ihren Verfassern, sie werden nicht
+  // aus dem Profil kopiert. Ausilia trägt hier nur ein, wofür sie die
+  // Zustimmung hat. Solange leer, zeigt die Seite nur die Gesamtbewertung.
+  "google.zitate": "",
+
   // WhatsApp laeuft nur ueber 079 604 44 44 (Entscheidung 3 vom 26.07.2026).
   // Die Texte stehen als Klartext, die URL-Kodierung passiert beim Rendern.
   "whatsapp.nummer": WHATSAPP_NUMMER,
