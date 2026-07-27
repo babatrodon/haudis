@@ -2,6 +2,7 @@ import { ADRESSE, TELEFONNUMMERN } from "@/lib/kontakt";
 import type { GoogleProfil } from "@/lib/google";
 import type { Oeffnungszeiten } from "@/lib/oeffnungszeiten";
 import { einstellungenLesen } from "@/lib/einstellungen";
+import { SEITEN_URL, absoluteUrl } from "@/lib/seite";
 
 /**
  * schema.org DrivingSchool fuer die Suchergebnisse (PLAN.md Abschnitt 11).
@@ -46,6 +47,12 @@ export async function StrukturierteDaten({
     openingHours: zeiten.schemaOrg,
     areaServed: "Baden AG",
     hasMap: profil.profilUrl,
+    // Ohne url weiss Google nicht, welche Seite dieser Eintrag beschreibt;
+    // ohne Bild bleibt das Suchergebnis eine reine Textzeile. Beide Adressen
+    // sind absolut, relative Pfade wertet der Parser nicht aus.
+    url: SEITEN_URL,
+    logo: absoluteUrl("/haudis-logo.png"),
+    image: absoluteUrl("/opengraph-image"),
   };
 
   if (profil.bewertung !== null && profil.anzahlBewertungen !== null) {

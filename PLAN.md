@@ -414,11 +414,30 @@ pnpm dev | pnpm build | pnpm prisma migrate dev | pnpm prisma db seed | pnpm tes
   nicht statt — still, denn ein nicht laufender Cron meldet sich nicht. Nach
   dem Setzen einmal von Hand auslösen (Admin → Schüler → „Erinnerungen jetzt
   verschicken") und prüfen, dass die Vermerke auf „gesendet" stehen.
-- [ ] Altes haudi.ch crawlen, 301-Redirect-Map für indexierte URLs
+- [ ] Altes haudi.ch crawlen, 301-Redirect-Map für indexierte URLs.
+  Die Mechanik steht: [lib/inhalte/redirects.ts](lib/inhalte/redirects.ts) wird
+  von [next.config.ts](next.config.ts) gelesen und liefert 301. Zu tun bleibt
+  der Crawl und das Eintragen der Paare; Codeänderung braucht es dafür keine.
 - [ ] Google Business Profile aktualisieren (neue Site, Fotos, Buchungslink)
-- [ ] schema.org DrivingSchool + LocalBusiness, OG-Images, Favicons
+- [x] schema.org DrivingSchool (Untertyp von LocalBusiness) in
+  [components/strukturierte-daten.tsx](components/strukturierte-daten.tsx),
+  eingebunden im öffentlichen Layout: Adresse, Koordinaten, beide Nummern,
+  Öffnungszeiten, Bewertung, url, logo, image.
+- [x] OG-Bild ([app/opengraph-image.tsx](app/opengraph-image.tsx)), Favicon
+  ([app/icon.tsx](app/icon.tsx)) und iOS-Symbol
+  ([app/apple-icon.tsx](app/apple-icon.tsx)), zur Laufzeit aus den
+  Markenfarben gezeichnet. Kein Foto, solange keines geliefert ist.
+- [x] `robots.txt` ([app/robots.ts](app/robots.ts)) und Sitemap
+  ([app/sitemap.ts](app/sitemap.ts)). Die Sitemap führt keine noindex-Seiten:
+  die drei Rechtstexte kommen erst nach der juristischen Freigabe dazu.
 - [ ] Neon-Backups/PITR verifiziert, Sentry + Uptime-Monitor aktiv
-- [ ] Testfälle: Buchung, telefonische Anmeldung, Ampel-Zustände, ausgebucht, Frühbucher ausgeschöpft, SMS, Abrechnung, Kurs absagen
+- [x] Testfälle automatisiert: `test:e2e` (Buchung, ausgebucht mit Warteliste,
+  Honigtopf, Frühbucher ausgeschöpft), `verify:buchung`, `verify:kurse`,
+  `verify:abrechnung`, `verify:warteliste`, `verify:schueler`, `db:verify`,
+  `verify:breite`. **SMS fehlt**: ASPSMS ist nicht angebunden, `sms.aktiv`
+  steht auf false und das Feld im Buchungsformular erscheint nur, wenn die
+  Einstellung eingeschaltet wird. Entweder vor dem Go-Live anbinden oder
+  bewusst auf später verschieben.
 - [ ] 10-Min-Loom für Ausilia: Kurs anlegen, Buchung erfassen, Abrechnung ziehen
 - [ ] Parallelbetrieb: 1 Woche Testbuchungen intern, erst dann DNS
 
