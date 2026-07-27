@@ -158,3 +158,25 @@
     @apply font-heading;
   }
 }
+
+/**
+ * Druck.
+ *
+ * Die Teilnehmerliste ist ein Papierdokument, das im Kursraum herumgereicht
+ * und unterschrieben wird. Deshalb A4 und nicht das Standardformat des
+ * Browsers, das je nach Systemeinstellung Letter ist: auf Letter waere die
+ * Liste 18 mm schmaler und die Unterschriftenspalten entsprechend enger.
+ *
+ * Die Raender sind so gewaehlt, dass die Liste in einen Ordner passt.
+ */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm 12mm 14mm;
+  }
+
+  html,
+  body {
+    background: #fff;
+  }
+}

@@ -1,5 +1,10 @@
 import "dotenv/config";
-import { buchungAnlegen } from "../lib/buchung";
+import {
+  buchungReaktivieren,
+  buchungStornieren,
+} from "../lib/admin/buchungen";
+import { buchungAnlegen, buchungLesen } from "../lib/buchung";
+import { bestaetigungSenden } from "../lib/mail";
 import { prismaOeffnen, type PrismaSeedClient } from "./seed-lib";
 
 /**
@@ -270,6 +275,123 @@ async function nichtBuchbarPruefen(prisma: PrismaSeedClient) {
   );
 }
 
+/**
+ * Telefonische Anmeldung, Geschaeftsregel 4.
+ *
+ * Sie laeuft durch dieselbe Funktion wie die Onlineanmeldung, also durch
+ * dieselbe Zeilensperre. Der Unterschied liegt in der Quelle, im fehlenden
+ * AGB-Zeitstempel und darin, dass kein Bestaetigungsmail hinausgeht.
+ */
+async function telefonischPruefen(prisma: PrismaSeedClient) {
+  console.log("Telefonische Anmeldung");
+
+  await mitTestkurs(
+    prisma,
+    { id: `${PRAEFIX}telefon`, onlineLimit: 2, preis: "140.00", material: "30.00" },
+    async (kursId) => {
+      const instruktor = await prisma.instructor.findFirstOrThrow({
+        where: { active: true },
+      });
+
+      const ergebnis = await buchungAnlegen(kursId, person(1), {
+        quelle: "PHONE",
+        lfaNummer: "AG 123456",
+        referredById: instruktor.id,
+      });
+      pruefe(ergebnis.erfolg, "telefonische Anmeldung gelingt");
+      if (!ergebnis.erfolg) return;
+
+      const buchung = await prisma.booking.findUniqueOrThrow({
+        where: { id: ergebnis.buchungId },
+      });
+
+      pruefe(buchung.source === "PHONE", "Quelle ist PHONE", buchung.source);
+      pruefe(
+        buchung.agbAcceptedAt === null,
+        "kein AGB-Zeitstempel: am Telefon setzt niemand ein Häkchen",
+        String(buchung.agbAcceptedAt),
+      );
+      pruefe(
+        buchung.lfaNumber === "AG 123456",
+        "diktierte Ausweisnummer gespeichert",
+        buchung.lfaNumber ?? "keine",
+      );
+      pruefe(
+        buchung.referredById === instruktor.id,
+        "zuweisender Fahrlehrer gespeichert",
+      );
+
+      // Geschaeftsregel 4: der Mailversand lehnt eine PHONE-Buchung selbst ab,
+      // unabhaengig davon, wer ihn aufruft.
+      const mitKurs = await buchungLesen(ergebnis.buchungId);
+      const versand = await bestaetigungSenden(mitKurs!);
+      pruefe(
+        !versand.gesendet && versand.grund === "telefonische Anmeldung, keine Mail",
+        "kein Bestätigungsmail für eine telefonische Anmeldung",
+        versand.grund ?? "es ging hinaus",
+      );
+
+      // Dieselbe Kapazitaetspruefung wie online.
+      await buchungAnlegen(kursId, person(2), { quelle: "PHONE" });
+      const dritte = await buchungAnlegen(kursId, person(3), { quelle: "PHONE" });
+      pruefe(
+        !dritte.erfolg && dritte.fehler === "ausgebucht",
+        "telefonische Anmeldung über das Limit wird abgewiesen",
+        dritte.erfolg ? "sie ging durch" : dritte.fehler,
+      );
+    },
+  );
+}
+
+/** Stornieren gibt den Platz frei, die Zeile bleibt stehen. */
+async function stornoPruefen(prisma: PrismaSeedClient) {
+  console.log("Stornieren und wieder anmelden");
+
+  await mitTestkurs(
+    prisma,
+    { id: `${PRAEFIX}storno`, onlineLimit: 1, preis: "140.00", material: "30.00" },
+    async (kursId) => {
+      const erste = await buchungAnlegen(kursId, person(1));
+      if (!erste.erfolg) {
+        pruefe(false, "erste Anmeldung gelingt");
+        return;
+      }
+
+      const vollerKurs = await buchungAnlegen(kursId, person(2));
+      pruefe(
+        !vollerKurs.erfolg && vollerKurs.fehler === "ausgebucht",
+        "der einzige Platz ist belegt",
+      );
+
+      await buchungStornieren(erste.buchungId);
+      const nachStorno = await prisma.booking.findUniqueOrThrow({
+        where: { id: erste.buchungId },
+      });
+      pruefe(
+        nachStorno.status === "CANCELLED",
+        "Buchung steht auf storniert, die Zeile bleibt",
+        nachStorno.status,
+      );
+
+      const nachher = await buchungAnlegen(kursId, person(3));
+      pruefe(nachher.erfolg, "der freigewordene Platz ist wieder buchbar");
+
+      // Jetzt ist der Kurs wieder voll: der Widerruf darf ihn nicht ueberbuchen.
+      const zurueck = await buchungReaktivieren(erste.buchungId);
+      pruefe(
+        !zurueck.erfolg && zurueck.fehler === "ausgebucht",
+        "Wiederanmeldung wird abgewiesen, wenn der Platz weg ist",
+        zurueck.erfolg ? "sie ging durch" : (zurueck.fehler ?? ""),
+      );
+
+      const bestaetigt = await prisma.booking.count({
+        where: { courseId: kursId, status: "CONFIRMED" },
+      });
+      pruefe(bestaetigt === 1, "der Kurs bleibt bei einem Platz", `${bestaetigt}`);
+    },
+  );
+}
+
 async function main() {
   const prisma = prismaOeffnen();
   try {
@@ -278,6 +400,8 @@ async function main() {
     await doppelbuchungPruefen(prisma);
     await ausgebuchtPruefen(prisma);
     await nichtBuchbarPruefen(prisma);
+    await telefonischPruefen(prisma);
+    await stornoPruefen(prisma);
 
     // Sicherheitsnetz: nichts von dieser Pruefung darf zurueckbleiben.
     const reste = await prisma.course.count({

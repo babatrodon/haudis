@@ -126,6 +126,26 @@ in der Datenbank steht, muss der Wert einmalig von Hand nachgezogen werden.
   Prisma-Client, und der lässt sich nicht ins Browser-Bundle packen (Turbopack
   bricht mit `node:module` ab). Werte, die das Formular im Browser braucht,
   stehen in [lib/inhalte/kursmuster.ts](lib/inhalte/kursmuster.ts).
+- **Telefonische Anmeldung** läuft durch dasselbe `buchungAnlegen` wie die
+  Onlineanmeldung, nur mit `quelle: "PHONE"`. Ein zweiter Schreibweg wäre ein
+  zweiter Weg ohne Zeilensperre. Zwei Unterschiede sind Absicht:
+  `agbAcceptedAt` bleibt leer (am Telefon setzt niemand ein Häkchen), und der
+  Doppelbuchungsschutz greift nur online — er fängt den doppelt geklickten
+  Absendeknopf ab, nicht zwei Geschwister unter derselben Elternadresse.
+- **CSV** entsteht in [lib/admin/csv.ts](lib/admin/csv.ts): Semikolon statt
+  Komma und ein BOM am Anfang. Ohne beides zerlegt Excel unter Windows die
+  Spalten nicht und macht aus "Müller" ein "MÃ¼ller". Zellen, die mit `=`, `+`,
+  `-` oder `@` beginnen, bekommen ein Apostroph, sonst führt Excel sie als
+  Formel aus.
+- **Teilnehmerliste** liegt unter `/druck/...`, ausserhalb von `/admin`, damit
+  die Seitenleiste gar nicht erst entsteht; geschützt ist sie trotzdem über
+  `requireRole`. Sie ist eine echte `<table>`: `<thead>` wiederholt der Browser
+  auf jeder Druckseite, also steht der Kursname auch auf Blatt zwei. Jede Zeile
+  trägt `break-inside: avoid` — auf einer halben Zeile unterschreibt niemand.
+- **SARI-Knopf** kopiert die Ausweisnummer und öffnet das Portal, mehr nicht.
+  Die Rückmeldung sagt deshalb nur, dass die Nummer kopiert ist. Ein
+  "Eingetragen" wäre eine Behauptung über etwas, das diese Anwendung nicht
+  wissen kann, und wer sich darauf verlässt, verpasst die 24-Stunden-Frist.
 
 ## Abweichungen von der Prisma-Skizze in PLAN.md Abschnitt 4
 

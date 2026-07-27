@@ -41,10 +41,28 @@ export type BuchungErgebnis =
   | { erfolg: true; buchungId: string; total: Decimal; fruehbucher: boolean }
   | { erfolg: false; fehler: BuchungFehler };
 
+/**
+ * Zusaetze fuer die telefonische Anmeldung im Panel.
+ *
+ * Sie laeuft absichtlich durch dieselbe Funktion wie die Onlineanmeldung. Ein
+ * zweiter Weg in die Buchungstabelle waere ein zweiter Weg ohne Zeilensperre,
+ * und das Ueberbuchen kaeme durch die Hintertuer zurueck.
+ */
+export type BuchungOptionen = {
+  /** Default ONLINE. PHONE loest kein Bestaetigungsmail aus (Regel 4). */
+  quelle?: "ONLINE" | "PHONE";
+  /** Zuweisender Fahrlehrer, Grundlage der Provision (Regel 5). */
+  referredById?: string | null;
+  /** Wird am Telefon oft gleich mitdiktiert. */
+  lfaNummer?: string;
+};
+
 export async function buchungAnlegen(
   kursId: string,
   eingabe: BuchungEingabe,
+  optionen: BuchungOptionen = {},
 ): Promise<BuchungErgebnis> {
+  const quelle = optionen.quelle ?? "ONLINE";
   return prisma.$transaction(async (tx) => {
     // Sperrt die Kurszeile fuer die Dauer der Transaktion. Alles Weitere in
     // diesem Block sieht einen Stand, den niemand sonst gleichzeitig aendert.
@@ -81,18 +99,26 @@ export async function buchungAnlegen(
 
     // Geschaeftsregel 8. Innerhalb der Transaktion, also auch wirksam, wenn
     // zwei Anfragen auf verschiedenen Instanzen gleichzeitig ankommen.
-    const seit = new Date(Date.now() - DOPPELBUCHUNG_MINUTEN * 60 * 1000);
-    const schonGebucht = await tx.booking.findFirst({
-      where: {
-        courseId: kursId,
-        email: eingabe.email,
-        createdAt: { gte: seit },
-        status: { not: "CANCELLED" },
-      },
-      select: { id: true },
-    });
-    if (schonGebucht) {
-      return { erfolg: false, fehler: "doppelbuchung" };
+    //
+    // Nur online: die Regel faengt den doppelt geklickten Absendeknopf ab. Am
+    // Telefon sitzt ein Mensch, der weiss, was er tut, und zwei Geschwister
+    // unter derselben Elternadresse sind ein alltaeglicher Fall. Ein Duplikat
+    // steht in der Liste direkt vor Ausilia und ist in einem Griff storniert;
+    // eine abgewiesene Zweitanmeldung waere ein Telefonat mehr.
+    if (quelle === "ONLINE") {
+      const seit = new Date(Date.now() - DOPPELBUCHUNG_MINUTEN * 60 * 1000);
+      const schonGebucht = await tx.booking.findFirst({
+        where: {
+          courseId: kursId,
+          email: eingabe.email,
+          createdAt: { gte: seit },
+          status: { not: "CANCELLED" },
+        },
+        select: { id: true },
+      });
+      if (schonGebucht) {
+        return { erfolg: false, fehler: "doppelbuchung" };
+      }
     }
 
     const belegt = await tx.booking.count({
@@ -126,8 +152,13 @@ export async function buchungAnlegen(
         birthDate: new Date(eingabe.geburtsdatum),
         phone: eingabe.telefon,
         email: eingabe.email,
-        agbAcceptedAt: new Date(),
-        source: "ONLINE",
+        // Nur wer das Haekchen selbst gesetzt hat, hat den AGB zugestimmt. Bei
+        // einer telefonischen Anmeldung bleibt das Feld leer, statt eine
+        // Zustimmung zu behaupten, die niemand gegeben hat.
+        agbAcceptedAt: quelle === "ONLINE" ? new Date() : null,
+        lfaNumber: optionen.lfaNummer?.trim() || null,
+        referredById: optionen.referredById ?? null,
+        source: quelle,
         status: "CONFIRMED",
         priceCharged: preis.total,
         earlyBird: preis.fruehbucher,
