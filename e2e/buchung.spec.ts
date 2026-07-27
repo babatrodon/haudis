@@ -21,16 +21,22 @@ async function schritt1Ausfuellen(
   page: import("@playwright/test").Page,
   email: string,
 ) {
-  await page.getByLabel("Anrede").selectOption("Frau");
-  await page.getByLabel("Nachname").fill("Testerin");
-  await page.getByLabel("Vorname").fill("Petra");
-  await page.getByLabel("Strasse und Nummer").fill("Haselstrasse 33");
-  await page.getByLabel("PLZ").fill("5400");
-  await page.getByLabel("Ort").fill("Baden");
-  await page.getByLabel("Geburtsdatum").fill("2008-03-12");
-  await page.getByLabel("Telefonnummer").fill("079 604 44 44");
-  await page.getByLabel("E-Mail-Adresse").fill(email);
-  await page.getByRole("checkbox").check();
+  // Am Wortanfang verankert: "Ort" steckt sonst auch in der Beschriftung
+  // "Fortschritt der Anmeldung" der Schrittleiste, und Playwright bricht bei
+  // zwei Treffern ab. Die Pflichtfelder tragen zusaetzlich ein verstecktes
+  // "Pflichtfeld" im Namen, deshalb kein exakter Vergleich.
+  await page.getByLabel(/^Anrede/).selectOption("Frau");
+  await page.getByLabel(/^Nachname/).fill("Testerin");
+  await page.getByLabel(/^Vorname/).fill("Petra");
+  await page.getByLabel(/^Strasse und Nummer/).fill("Haselstrasse 33");
+  await page.getByLabel(/^PLZ/).fill("5400");
+  await page.getByLabel(/^Ort/).fill("Baden");
+  await page.getByLabel(/^Geburtsdatum/).fill("2008-03-12");
+  await page.getByLabel(/^Telefon/).fill("079 604 44 44");
+  await page.getByLabel(/^E-Mail/).fill(email);
+  // Das Kaestchen liegt unsichtbar unter dem gezeichneten (Vorlage Screen
+  // 04). Ein Mensch tippt auf die Beschriftung, der Test tut dasselbe.
+  await page.getByText("Ich akzeptiere die").click();
 }
 
 test("Anmeldung von den Kursdaten bis zur Bestaetigung", async ({ page }) => {
@@ -43,40 +49,47 @@ test("Anmeldung von den Kursdaten bis zur Bestaetigung", async ({ page }) => {
   // Kundin ist der, der getestet gehoert.
   await page.goto(`/anmeldung/${KURS_GRUEN}`);
   await expect(
-    page.getByRole("heading", { name: /Anmeldung Verkehrskundeunterricht/ }),
+    page.getByRole("heading", { name: "Deine Angaben", level: 1 }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Verkehrskundeunterricht").first(),
   ).toBeVisible();
 
   // Der gruene Kurs hat 5 von 12 belegt, der Fruehbucherrabatt ist mit fuenf
   // Plaetzen ausgeschoepft, also gilt der volle Preis.
   await expect(page.getByText("CHF 170.00").first()).toBeVisible();
-  await expect(page.getByText("bar am ersten Kurstag").first()).toBeVisible();
+  // Nur Bar: TWINT und Karte zeigt die Vorlage, Payrexx haengt aber nicht
+  // dran, und eine Zahlart ohne Abschluss gehoert nicht auf die Seite.
   await expect(
-    page.getByText("Lernfahrausweis am ersten Kurstag mitbringen").first(),
+    page.getByText(/Bar am ersten Kurstag/i).first(),
   ).toBeVisible();
+  await expect(page.getByText("TWINT")).toHaveCount(0);
 
   // Geschaeftsregel 1: kein Kanton-Feld, kein Konto, kein Passwort.
   await expect(page.getByLabel(/Kanton/i)).toHaveCount(0);
   await expect(page.locator('input[type="password"]')).toHaveCount(0);
 
   await schritt1Ausfuellen(page, testEmail("volllauf"));
-  await page.getByRole("button", { name: "Anmeldung abschicken" }).click();
+  await page.getByRole("button", { name: "Weiter zu Schritt 2" }).click();
 
   await expect(page).toHaveURL(new RegExp(`/anmeldung/${KURS_GRUEN}/schritt-2`));
   await expect(
-    page.getByRole("heading", { name: "Fast geschafft" }),
+    page.getByRole("heading", { name: "Lernfahrausweis und Erinnerung" }),
   ).toBeVisible();
-  await expect(page.getByText(/Anmeldung .* ist\s+eingegangen/)).toBeVisible();
 
-  await page.getByLabel("Lernfahrausweis-Nummer").fill("AG 654321");
-  await page.getByRole("button", { name: "Speichern und abschliessen" }).click();
+  await page.getByLabel(/^Lernfahrausweis-Nummer/).fill("AG 654321");
+  await page.getByRole("button", { name: "Anmeldung abschicken" }).click();
 
   await expect(page).toHaveURL(
     new RegExp(`/anmeldung/${KURS_GRUEN}/bestaetigung`),
   );
   await expect(
-    page.getByRole("heading", { name: "Anmeldung bestätigt" }),
+    page.getByRole("heading", { name: /Du bist angemeldet/ }),
   ).toBeVisible();
   await expect(page.getByText("CHF 170.00")).toBeVisible();
+  await expect(
+    page.getByText(/Bring am ersten Abend/),
+  ).toBeVisible();
   await expect(
     page.getByRole("link", { name: /Frage zur Buchung/ }),
   ).toBeVisible();
@@ -104,7 +117,7 @@ test("ausgebuchter Kurs laesst sich nicht anmelden", async ({ page }) => {
     page.getByRole("heading", { name: "Dieser Kurs ist ausgebucht" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Anmeldung abschicken" }),
+    page.getByRole("button", { name: "Weiter zu Schritt 2" }),
   ).toHaveCount(0);
   await expect(page.getByRole("link", { name: /079 604 44 44/ }).first()).toBeVisible();
 });
@@ -133,23 +146,21 @@ test("Honigtopf: ausgefuelltes Falle-Feld legt keine Buchung an", async ({
   await schritt1Ausfuellen(page, testEmail("honigtopf"));
   // Genau das, was ein Bot tut: jedes Feld ausfuellen, auch das weggeschobene.
   await falle.fill("https://spam.example", { force: true });
-  await page.getByRole("button", { name: "Anmeldung abschicken" }).click();
+  await page.getByRole("button", { name: "Weiter zu Schritt 2" }).click();
 
   // Nach aussen sieht es aus wie Erfolg, damit der Bot nichts lernt.
   await expect(page).toHaveURL(
     new RegExp(`/anmeldung/${KURS_GRUEN}/bestaetigung`),
   );
   await expect(
-    page.getByRole("heading", { name: "Anmeldung bestätigt" }),
+    page.getByRole("heading", { name: /Du bist angemeldet/ }),
   ).toBeVisible();
 
   // Der Unterschied zur echten Anmeldung: es wurde nichts gespeichert, also
   // gibt es keine Buchung zum Anzeigen. Bei einer echten Anmeldung stuenden
   // hier Kursname, Termine und Total.
-  await expect(page.getByRole("heading", { level: 2 })).not.toContainText(
-    "Verkehrskundeunterricht",
-  );
-  await expect(page.getByText("Bitte bar am ersten Kurstag")).toHaveCount(0);
+  await expect(page.getByText("Verkehrskundeunterricht")).toHaveCount(0);
+  await expect(page.getByText("CHF 170.00")).toHaveCount(0);
 });
 
 test("Fruehbucherrabatt ausgeschoepft: voller Preis", async ({ page }) => {

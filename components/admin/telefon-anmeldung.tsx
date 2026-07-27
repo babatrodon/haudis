@@ -122,7 +122,7 @@ export function TelefonAnmeldung({
             </div>
           )}
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
               <Label htmlFor="anrede">Anrede</Label>
               <select
@@ -139,14 +139,14 @@ export function TelefonAnmeldung({
             <Feld name="geburtsdatum" label="Geburtsdatum" type="date" />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Feld name="nachname" label="Nachname" autoComplete="off" />
             <Feld name="vorname" label="Vorname" autoComplete="off" />
           </div>
 
           <Feld name="strasse" label="Strasse und Nummer" autoComplete="off" />
 
-          <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
             <Feld name="plz" label="PLZ" inputMode="numeric" maxLength={4} />
             <Feld name="ort" label="Ort" autoComplete="off" />
           </div>
@@ -162,7 +162,7 @@ export function TelefonAnmeldung({
             autoComplete="off"
           />
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Feld
               name="lfaNummer"
               label="Ausweisnummer"

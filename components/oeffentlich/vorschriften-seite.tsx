@@ -29,7 +29,7 @@ export function VorschriftenSeite({ seite }: { seite: Vorschriftenseite }) {
             <h2 className="font-heading text-2xl font-bold sm:text-3xl">
               {abschnitt.ueberschrift}
             </h2>
-            <dl className="mt-6 grid gap-px border border-border bg-border">
+            <dl className="mt-6 grid grid-cols-1 gap-px border border-border bg-border">
               {abschnitt.regeln.map((regel) => (
                 <div key={regel.titel} className="bg-card p-5">
                   <dt className="font-heading font-bold">{regel.titel}</dt>

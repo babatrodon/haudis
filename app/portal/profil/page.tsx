@@ -34,7 +34,7 @@ export default async function ProfilSeite() {
         }
       />
 
-      <dl className="grid gap-px border border-border bg-border sm:grid-cols-2">
+      <dl className="grid grid-cols-1 gap-px border border-border bg-border sm:grid-cols-2">
         <Feld bezeichnung="Name" wert={`${profil.lastName} ${profil.firstName}`} />
         <Feld bezeichnung="Kürzel" wert={profil.shortCode} />
         <Feld bezeichnung="Anmeldung" wert={benutzer.email} />

@@ -148,6 +148,16 @@
   }
   body {
     @apply bg-background text-foreground;
+    /**
+     * Lange Wörter dürfen umbrechen.
+     *
+     * Ohne das schiebt ein einziges unteilbares Wort die ganze Seite breiter
+     * als das Fenster. Auf dem iPhone sah man davon nicht das Wort, sondern
+     * die Folge: Kopfleiste und Fusszeile endeten mitten im Bild, weil sie
+     * sich auf die Fensterbreite strecken, während die Seite darunter
+     * weiterlief. Eine E-Mail-Adresse in den Rechtstexten genügte dafür.
+     */
+    overflow-wrap: break-word;
   }
   html {
     @apply font-sans;
@@ -156,6 +166,16 @@
   h2,
   h3 {
     @apply font-heading;
+    /**
+     * Silbentrennung in Überschriften.
+     *
+     * Deutsch baut Wörter wie "Verkehrskundeunterricht". Bei 36 Pixeln ist
+     * das 437 Pixel breit und passt in kein Handydisplay. Ohne Trennung
+     * entsteht daraus waagrechtes Scrollen auf jeder Seite, die so ein Wort
+     * in der Überschrift trägt. lang="de-CH" steht am html-Element, damit die
+     * Trennstellen stimmen.
+     */
+    hyphens: auto;
   }
 }
 

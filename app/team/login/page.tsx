@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -31,10 +32,15 @@ export default async function LoginSeite({
     <main className="flex flex-1 items-center justify-center px-6 py-16">
       <div className="w-full max-w-sm">
         <div className="border border-border bg-card p-8">
-          <p className="font-heading text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            {ADRESSE.firma}
-          </p>
-          <h1 className="mt-2 font-heading text-2xl font-bold">Team-Login</h1>
+          <Image
+            src="/haudis-logo.png"
+            alt={ADRESSE.firma}
+            width={993}
+            height={586}
+            priority
+            className="h-12 w-auto"
+          />
+          <h1 className="mt-4 font-heading text-2xl font-bold">Team-Login</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Für Administration und Fahrlehrer.
           </p>

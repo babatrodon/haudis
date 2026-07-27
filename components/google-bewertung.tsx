@@ -63,7 +63,7 @@ export function GoogleBewertung({ profil }: { profil: GoogleProfil }) {
       </div>
 
       {zitate.length > 0 ? (
-        <ul className="mt-8 grid gap-px border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-8 grid grid-cols-1 gap-px border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
           {zitate.map((zitat) => (
             <li key={`${zitat.name}-${zitat.text.slice(0, 24)}`} className="bg-card p-5">
               <Sterne bewertung={zitat.sterne} />

@@ -149,7 +149,7 @@ export function BuchungBearbeitenDialog({
             required={false}
           />
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
               <Label htmlFor={`anrede-${buchung.id}`}>Anrede</Label>
               <select
@@ -170,14 +170,14 @@ export function BuchungBearbeitenDialog({
             />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Feld name="nachname" label="Nachname" defaultValue={buchung.nachname} />
             <Feld name="vorname" label="Vorname" defaultValue={buchung.vorname} />
           </div>
 
           <Feld name="strasse" label="Strasse" defaultValue={buchung.strasse} />
 
-          <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
             <Feld name="plz" label="PLZ" defaultValue={buchung.plz} inputMode="numeric" />
             <Feld name="ort" label="Ort" defaultValue={buchung.ort} />
           </div>

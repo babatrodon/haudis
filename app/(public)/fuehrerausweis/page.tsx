@@ -107,6 +107,10 @@ function SchrittKarte({ schritt }: { schritt: Schritt }) {
                   key={aktion.href}
                   asChild
                   variant={aktion.betont ? "default" : "outline"}
+                  // Die Beschriftungen hier sind ganze Sätze ("Zum
+                  // Strassenverkehrsamt Aargau"). Auf 390px müssen sie
+                  // umbrechen dürfen, sonst ragt der Knopf aus der Seite.
+                  className="h-auto min-h-12 whitespace-normal py-3 text-left"
                 >
                   {aktion.extern ? (
                     <a

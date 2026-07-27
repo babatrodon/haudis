@@ -52,7 +52,7 @@ export function AbrechnungBericht({
         >
           Zusammenfassung
         </h2>
-        <dl className="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-3">
+        <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-3">
           <Kennzahl
             bezeichnung="Anmeldungen"
             wert={String(abrechnung.anzahl)}

@@ -86,7 +86,7 @@ export default async function KursdatenSeite({
               {kurse.length} {kurse.length === 1 ? "Kurs" : "Kurse"}
               {gewaehlt ? ` in der Kategorie ${gewaehlt.name}` : ""}
             </p>
-            <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {kurse.map((kurs) => (
                 <Kurskarte key={kurs.id} kurs={kurs} />
               ))}

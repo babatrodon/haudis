@@ -72,7 +72,7 @@ export default async function KursDetailSeite({
         <span>{kursart.name}</span>
       </nav>
 
-      <div className="mt-6 grid gap-10 lg:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-10 lg:grid-cols-3">
         <header className="lg:col-span-2">
           <h1 className="font-heading text-4xl font-bold leading-[1.1] sm:text-5xl">
             {kursart.name}
@@ -169,7 +169,7 @@ export default async function KursDetailSeite({
           </h2>
 
           {kurse.length > 0 ? (
-            <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {kurse.map((kurs) => (
                 <Kurskarte key={kurs.id} kurs={kurs} />
               ))}

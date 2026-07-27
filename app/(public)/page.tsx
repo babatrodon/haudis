@@ -79,7 +79,7 @@ function Hero({
 }) {
   return (
     <section className="border-b border-border bg-flaeche-2">
-      <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-2 lg:items-center">
+      <div className="mx-auto grid grid-cols-1 w-full max-w-6xl gap-10 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-2 lg:items-center">
         <div>
           <p className="inline-block border-b-4 border-brand-gelb pb-1 font-heading text-sm font-semibold uppercase tracking-widest text-muted-foreground">
             Fahrschule in Baden
@@ -128,7 +128,7 @@ function WarumUns({ zeitenText }: { zeitenText: string }) {
         Warum uns wählen?
       </h2>
 
-      <ul className="mt-8 grid gap-px border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="mt-8 grid grid-cols-1 gap-px border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
         {VORTEILE.map((vorteil) => (
           <li key={vorteil.titel} className="bg-card p-6">
             <h3 className="font-heading text-lg font-bold">{vorteil.titel}</h3>
@@ -165,7 +165,7 @@ function NaechsteKurse({ kurse }: { kurse: KursOeffentlich[] }) {
       </div>
 
       {kurse.length > 0 ? (
-        <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {kurse.map((kurs) => (
             <Kurskarte key={kurs.id} kurs={kurs} />
           ))}
@@ -190,7 +190,7 @@ function FahrstundenTeaser({
   return (
     <section
       aria-labelledby="fahrstunden-titel"
-      className="grid gap-10 border border-border bg-card p-8 sm:p-12 lg:grid-cols-2 lg:items-center"
+      className="grid grid-cols-1 gap-10 border border-border bg-card p-8 sm:p-12 lg:grid-cols-2 lg:items-center"
     >
       <div>
         <h2

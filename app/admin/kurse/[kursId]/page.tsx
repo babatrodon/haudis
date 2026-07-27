@@ -129,7 +129,7 @@ export default async function KursDetailSeite({
         </div>
       )}
 
-      <div className="grid gap-8 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <section aria-labelledby="termine-titel">
           <h2 id="termine-titel" className="mb-3 font-heading text-lg font-bold">
             Termine

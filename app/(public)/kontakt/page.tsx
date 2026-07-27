@@ -36,7 +36,7 @@ export default async function KontaktSeite() {
         </p>
       </header>
 
-      <div className="mt-12 grid gap-6 lg:grid-cols-2">
+      <div className="mt-12 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <section
           aria-labelledby="telefon-titel"
           className="border border-border bg-card p-6 sm:p-8"

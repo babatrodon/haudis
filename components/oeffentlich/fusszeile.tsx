@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ADRESSE, TELEFONNUMMERN } from "@/lib/kontakt";
 import type { Oeffnungszeiten } from "@/lib/oeffnungszeiten";
@@ -12,9 +13,18 @@ import type { Oeffnungszeiten } from "@/lib/oeffnungszeiten";
 export function Fusszeile({ zeiten }: { zeiten: Oeffnungszeiten }) {
   return (
     <footer className="mt-20 border-t border-border bg-flaeche-2">
-      <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-3">
+      <div className="mx-auto grid grid-cols-1 w-full max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-3">
         <div>
-          <p className="font-heading text-lg font-bold">{ADRESSE.firma}</p>
+          {/* Kein priority: die Fusszeile steht unter der Falz und soll die
+              erste Anzeige nicht ausbremsen. */}
+          <Image
+            src="/haudis-logo.png"
+            alt="Haudi's Fahrschule & Verkehrsschule"
+            width={993}
+            height={586}
+            className="h-11 w-auto"
+          />
+          <p className="sr-only">{ADRESSE.firma}</p>
           <address className="mt-3 not-italic text-sm text-muted-foreground">
             {ADRESSE.strasse}
             <br />

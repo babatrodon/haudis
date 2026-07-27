@@ -427,7 +427,7 @@ export function KursFormular({ kursarten, aktion, vorgabe, zurueck }: Props) {
           hidden={!weitereOffen}
           className="mt-5 flex flex-col gap-5"
         >
-          <div className="grid gap-5 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
             <Feld
               id="preis"
               label="Kursgebühr (CHF)"
@@ -451,7 +451,7 @@ export function KursFormular({ kursarten, aktion, vorgabe, zurueck }: Props) {
             />
           </div>
 
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <Feld
               id="fruehbucherProzent"
               label="Frühbucherrabatt (%)"

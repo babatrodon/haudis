@@ -52,7 +52,7 @@ export default async function BoegleSeite() {
         <h2 id="pruefung-titel" className="font-heading text-2xl font-bold">
           Die Theorieprüfung in Zahlen
         </h2>
-        <dl className="mt-6 grid gap-px border border-border bg-border sm:grid-cols-2">
+        <dl className="mt-6 grid grid-cols-1 gap-px border border-border bg-border sm:grid-cols-2">
           <Kennzahl wert="50" text="Fragen mit je drei Antwortmöglichkeiten" />
           <Kennzahl wert="45" text="Minuten Zeit" />
           <Kennzahl wert="150" text="Punkte sind maximal möglich" />

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { DruckKnopf } from "@/components/admin/druck-knopf";
 import { einsatzplanWoche } from "@/lib/admin/einsatzplan";
@@ -34,7 +35,17 @@ export default async function EinsatzplanDruckSeite({
       <DruckKnopf hinweis="A4 quer einstellen, dann passt die Woche auf ein Blatt." />
 
       <div className="mb-3 border-b-2 border-black pb-2">
-        <p className="text-[9pt] font-semibold uppercase tracking-[0.15em]">
+        {/* priority statt Lazy-Loading: der Druckdialog wartet nicht, bis ein
+                   Bild nachgeladen ist. Ohne das bleibt der Kopf auf dem Papier leer. */}
+              <Image
+                src="/haudis-logo.png"
+                alt={ADRESSE.firma}
+                width={993}
+                height={586}
+                priority
+                className="mb-2 h-10 w-auto"
+              />
+              <p className="text-[9pt] font-semibold uppercase tracking-[0.15em]">
           {ADRESSE.firma}
         </p>
         <h1 className="mt-1 text-[18pt] font-bold leading-tight">

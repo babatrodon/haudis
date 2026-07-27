@@ -87,7 +87,7 @@ export default async function AdminUebersicht() {
           >
             Anmeldungen
           </h2>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Kennzahl
               titel="Heute"
               wert={String(zahlen.heuteGesamt)}
@@ -105,7 +105,7 @@ export default async function AdminUebersicht() {
           <h2 id="umsatz-titel" className="mb-3 font-heading text-lg font-bold">
             Umsatz {monatsName()}
           </h2>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Kennzahl
               titel="Nach Anmeldedatum"
               wert={chf(umsatz.nachAnmeldedatum)}

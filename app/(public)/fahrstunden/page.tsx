@@ -47,7 +47,7 @@ export default async function FahrstundenSeite() {
         </p>
       </header>
 
-      <div className="mt-12 grid gap-6 md:grid-cols-2">
+      <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2">
         {kategorien.map((eintrag) => (
           <KategorieKarte
             key={eintrag.kategorie.slug}

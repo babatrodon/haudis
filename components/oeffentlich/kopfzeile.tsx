@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, Phone, X } from "lucide-react";
@@ -15,8 +16,8 @@ import { ADRESSE, TELEFONNUMMERN } from "@/lib/kontakt";
  * Telefonnummern bleiben aber immer mit einem Griff erreichbar - wer eine
  * Fahrschule sucht, ruft an.
  *
- * Der Schriftzug ist gesetzt statt gezeichnet: eine Logodatei liegt noch nicht
- * vor. Sobald das SVG kommt, wird nur diese eine Stelle ersetzt.
+ * Das Schriftlogo liegt als PNG mit Transparenz in public/haudis-logo.png und
+ * steht auf hellem wie auf dunklem Grund.
  */
 
 const NAVIGATION = [
@@ -34,15 +35,23 @@ export function Kopfzeile() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-card">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-        <Link
-          href="/"
-          className="font-heading text-xl font-bold tracking-tight"
-          onClick={() => setOffen(false)}
-        >
-          Haudi&apos;s
-          <span className="ml-2 hidden text-sm font-medium text-muted-foreground sm:inline">
-            Fahrschule Baden
-          </span>
+        <Link href="/" onClick={() => setOffen(false)}>
+          {/*
+            Das Schriftlogo der Fahrschule, unverändert übernommen (Vorlage,
+            Style Tile: "Bestehendes Schriftlogo bleibt unverändert").
+            width und height sind die echten Bildmasse, damit der Platz vor
+            dem Laden reserviert ist und nichts springt; die Anzeigehöhe
+            steuert die Klasse. priority nur hier: es ist das erste Bild
+            über der Falz.
+          */}
+          <Image
+            src="/haudis-logo.png"
+            alt="Haudi's Fahrschule & Verkehrsschule"
+            width={993}
+            height={586}
+            priority
+            className="h-10 w-auto sm:h-12"
+          />
         </Link>
 
         <nav aria-label="Hauptnavigation" className="hidden lg:block">

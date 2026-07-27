@@ -22,7 +22,7 @@ export function KontaktStreifen({
       aria-labelledby="kontakt-streifen-titel"
       className="border border-border bg-brand-schwarz p-8 text-flaeche-1 sm:p-12"
     >
-      <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-center">
         <div>
           <h2
             id="kontakt-streifen-titel"
