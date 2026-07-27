@@ -18,6 +18,7 @@ pnpm db:migrate | pnpm db:seed | pnpm db:verify | pnpm db:studio
 pnpm db:seed:demo | pnpm db:seed:demo:purge
 pnpm test:e2e | pnpm verify:buchung | pnpm verify:kurse | pnpm verify:abrechnung
 pnpm verify:warteliste | pnpm verify:schueler | pnpm verify:breite
+pnpm verify:redirects
 
 `db:migrate` und `db:deploy` hängen `prisma generate` an. Prisma 7 generiert
 nach einer Migration nicht mehr von selbst, und ein veralteter Client fällt erst
@@ -47,6 +48,11 @@ beim Typecheck auf.
   die Erinnerung erst nach elf Monaten fällig wird.
 - `pnpm verify:breite` lädt jede öffentliche Route in WebKit bei 390 Pixeln und
   meldet Elemente, die breiter sind als das Fenster.
+- `pnpm verify:redirects` prüft, welche Adresse jede Seite als die richtige
+  ausgibt: dass jede alte ASP-Adresse mit 301 auf ein Ziel zeigt, das mit 200
+  antwortet, dass die Regeln in der richtigen Reihenfolge stehen, und dass das
+  canonical verschachtelter Seiten auf sich selbst zeigt statt auf den
+  Elternpfad. Braucht einen laufenden Server.
 - `pnpm db:verify` prüft die Zusicherungen des Seeds, unter anderem
   Geschäftsregel 11.
 
@@ -242,6 +248,15 @@ in der Datenbank steht, muss der Wert einmalig von Hand nachgezogen werden.
   Schlüssel wird sie nie aufgerufen — der Renderer zieht `react-dom/server`
   nach, und das lässt sich unter den React-Server-Bedingungen der Prüfskripte
   nicht laden.
+- **Kanonische Adresse**: `KANONISCHER_HOST` in
+  [lib/inhalte/redirects.ts](lib/inhalte/redirects.ts) ist `haudi.ch` ohne www;
+  `www` leitet mit 301 dorthin. `BETTER_AUTH_URL` muss denselben Hostnamen
+  tragen, sonst widersprechen sich Weiterleitung und canonical —
+  [lib/seite.ts](lib/seite.ts) meldet das im Log. Dazu setzt
+  `app/(public)/layout.tsx` ein selbstbezügliches canonical: gefilterte
+  Ansichten wie `/kursdaten?art=vku` zeigen **absichtlich** auf `/kursdaten`,
+  weil sie denselben Inhalt in Teilmengen zeigen. Wer Kursarten einzeln in die
+  Suche bringen will, nimmt `/kurse/[slug]`.
 - **Zahlung**: [lib/zahlung.ts](lib/zahlung.ts) entscheidet anhand von
   `PAYREXX_API_KEY`, welche Zahlungsarten erscheinen. Ohne Schlüssel nur Bar,
   also genau das bisherige Bild. Bewusst kein Schalter in den Einstellungen:

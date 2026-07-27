@@ -6,20 +6,37 @@ import {
 } from "../lib/inhalte/redirects";
 
 /**
- * Prueft jede Weiterleitung vom alten haudi.ch gegen die laufende Anwendung.
+ * Prueft, welche Adresse jede Seite als die richtige ausgibt.
  *
- * Zwei Dinge muessen stimmen, und beide fallen ohne Pruefung erst auf, wenn
- * jemand aus einem Suchergebnis kommt:
+ * Zwei Mechanismen beantworten diese Frage, und beide gehoeren zusammen:
+ * die Weiterleitungen vom alten haudi.ch und das canonical auf den neuen
+ * Seiten. Stimmt eines von beiden nicht, verteilen sich die Signale der alten
+ * Seite auf mehrere Adressen — bei einer Fahrschule, die von der lokalen
+ * Suche lebt, der teuerste stille Fehler.
+ *
+ * WEITERLEITUNGEN
  *
  *   1. Die alte Adresse antwortet mit 301 auf das erwartete Ziel. Ein 404
  *      verliert die Signale der alten Seite, ein 200 hiesse, die Regel greift
  *      gar nicht.
  *   2. Das Ziel antwortet mit 200. Eine 301 auf eine Seite, die es nicht gibt,
  *      ist schlimmer als keine Weiterleitung: sie sieht richtig aus.
+ *   3. Die Reihenfolge stimmt. Das ist der subtile Teil: steht der Platzhalter
+ *      zu weit vorne, gehen alle alten Adressen auf die Startseite, und jede
+ *      einzelne Pruefung wuerde trotzdem eine 301 sehen.
  *
- * Zusaetzlich wird die Reihenfolge geprueft. Sie ist der subtile Teil: steht
- * der Platzhalter zu weit vorne, gehen alle alten Adressen auf die Startseite,
- * und jede einzelne Pruefung unten wuerde trotzdem eine 301 sehen.
+ * CANONICAL
+ *
+ * app/(public)/layout.tsx setzt `alternates.canonical` auf "./" — Next loest
+ * das gegen den vollstaendigen aktuellen Pfad auf, nicht nach den Regeln
+ * relativer URLs. Verschachtelte Seiten zeigen deshalb auf sich selbst und
+ * nicht auf ihren Elternpfad.
+ *
+ * Genau das wird hier geprueft, und zwar an verschachtelten Routen. Wuerde
+ * "./" je auf das Elternsegment aufloesen — durch ein Next-Update oder weil
+ * jemand die Zeile im Layout anfasst —, zeigten alle Kursseiten auf /kurse und
+ * fielen aus dem Index. Eine einstufige Seite wie /kontakt wuerde denselben
+ * Fehler nicht zeigen.
  *
  * Aufruf: pnpm verify:redirects   (Server muss laufen)
  */
@@ -119,10 +136,74 @@ async function weiterleitungenPruefen() {
   }
 }
 
+/**
+ * Erwartetes canonical je Route.
+ *
+ * Die verschachtelten Routen sind der Kern: /kurse/vku muss auf sich selbst
+ * zeigen und nicht auf /kurse. Die Query-Varianten daneben zeigen, dass
+ * Parameter wegfallen.
+ */
+const CANONICAL_FAELLE: { route: string; erwartet: string }[] = [
+  { route: "/", erwartet: "/" },
+  { route: "/kontakt", erwartet: "/kontakt" },
+
+  // Zwei Ebenen: hier faellt auf, wenn "./" auf den Elternpfad aufloest.
+  { route: "/kurse/vku", erwartet: "/kurse/vku" },
+  { route: "/kurse/btu", erwartet: "/kurse/btu" },
+  { route: "/vorschriften/auto", erwartet: "/vorschriften/auto" },
+  { route: "/vorschriften/motorrad", erwartet: "/vorschriften/motorrad" },
+
+  /**
+   * Gefilterte Kursdaten zeigen auf die ungefilterte Liste, und das ist
+   * gewollt: /kursdaten?art=vku enthaelt eine Teilmenge derselben Kurse wie
+   * /kursdaten. Zwei Adressen mit weitgehend demselben Inhalt konkurrieren
+   * sonst gegeneinander, und keine rankt.
+   *
+   * Wer das je aendern will, braucht eigene Seiten mit eigenem Text — die
+   * Filter selbst gehoeren nicht in den Index.
+   */
+  { route: "/kursdaten?art=vku", erwartet: "/kursdaten" },
+  { route: "/kursdaten?art=nothelfer", erwartet: "/kursdaten" },
+
+  // Kampagnen- und Klick-Parameter duerfen ebenso wenig eine eigene Adresse
+  // erzeugen.
+  { route: "/fahrstunden?utm_source=inserat", erwartet: "/fahrstunden" },
+];
+
+async function canonicalPruefen() {
+  console.log("Canonical");
+
+  for (const fall of CANONICAL_FAELLE) {
+    const antwort = await fetch(`${BASIS}${fall.route}`);
+    if (antwort.status !== 200) {
+      pruefe(false, `${fall.route} laedt`, `${antwort.status}`);
+      continue;
+    }
+
+    const html = await antwort.text();
+    const treffer = html.match(
+      /<link rel="canonical" href="([^"]*)"/,
+    )?.[1];
+
+    if (!treffer) {
+      pruefe(false, `${fall.route} hat ein canonical`, "keines gefunden");
+      continue;
+    }
+
+    const pfad = new URL(treffer, BASIS).pathname;
+    pruefe(
+      pfad === fall.erwartet,
+      `${fall.route} zeigt auf ${fall.erwartet}`,
+      pfad,
+    );
+  }
+}
+
 async function main() {
   console.log(`Basis: ${BASIS}\n`);
   await reihenfolgePruefen();
   await weiterleitungenPruefen();
+  await canonicalPruefen();
 
   console.log("");
   if (fehler > 0) {
@@ -130,7 +211,9 @@ async function main() {
     process.exit(1);
   }
   console.log(
-    `Alle ${WEITERLEITUNGEN.length} Weiterleitungen zeigen mit 301 auf eine Seite, die antwortet.`,
+    `Alle ${WEITERLEITUNGEN.length} Weiterleitungen zeigen mit 301 auf eine Seite, ` +
+      `die antwortet. ${CANONICAL_FAELLE.length} Routen nennen die richtige ` +
+      `kanonische Adresse.`,
   );
 }
 

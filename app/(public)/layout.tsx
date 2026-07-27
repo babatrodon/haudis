@@ -37,9 +37,25 @@ export const revalidate = 3600;
  * Es hilft darueber hinaus bei allem, was Parameter anhaengt: utm_source aus
  * einer Kampagne, fbclid aus einem geteilten Link, gclid aus einer Anzeige.
  *
- * "./" heisst fuer Next: die aktuelle Adresse, aufgeloest gegen metadataBase
- * aus app/layout.tsx. Damit gilt die Regel fuer jede Seite dieser Gruppe,
- * ohne sie in jede Datei zu schreiben.
+ * "./" heisst fuer Next: der vollstaendige aktuelle Pfad, aufgeloest gegen
+ * metadataBase aus app/layout.tsx — NICHT nach den Regeln relativer URLs.
+ * Verschachtelte Seiten zeigen deshalb auf sich selbst: /kurse/vku bleibt
+ * /kurse/vku und wird nicht zu /kurse. Geprueft in
+ * scripts/verify-redirects.mts, weil ein Next-Update das aendern koennte und
+ * eine einstufige Seite wie /kontakt den Fehler nicht zeigen wuerde.
+ *
+ * GEWOLLTE FOLGE: GEFILTERTE LISTEN ZEIGEN AUF DIE UNGEFILTERTE
+ *
+ * `/kursdaten?art=vku` nennt `/kursdaten` als kanonische Adresse. Das ist kein
+ * Versehen, sondern der Zweck: die gefilterte Ansicht zeigt eine Teilmenge
+ * derselben Kurse mit demselben Text ringsherum. Zwei Adressen mit
+ * weitgehend gleichem Inhalt konkurrieren gegeneinander, und am Ende rankt
+ * keine von beiden.
+ *
+ * Die Filter verlieren dadurch nichts, was sie je hatten — sie sind ein
+ * Bedienelement, kein Inhalt. Wer die Kursarten einzeln in die Suche bringen
+ * will, nimmt dafuer die Kursseiten unter `/kurse/[slug]`: die haben eigenen
+ * Text, stehen in der Sitemap und canonicalisieren auf sich selbst.
  */
 export const metadata = {
   alternates: { canonical: "./" },
