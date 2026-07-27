@@ -1,21 +1,23 @@
 import { chromium, webkit, devices } from "@playwright/test";
 
 /**
- * Prueft den gelben Streifen in der Kopfzeile und die dunkle Tafel darunter.
+ * Prueft den gelben Streifen in der Kopfzeile und das Feld des Logos.
  *
  * WARUM DAS EINE PRUEFUNG BRAUCHT
  *
- * Der Streifen liegt an der Unterkante der Kopfzeile und kreuzt das Logo auf
- * der Hoehe des gelben Untertitels "Fahrschule Verkehrszentrum". Der
- * Untertitel ist selbst gelb — laege der Streifen sichtbar hinter ihm, bliebe
- * nur die dunkle Kontur. Lesbar bleibt er, weil das Logo auf einer dunklen
- * Tafel steht und der Streifen dahinter durchlaeuft.
+ * Der Streifen liegt an der Unterkante der Kopfzeile und setzt links und
+ * rechts des Logos auf der Hoehe des gelben Untertitels "Fahrschule
+ * Verkehrszentrum" an. Hinter dem Logo laeuft er durch, nicht darueber: sein
+ * Feld ist deckend und traegt den Grund der Kopfzeile.
  *
- * Zwei Dinge koennen das unbemerkt zerstoeren: die Tafel verliert ihren
- * dunklen Grund oder ihre Deckung (dann steht Gelb auf Gelb), und das Logo
- * rutscht in der Zeile nach oben (dann kreuzt der Streifen den roten
- * Schriftzug statt des Untertitels, und das H waere durchgestrichen).
- * Ausloesen wuerde das keine Aenderung am Streifen, sondern eine an etwas
+ * Zwei Dinge koennen das unbemerkt zerstoeren. Wird das Feld durchsichtig,
+ * erscheint der Streifen hinter dem Untertitel, und weil der selbst gelb ist,
+ * bleibt von der Schrift nur die dunkle Kontur — das Bild ist durchsichtig,
+ * also faellt es erst im fertigen Bild auf. Und rutscht das Logo in der Zeile
+ * nach oben, kreuzt der Streifen den roten Schriftzug statt des Untertitels,
+ * das H waere durchgestrichen.
+ *
+ * Ausloesen wuerde beides keine Aenderung am Streifen, sondern eine an etwas
  * anderem: eine andere Logohoehe, ein Innenabstand, ein zusaetzlicher Knopf.
  * Deshalb wird hier nicht der CSS-Wert geprueft, sondern die Geometrie im
  * Browser.
@@ -48,19 +50,20 @@ const LOGO_MIN = 64;
 /** Mindestabstand zwischen Streifen und Bedienelementen, in Pixeln. */
 const ABSTAND_MIN = 4;
 
-/** Mindestabstand zwischen Logotafel und dem naechsten Bedienelement. */
-const TAFEL_ABSTAND_MIN = 16;
+/** Mindestabstand zwischen dem Feld des Logos und dem naechsten Knopf. */
+const FELD_ABSTAND_MIN = 16;
 
 const AUSWERTUNG = `(() => {
   const zeile = document.querySelector("body > header > div:nth-of-type(2)");
   const r = zeile.getBoundingClientRect();
   const bild = zeile.querySelector("img");
   const logo = bild.getBoundingClientRect();
-  const tafel = bild.closest("a").getBoundingClientRect();
-  const grund = getComputedStyle(bild.closest("a")).backgroundColor;
-  const streifen = zeile
-    .querySelector(':scope > [aria-hidden="true"]')
-    .getBoundingClientRect();
+  const feldEl = bild.closest("a");
+  const feld = feldEl.getBoundingClientRect();
+  const grund = getComputedStyle(feldEl).backgroundColor;
+  const streifenEl = zeile.querySelector(':scope > [aria-hidden="true"]');
+  const streifen = streifenEl.getBoundingClientRect();
+  const streifenGrund = getComputedStyle(streifenEl).backgroundColor;
 
   // Alles, was bedient wird, ausser dem Logo selbst: Menuepunkte, der
   // Probelektion-Knopf, die beiden Symbolknoepfe.
@@ -91,10 +94,11 @@ const AUSWERTUNG = `(() => {
     zeilenHoehe: r.height,
     logoOben: logo.top - r.top,
     logoHoehe: logo.height,
-    tafel: [tafel.left, tafel.right, tafel.top - r.top, tafel.bottom - r.top],
-    tafelGrund: grund,
+    feld: [feld.left, feld.right, feld.top - r.top, feld.bottom - r.top],
+    feldGrund: grund,
     logoKanten: [logo.left, logo.right],
     streifen: [streifen.top - r.top, streifen.bottom - r.top],
+    streifenGrund: streifenGrund,
     bedienUnten: bedienUnten,
     bedienLinks: bedienLinks === Infinity ? null : bedienLinks,
     glyphenUnten: glyphenUnten,
@@ -114,25 +118,20 @@ type Mass = {
   zeilenHoehe: number;
   logoOben: number;
   logoHoehe: number;
-  tafel: [number, number, number, number];
-  tafelGrund: string;
+  feld: [number, number, number, number];
+  feldGrund: string;
   logoKanten: [number, number];
   streifen: [number, number];
+  streifenGrund: string;
   bedienUnten: number;
   bedienLinks: number | null;
   glyphenUnten: number | null;
 };
 
-/** Relative Helligkeit nach WCAG, aus einem rgb()-Wert des Browsers. */
-function helligkeit(farbe: string): number {
-  const teile = farbe.match(/[\d.]+/g)?.map(Number) ?? [255, 255, 255];
-  const [r, g, b] = teile.map((wert) => {
-    const anteil = wert / 255;
-    return anteil <= 0.03928
-      ? anteil / 12.92
-      : ((anteil + 0.055) / 1.055) ** 2.4;
-  });
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+/** Kanaele eines rgb()- oder rgba()-Werts des Browsers, Alpha zuletzt. */
+function kanaele(farbe: string): [number, number, number, number] {
+  const teile = farbe.match(/[\d.]+/g)?.map(Number) ?? [0, 0, 0, 0];
+  return [teile[0], teile[1], teile[2], teile[3] ?? 1];
 }
 
 async function pruefeBreite(
@@ -146,8 +145,10 @@ async function pruefeBreite(
   const untertitelAb = m.logoOben + UNTERTITEL_AB * m.logoHoehe;
   const untertitelBis = m.logoOben + UNTERTITEL_BIS * m.logoHoehe;
   const [oben, unten] = m.streifen;
-  const [tafelLinks, tafelRechts, , tafelUnten] = m.tafel;
+  const [feldLinks, feldRechts, , feldUnten] = m.feld;
   const [logoLinks, logoRechts] = m.logoKanten;
+  const grund = kanaele(m.feldGrund);
+  const streifenFarbe = kanaele(m.streifenGrund);
 
   pruefe(
     unten - oben > 0,
@@ -173,23 +174,32 @@ async function pruefeBreite(
     `Streifen beginnt bei ${oben.toFixed(1)}, roter Schriftzug endet bei ${rotBis.toFixed(1)}`,
   );
 
-  // Ohne diese drei steht der gelbe Untertitel auf gelbem Grund.
+  // Ohne diese vier erscheint der gelbe Streifen hinter dem gelben
+  // Untertitel, und von der Schrift bleibt nur die dunkle Kontur.
   pruefe(
-    helligkeit(m.tafelGrund) < 0.05,
-    "das Logo steht auf einer dunklen Tafel",
-    `Grund ${m.tafelGrund}`,
+    grund[3] === 1,
+    "das Feld des Logos ist deckend, der Streifen scheint nicht durch",
+    `Grund ${m.feldGrund}`,
   );
 
   pruefe(
-    tafelLinks <= logoLinks && tafelRechts >= logoRechts,
-    "die Tafel reicht ueber die ganze Breite des Logos",
-    `Tafel ${tafelLinks.toFixed(1)}-${tafelRechts.toFixed(1)}, Logo ${logoLinks.toFixed(1)}-${logoRechts.toFixed(1)}`,
+    grund[0] !== streifenFarbe[0] ||
+      grund[1] !== streifenFarbe[1] ||
+      grund[2] !== streifenFarbe[2],
+    "das Feld traegt nicht die Farbe des Streifens",
+    `Feld ${m.feldGrund}, Streifen ${m.streifenGrund}`,
   );
 
   pruefe(
-    tafelUnten >= unten - 0.5,
-    "die Tafel reicht bis unter den Streifen, er laeuft dahinter durch",
-    `Tafel endet bei ${tafelUnten.toFixed(1)}, Streifen bei ${unten.toFixed(1)}`,
+    feldLinks <= logoLinks && feldRechts >= logoRechts,
+    "das Feld reicht ueber die ganze Breite des Logos",
+    `Feld ${feldLinks.toFixed(1)}-${feldRechts.toFixed(1)}, Logo ${logoLinks.toFixed(1)}-${logoRechts.toFixed(1)}`,
+  );
+
+  pruefe(
+    feldUnten >= unten - 0.5,
+    "das Feld reicht bis unter den Streifen, er laeuft dahinter durch",
+    `Feld endet bei ${feldUnten.toFixed(1)}, Streifen bei ${unten.toFixed(1)}`,
   );
 
   pruefe(
@@ -200,9 +210,9 @@ async function pruefeBreite(
 
   if (m.bedienLinks !== null) {
     pruefe(
-      m.bedienLinks - tafelRechts >= TAFEL_ABSTAND_MIN,
-      `zwischen Tafel und Bedienelementen bleiben ${TAFEL_ABSTAND_MIN}px`,
-      `${(m.bedienLinks - tafelRechts).toFixed(1)}px`,
+      m.bedienLinks - feldRechts >= FELD_ABSTAND_MIN,
+      `zwischen Logo und Bedienelementen bleiben ${FELD_ABSTAND_MIN}px`,
+      `${(m.bedienLinks - feldRechts).toFixed(1)}px`,
     );
   }
 
@@ -252,7 +262,7 @@ async function main() {
     process.exit(1);
   }
   console.log(
-    "Der Streifen liegt an der Unterkante und kreuzt den Untertitel auf dunklem Grund.",
+    "Der Streifen liegt an der Unterkante und laeuft hinter dem Logo durch.",
   );
 }
 

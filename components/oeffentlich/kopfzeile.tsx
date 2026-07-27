@@ -101,11 +101,16 @@ export function Kopfzeile({ whatsappUrl }: { whatsappUrl: string }) {
           GELB AUF GELB
 
           Der Untertitel ist selbst gelb. Laege der Streifen sichtbar hinter
-          ihm, bliebe von der Schrift nur die dunkle Kontur. Deshalb steht das
-          Logo auf einer dunklen Tafel (wie auf der alten Seite), und der
-          Streifen laeuft hinter der Tafel durch: der Untertitel steht auf
-          Schwarz, so wie im Fuss der Seite auch. Rechts der Tafel tritt der
-          Streifen auf der Hoehe des Untertitels wieder hervor.
+          ihm, bliebe von der Schrift nur die dunkle Kontur. Das Logo laeuft
+          deshalb nicht ueber dem Streifen, sondern verdeckt ihn: sein Feld
+          traegt den Grund der Kopfzeile und ist deckend. Der Streifen endet an
+          der linken Kante des Logos und tritt an der rechten auf der Hoehe des
+          Untertitels wieder hervor — er laeuft hinter dem Schriftzug durch.
+
+          Das Feld muss deckend bleiben. Eine durchsichtige Flaeche liesse den
+          Streifen wieder hinter dem Untertitel erscheinen, und weil das Bild
+          selbst durchsichtig ist, faellt das nicht beim Verschieben auf,
+          sondern erst im fertigen Bild.
 
           Wer daran etwas aendert, laesst pnpm verify:kopfzeile laufen. Nicht
           der Diagonalstreifen aus diagonalstreifen.tsx: der ist das Element
@@ -116,20 +121,22 @@ export function Kopfzeile({ whatsappUrl }: { whatsappUrl: string }) {
           className="pointer-events-none absolute inset-x-0 bottom-0 h-2 bg-brand-gelb lg:h-2.5"
         />
 
-        {/* items-stretch: die dunkle Tafel reicht von der Oberkante der Zeile
+        {/* items-stretch: das Feld des Logos reicht von der Oberkante der Zeile
             bis auf den Streifen hinunter. relative: die Zeile liegt ueber dem
-            Streifen, sonst liefe er ueber die Tafel statt dahinter. */}
+            Streifen, sonst liefe er ueber das Logo statt dahinter. */}
         <div className="relative mx-auto flex w-full max-w-[1344px] items-stretch justify-between gap-4 px-4 sm:px-6">
           {/*
-            Die dunkle Tafel. Sie schliesst oben an den Kontaktstreifen an und
-            unten an die Hero-Flaeche; das Logo steht mit seiner Unterkante auf
-            der Zeilenunterkante, damit der Streifen es auf der Hoehe des
-            Untertitels kreuzt.
+            Das Feld des Logos. Es traegt denselben Grund wie die Kopfzeile und
+            ist darum nicht zu sehen; es deckt nur den Streifen ab. Das Logo
+            steht mit seiner Unterkante auf der Zeilenunterkante, damit der
+            Streifen links und rechts auf der Hoehe des Untertitels ansetzt.
+            Seitlich kein Innenabstand: die durchsichtigen Raender des Bildes
+            geben dem Streifen von selbst etwas Luft.
           */}
           <Link
             href="/"
             onClick={() => setOffen(false)}
-            className="flex items-end bg-brand-schwarz px-4 pt-3 lg:px-6 lg:pt-4"
+            className="flex items-end bg-card pt-3 lg:pt-4"
           >
             {/*
               Das Schriftlogo der Fahrschule, unveraendert uebernommen

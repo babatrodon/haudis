@@ -55,10 +55,10 @@ beim Typecheck auf.
   Elternpfad. Braucht einen laufenden Server.
 - `pnpm verify:kopfzeile` misst im Browser, wo der gelbe Streifen der Kopfzeile
   liegt: dass er an der Unterkante sitzt, das Logo auf der Höhe des Untertitels
-  kreuzt und den roten Schriftzug frei lässt, dass die dunkle Tafel unter dem
-  Logo den Streifen deckt — sonst stünde Gelb auf Gelb —, dass das Logo gross
-  genug für den Untertitel bleibt und daneben genug Platz für die Bedienung.
-  Braucht einen laufenden Server.
+  kreuzt und den roten Schriftzug frei lässt, dass das Feld des Logos deckend
+  ist und den Streifen abfängt — sonst stünde Gelb auf Gelb —, dass das Logo
+  gross genug für den Untertitel bleibt und daneben genug Platz für die
+  Bedienung. Braucht einen laufenden Server.
 - `pnpm db:verify` prüft die Zusicherungen des Seeds, unter anderem
   Geschäftsregel 11.
 
@@ -149,12 +149,13 @@ in der Datenbank steht, muss der Wert einmalig von Hand nachgezogen werden.
   Bildhöhe, gelber Untertitel 72,5 % bis 95 %. Das Logo steht mit seiner
   Unterkante auf der Zeilenunterkante, damit der Streifen von selbst in dieses
   Band fällt; die Zeilenhöhe ergibt sich aus der Logohöhe und ist nicht
-  gesetzt. Weil der Untertitel selbst gelb ist, steht das Logo auf einer
-  dunklen Tafel und der Streifen läuft dahinter durch — dieselbe Kombination
-  wie im Seitenfuss. Die Knöpfe der Kopfzeile und die aktive Unterstreichung
-  stehen deshalb wieder auf Weiss und tragen die Farben der Vorlage. Geprüft
-  mit `pnpm verify:kopfzeile`. Nicht zu verwechseln mit dem Diagonalstreifen
-  aus
+  gesetzt. Weil der Untertitel selbst gelb ist, läuft der Streifen nicht über
+  das Logo, sondern dahinter: das Feld des Logos trägt den Grund der Kopfzeile
+  und ist deckend, der Streifen setzt links und rechts davon wieder an. Das
+  Feld darf nie durchsichtig werden — das Bild selbst ist es, und dann stünde
+  Gelb auf Gelb. Die Knöpfe der Kopfzeile und die aktive Unterstreichung
+  tragen die Farben der Vorlage. Geprüft mit `pnpm verify:kopfzeile`. Nicht zu
+  verwechseln mit dem Diagonalstreifen aus
   [components/oeffentlich/diagonalstreifen.tsx](components/oeffentlich/diagonalstreifen.tsx),
   der auf den Flächen liegt.
 - **Kapazität**: [lib/buchung.ts](lib/buchung.ts) sperrt die Kurszeile mit
