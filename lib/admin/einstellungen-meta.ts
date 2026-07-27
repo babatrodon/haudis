@@ -145,7 +145,26 @@ export const META: Partial<Record<EinstellungSchluessel, EinstellungMeta>> = {
     hinweis: "Für den Weiterausbildungskurs beim TCS.",
   },
 
-  "mail.absender": { beschriftung: "Absenderadresse", typ: "text" },
+  "mail.absender": {
+    beschriftung: "Absenderadresse",
+    typ: "text",
+    hinweis:
+      "Muss zu einer bei Resend verifizierten Domain gehören, sonst weist Resend die Mail ab.",
+  },
+  "mail.absenderName": {
+    beschriftung: "Absendername",
+    typ: "text",
+    hinweis: "Steht im Postfach vor der Adresse.",
+  },
+  "mail.antwortAn": {
+    beschriftung: "Antwort an",
+    typ: "text",
+    hinweis: "Hierhin gehen Antworten, unabhängig vom Absender.",
+  },
+  "mail.internEmpfaenger": {
+    beschriftung: "Interne Kopie an",
+    typ: "text",
+  },
   "mail.internKopie": {
     beschriftung: "Interne Kopie pro Buchung",
     typ: "schalter",
@@ -251,7 +270,14 @@ export const GRUPPEN: Gruppe[] = [
     titel: "Benachrichtigungen",
     beschreibung:
       "Ohne RESEND_API_KEY wird jede Mail nur protokolliert statt verschickt.",
-    schluessel: ["mail.absender", "mail.internKopie", "sms.aktiv"],
+    schluessel: [
+      "mail.absender",
+      "mail.absenderName",
+      "mail.antwortAn",
+      "mail.internKopie",
+      "mail.internEmpfaenger",
+      "sms.aktiv",
+    ],
   },
   {
     id: "aktionen",

@@ -14,6 +14,11 @@ import {
   telefonAnmeldungSchema,
 } from "@/lib/admin/buchung-schema";
 import { requireRole } from "@/lib/auth-guard";
+import {
+  einladungErneutSenden,
+  naechstenBenachrichtigen,
+  wartendenEntfernen,
+} from "@/lib/admin/warteliste";
 import { buchungAnlegen } from "@/lib/buchung";
 
 /**
@@ -201,4 +206,67 @@ export async function buchungLoeschenAktion(
   await buchungLoeschen(buchungId);
   auffrischen(String(formular.get("kursId") ?? "") || undefined);
   return { erledigt: "Gelöscht." };
+}
+
+/**
+ * Naechste Person von der Warteliste einladen.
+ *
+ * Von Hand, wenn die automatische Mail beim Stornieren nicht ankam oder wenn
+ * ein Platz auf anderem Weg frei wurde — etwa weil Ausilia das Limit erhoeht
+ * hat.
+ */
+export async function wartelisteBenachrichtigenAktion(
+  _bisher: BuchungErgebnisMeldung,
+  formular: FormData,
+): Promise<BuchungErgebnisMeldung> {
+  await requireRole("ADMIN");
+
+  const kursId = String(formular.get("kursId") ?? "");
+  if (!kursId) return { fehler: "Kurs nicht gefunden." };
+
+  const ergebnis = await naechstenBenachrichtigen(kursId);
+  if (!ergebnis.erfolg) return { fehler: ergebnis.grund ?? "Nicht möglich." };
+
+  auffrischen(kursId);
+  return {
+    erledigt: process.env.RESEND_API_KEY
+      ? "Eingeladen. Der Platz ist 48 Stunden reserviert."
+      : "Eingeladen, aber ohne E-Mail: es ist kein Versandschlüssel gesetzt. Bitte anrufen.",
+  };
+}
+
+/** Dieselbe Einladung noch einmal verschicken, Frist und Link bleiben gleich. */
+export async function einladungErneutSendenAktion(
+  _bisher: BuchungErgebnisMeldung,
+  formular: FormData,
+): Promise<BuchungErgebnisMeldung> {
+  await requireRole("ADMIN");
+
+  const eintragId = String(formular.get("eintragId") ?? "");
+  if (!eintragId) return { fehler: "Eintrag nicht gefunden." };
+
+  const ergebnis = await einladungErneutSenden(eintragId);
+  if (!ergebnis.erfolg) return { fehler: ergebnis.grund ?? "Nicht möglich." };
+
+  auffrischen(String(formular.get("kursId") ?? "") || undefined);
+  return {
+    erledigt: process.env.RESEND_API_KEY
+      ? "Einladung noch einmal verschickt."
+      : "Nicht verschickt: es ist kein Versandschlüssel gesetzt. Bitte anrufen.",
+  };
+}
+
+/** Von der Warteliste streichen. Die Zeile bleibt als Beleg stehen. */
+export async function wartendenEntfernenAktion(
+  _bisher: BuchungErgebnisMeldung,
+  formular: FormData,
+): Promise<BuchungErgebnisMeldung> {
+  await requireRole("ADMIN");
+
+  const eintragId = String(formular.get("eintragId") ?? "");
+  if (!eintragId) return { fehler: "Eintrag nicht gefunden." };
+
+  await wartendenEntfernen(eintragId);
+  auffrischen(String(formular.get("kursId") ?? "") || undefined);
+  return { erledigt: "Von der Warteliste gestrichen." };
 }

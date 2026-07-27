@@ -86,9 +86,13 @@ export function Kurskarte({ kurs }: { kurs: KursOeffentlich }) {
         </div>
 
         {ausgebucht ? (
-          <p className="flex min-h-12 items-center justify-center border border-linie-stark bg-card px-4 text-center text-sm font-semibold text-grau-text">
-            Ausgebucht, ruf uns an
-          </p>
+          <Link
+            href={`/anmeldung/${kurs.id}`}
+            className="flex min-h-12 items-center justify-center bg-brand-schwarz px-4 text-center font-semibold text-flaeche-1 transition-colors hover:bg-brand-schwarz-weich"
+          >
+            Auf Warteliste eintragen
+            <span className="sr-only"> für den {kurs.kursart.name}</span>
+          </Link>
         ) : (
           <Link
             href={`/anmeldung/${kurs.id}`}

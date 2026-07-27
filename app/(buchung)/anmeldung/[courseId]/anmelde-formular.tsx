@@ -3,6 +3,7 @@
 import { useActionState, useId, useState } from "react";
 import Link from "next/link";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { EINGABE, Feld, Stern } from "@/components/buchung/formularfeld";
 import { anmeldenAktion, type AnmeldeErgebnis } from "./aktionen";
 
 /**
@@ -26,11 +27,18 @@ export function AnmeldeFormular({
   titel,
   einleitung,
   zusammenfassung,
+  einladungsToken,
 }: {
   kursId: string;
   titel: string;
   einleitung: string;
   zusammenfassung: React.ReactNode;
+  /**
+   * Einladung von der Warteliste. Reist als verstecktes Feld mit, damit die
+   * Action den reservierten Platz einloesen kann — die Adresszeile hat sie
+   * nicht.
+   */
+  einladungsToken?: string;
 }) {
   const [ergebnis, absenden, laeuft] = useActionState<
     AnmeldeErgebnis,
@@ -49,6 +57,13 @@ export function AnmeldeFormular({
           </p>
 
           <input type="hidden" name="kursId" value={kursId} />
+          {einladungsToken ? (
+            <input
+              type="hidden"
+              name="einladungsToken"
+              value={einladungsToken}
+            />
+          ) : null}
 
           {/*
             Honigtopf. Nicht type="hidden", das ueberspringen Bots. Abseits
@@ -184,88 +199,6 @@ export function AnmeldeFormular({
         </div>
       </div>
     </form>
-  );
-}
-
-/** Rahmen und Innenabstand aller Eingaben, eins zu eins aus der Vorlage. */
-const EINGABE =
-  "min-h-12 w-full min-w-0 border border-linie-stark bg-card px-3.5 py-3 text-base outline-none placeholder:text-grau-text-hell focus-visible:border-brand-schwarz focus-visible:ring-3 focus-visible:ring-brand-schwarz/15";
-
-function Stern() {
-  return (
-    <span className="text-brand-rot" aria-hidden="true">
-      *
-    </span>
-  );
-}
-
-type FeldProps = {
-  spalten: string;
-  label: string;
-  pflicht?: boolean;
-  name?: string;
-  type?: string;
-  platzhalter?: string;
-  hinweis?: string;
-  /** Tabellenziffern fuer Zahlen, damit Ziffern gleich breit stehen. */
-  ziffern?: boolean;
-  /** Kraeftigerer Rahmen, wie in der Vorlage beim Telefonfeld. */
-  betont?: boolean;
-  children?: (id: string) => React.ReactNode;
-} & Omit<React.ComponentProps<"input">, "children" | "name" | "type">;
-
-function Feld({
-  spalten,
-  label,
-  pflicht = false,
-  name,
-  type = "text",
-  platzhalter,
-  hinweis,
-  ziffern = false,
-  betont = false,
-  children,
-  ...rest
-}: FeldProps) {
-  const id = useId();
-  const hinweisId = `${id}-hinweis`;
-
-  return (
-    <div className={spalten}>
-      {/*
-        Ein schlichtes label-Element, kein Flexcontainer. Die Beschriftungen
-        sind kurz, aber die AGB-Zeile weiter unten ist ein ganzer Satz — und
-        ein Satz in einem Flexcontainer bricht nicht um. Genau daran hing der
-        waagrechte Ueberhang auf dem iPhone.
-      */}
-      <label htmlFor={id} className="mb-1.5 block text-[13px] font-semibold lg:text-sm">
-        {label} {pflicht ? <Stern /> : null}
-        {pflicht ? <span className="sr-only">Pflichtfeld</span> : null}
-      </label>
-
-      {children ? (
-        children(id)
-      ) : (
-        <input
-          id={id}
-          name={name}
-          type={type}
-          required={pflicht}
-          placeholder={platzhalter}
-          aria-describedby={hinweis ? hinweisId : undefined}
-          className={`${EINGABE} ${ziffern ? "tabular-nums" : ""} ${
-            betont ? "border-brand-schwarz" : ""
-          }`}
-          {...rest}
-        />
-      )}
-
-      {hinweis ? (
-        <p id={hinweisId} className="mt-1.5 text-xs text-grau-text lg:text-[13px]">
-          {hinweis}
-        </p>
-      ) : null}
-    </div>
   );
 }
 

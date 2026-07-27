@@ -37,7 +37,7 @@ type DemoBuchung = {
   telefon: string;
   lfaNummer?: string;
   quelle?: "ONLINE" | "PHONE";
-  status?: "CONFIRMED" | "CANCELLED" | "WAITLIST";
+  status?: "CONFIRMED" | "CANCELLED";
   // Ob eine Buchung den Frühbucherrabatt bekommt, entscheidet nicht diese
   // Liste, sondern lib/preis.ts anhand der Reihenfolge. Genau wie im echten
   // Buchungsflow, sonst prueft der Demo-Seed etwas anderes als die Anwendung.
@@ -161,6 +161,12 @@ type DemoKurs = {
    */
   vorlaufTage?: number;
   buchungen: DemoBuchung[];
+  /**
+   * Wartende auf einem ausgebuchten Kurs. Eigenes Modell, keine Buchungen:
+   * ein Wartender hat weder Adresse noch Geburtsdatum noch einen Preis.
+   * Genutzt werden nur Vorname, Nachname und Telefon aus der Liste.
+   */
+  warteliste?: DemoBuchung[];
 };
 
 /**
@@ -340,9 +346,10 @@ function demoKurse(): DemoKurs[] {
         ...teilnehmer(12, 40),
         // Eine stornierte Buchung darf den Platz nicht belegen.
         { ...teilnehmer(1, 60)[0], status: "CANCELLED" as const },
-        // Warteliste, Flow folgt in Sprint 7.
-        { ...teilnehmer(1, 61)[0], status: "WAITLIST" as const },
       ],
+      // Drei Wartende, damit die Reihenfolge im Panel sichtbar ist und ein
+      // Storno etwas zu benachrichtigen hat.
+      warteliste: teilnehmer(3, 61),
     },
     {
       id: `${DEMO_PRAEFIX}vku-weekend-fruehbucher`,
@@ -448,6 +455,7 @@ async function schreiben(prisma: PrismaSeedClient) {
 
   let kurseGeschrieben = 0;
   let buchungenGeschrieben = 0;
+  let wartendeGeschrieben = 0;
 
   for (const kurs of demoKurse()) {
     const kursartId = kursartNachCode.get(kurs.kursartCode);
@@ -477,6 +485,7 @@ async function schreiben(prisma: PrismaSeedClient) {
     // dieselben Zahlen ergibt und die Daten wieder in der Zukunft liegen.
     await prisma.courseSession.deleteMany({ where: { courseId: kurs.id } });
     await prisma.booking.deleteMany({ where: { courseId: kurs.id } });
+    await prisma.waitlistEntry.deleteMany({ where: { courseId: kurs.id } });
 
     const start = naechsterWochentag(
       kurs.bloecke[0][0],
@@ -552,12 +561,219 @@ async function schreiben(prisma: PrismaSeedClient) {
       });
       buchungenGeschrieben += 1;
     }
+
+    for (const [index, person] of (kurs.warteliste ?? []).entries()) {
+      await prisma.waitlistEntry.create({
+        data: {
+          courseId: kurs.id,
+          firstName: person.vorname,
+          lastName: person.nachname,
+          phone: person.telefon,
+          email: demoEmail(person, `${kurs.id}-warteliste`, index),
+        },
+      });
+      wartendeGeschrieben += 1;
+    }
   }
 
+  const schueler = await schuelerSchreiben(prisma);
+
   console.log(
-    `Demodaten: ${kurseGeschrieben} Kurse, ${buchungenGeschrieben} Buchungen.`,
+    `Demodaten: ${kurseGeschrieben} Kurse, ${buchungenGeschrieben} Buchungen, ` +
+      `${wartendeGeschrieben} Wartende, ${schueler} Schüler.`,
   );
   console.log("Entfernen mit: pnpm db:seed:demo:purge");
+}
+
+/**
+ * Schuelerkartei mit Abos und Lektionen (PLAN.md Abschnitt 14).
+ *
+ * Deckt die Zustaende ab, die im Panel unterschiedlich aussehen: ein Abo mit
+ * Rest, ein aufgebrauchtes, eine Lektion ohne Abo, eine abgesagte, eine nicht
+ * wahrgenommene. Dazu drei Pruefungsdaten — eines faellig fuer die
+ * WAB-Erinnerung, eines knapp davor, und eines faellig ohne E-Mail-Adresse,
+ * damit im Panel sichtbar wird, wen jemand anrufen muss.
+ */
+async function schuelerSchreiben(prisma: PrismaSeedClient): Promise<number> {
+  // Bevorzugt Instruktoren mit Login: nur die koennen sich im Portal anmelden
+  // und "Meine Schüler" ueberhaupt sehen. Ohne diese Vorauswahl landen die
+  // Demo-Lektionen bei Kursleitern ohne Konto, und das Portal ist leer.
+  const mitKonto = await prisma.instructor.findMany({
+    where: { active: true, userId: { not: null } },
+    orderBy: { shortCode: "asc" },
+    take: 3,
+  });
+  const instruktoren =
+    mitKonto.length > 0
+      ? mitKonto
+      : await prisma.instructor.findMany({
+          where: { active: true },
+          orderBy: { shortCode: "asc" },
+          take: 3,
+        });
+  if (instruktoren.length === 0) return 0;
+
+  /** Datum vor n Monaten, als reiner Kalendertag. */
+  const monateZurueck = (monate: number): Date => {
+    const d = new Date();
+    d.setUTCHours(0, 0, 0, 0);
+    d.setUTCMonth(d.getUTCMonth() - monate);
+    return d;
+  };
+
+  type DemoLektion = [
+    number,
+    "GEPLANT" | "ABSOLVIERT" | "STORNIERT" | "NO_SHOW",
+    boolean,
+  ];
+
+  const muster: {
+    vorname: string;
+    nachname: string;
+    ohneMail?: boolean;
+    pruefungVorMonaten?: number;
+    abos: {
+      kategorie: "AUTO" | "TAXI" | "MOTORRAD";
+      groesse: number;
+      preis: string;
+      bezahlt: boolean;
+    }[];
+    /** [Tage ab heute, Status, auf das Abo buchen] */
+    lektionen: DemoLektion[];
+  }[] = [
+    {
+      vorname: "Selin",
+      nachname: "Arslan",
+      abos: [{ kategorie: "AUTO", groesse: 10, preis: "88.00", bezahlt: true }],
+      lektionen: [
+        [-21, "ABSOLVIERT", true],
+        [-14, "ABSOLVIERT", true],
+        [-7, "ABSOLVIERT", true],
+        [-2, "NO_SHOW", true],
+        [3, "GEPLANT", true],
+        [10, "GEPLANT", true],
+      ],
+    },
+    {
+      vorname: "Marco",
+      nachname: "Pfister",
+      // Faellig fuer die WAB-Erinnerung: Pruefung liegt 11 Monate zurueck.
+      pruefungVorMonaten: 11,
+      abos: [{ kategorie: "AUTO", groesse: 5, preis: "90.00", bezahlt: true }],
+      lektionen: [
+        [-120, "ABSOLVIERT", true],
+        [-110, "ABSOLVIERT", true],
+        [-100, "ABSOLVIERT", true],
+        [-95, "ABSOLVIERT", true],
+        [-90, "ABSOLVIERT", true],
+      ],
+    },
+    {
+      vorname: "Aline",
+      nachname: "Zbinden",
+      // Noch nicht faellig, damit der Lauf nicht alles auf einmal abraeumt.
+      pruefungVorMonaten: 4,
+      abos: [{ kategorie: "AUTO", groesse: 5, preis: "90.00", bezahlt: false }],
+      lektionen: [
+        [-30, "ABSOLVIERT", true],
+        [-25, "STORNIERT", true],
+        [5, "GEPLANT", true],
+      ],
+    },
+    {
+      vorname: "Dario",
+      nachname: "Blaser",
+      // Faellig, aber ohne Adresse: die Erinnerung kann nicht rausgehen, und
+      // genau das soll im Panel stehen.
+      ohneMail: true,
+      pruefungVorMonaten: 12,
+      abos: [{ kategorie: "TAXI", groesse: 5, preis: "90.00", bezahlt: true }],
+      lektionen: [
+        [-200, "ABSOLVIERT", true],
+        [-190, "ABSOLVIERT", true],
+      ],
+    },
+    {
+      vorname: "Nadia",
+      nachname: "Kuster",
+      // Nur die Gratis-Probelektion, noch kein Abo.
+      abos: [],
+      lektionen: [[2, "GEPLANT", false]],
+    },
+  ];
+
+  let angelegt = 0;
+
+  for (const [index, person] of muster.entries()) {
+    const email = person.ohneMail
+      ? null
+      : `${person.vorname}.${person.nachname}${DEMO_MAILDOMAIN}`.toLowerCase();
+
+    // Ueber die Maildomain wiederfindbar; wer keine hat, ueber den Namen.
+    await prisma.studentRecord.deleteMany({
+      where: email
+        ? { email }
+        : { firstName: person.vorname, lastName: person.nachname },
+    });
+
+    const schueler = await prisma.studentRecord.create({
+      data: {
+        firstName: person.vorname,
+        lastName: person.nachname,
+        phone: `079 ${300 + index} ${40 + index} ${50 + index}`,
+        email,
+        practicalExamPassedAt: person.pruefungVorMonaten
+          ? monateZurueck(person.pruefungVorMonaten)
+          : null,
+        notes:
+          index === 0
+            ? "Fährt lieber am Vormittag, Abholung beim Bahnhof."
+            : null,
+      },
+      select: { id: true },
+    });
+    angelegt += 1;
+
+    const abos: { id: string; category: "AUTO" | "TAXI" | "MOTORRAD" }[] = [];
+    for (const abo of person.abos) {
+      const angelegtesAbo = await prisma.lessonPackage.create({
+        data: {
+          studentId: schueler.id,
+          category: abo.kategorie,
+          size: abo.groesse,
+          pricePerLesson: abo.preis,
+          paymentMethod: "BAR",
+          paymentStatus: abo.bezahlt ? "BEZAHLT" : "OFFEN",
+          paidAt: abo.bezahlt ? new Date() : null,
+        },
+        select: { id: true },
+      });
+      abos.push({ id: angelegtesAbo.id, category: abo.kategorie });
+    }
+
+    for (const [versatz, status, aufAbo] of person.lektionen) {
+      const datum = new Date();
+      datum.setUTCHours(0, 0, 0, 0);
+      datum.setUTCDate(datum.getUTCDate() + versatz);
+      const abo = aufAbo ? abos[0] : undefined;
+
+      await prisma.lesson.create({
+        data: {
+          studentId: schueler.id,
+          instructorId: instruktoren[index % instruktoren.length].id,
+          category: abo?.category ?? "AUTO",
+          date: datum,
+          startTime: versatz % 2 === 0 ? "09:00" : "14:00",
+          durationMin: 45,
+          status,
+          packageId: abo?.id ?? null,
+          pickupNote: versatz === 3 ? "Bahnhof Baden, Ausgang Nord" : null,
+        },
+      });
+    }
+  }
+
+  return angelegt;
 }
 
 async function aufraeumen(prisma: PrismaSeedClient) {
@@ -567,12 +783,26 @@ async function aufraeumen(prisma: PrismaSeedClient) {
   const buchungen = await prisma.booking.deleteMany({
     where: { email: { endsWith: DEMO_MAILDOMAIN } },
   });
+  const wartende = await prisma.waitlistEntry.deleteMany({
+    where: { email: { endsWith: DEMO_MAILDOMAIN } },
+  });
   const kurse = await prisma.course.deleteMany({
     where: { id: { startsWith: DEMO_PRAEFIX } },
   });
+  // Abos und Lektionen haengen per Cascade am Schueler.
+  const schueler = await prisma.studentRecord.deleteMany({
+    where: {
+      OR: [
+        { email: { endsWith: DEMO_MAILDOMAIN } },
+        // Dario Blaser hat bewusst keine Adresse, deshalb ueber den Namen.
+        { firstName: "Dario", lastName: "Blaser" },
+      ],
+    },
+  });
 
   console.log(
-    `Demodaten entfernt: ${kurse.count} Kurse, ${buchungen.count} Buchungen.`,
+    `Demodaten entfernt: ${kurse.count} Kurse, ${buchungen.count} Buchungen, ` +
+      `${wartende.count} Wartende, ${schueler.count} Schüler.`,
   );
 }
 

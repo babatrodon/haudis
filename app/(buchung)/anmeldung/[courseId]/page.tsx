@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BuchungHuelle } from "@/components/buchung/buchung-huelle";
 import {
   Buchungskarte,
   Zahlungsarten,
 } from "@/components/buchung/buchungskarte";
-import { datumLang } from "@/lib/format";
+import { datumLang, datumZeit } from "@/lib/format";
 import { kommendeKurse } from "@/lib/kurse";
 import { TELEFONNUMMERN } from "@/lib/kontakt";
+import { einladungLesen } from "@/lib/warteliste";
 import { AnmeldeFormular } from "./anmelde-formular";
+import { WartelisteFormular } from "./warteliste-formular";
 
 export const metadata: Metadata = {
   title: "Anmeldung | Haudi's Fahrschule Baden",
@@ -27,10 +28,13 @@ export const metadata: Metadata = {
  */
 export default async function AnmeldungSchritt1({
   params,
+  searchParams,
 }: {
   params: Promise<{ courseId: string }>;
+  searchParams: Promise<{ einladung?: string }>;
 }) {
   const { courseId } = await params;
+  const { einladung: token } = await searchParams;
   const kurse = await kommendeKurse();
   const kurs = kurse.find((eintrag) => eintrag.id === courseId);
 
@@ -42,18 +46,40 @@ export default async function AnmeldungSchritt1({
     .map((termin) => `${datumLang(termin.datum)}, ${termin.von}–${termin.bis}`)
     .join(" · ");
 
-  if (!kurs.verfuegbarkeit.buchbar) {
+  // Einladung von der Warteliste. Sie oeffnet einen Kurs, der fuer alle
+  // anderen ausgebucht ist — genau den Platz, den sie reserviert hat.
+  const einladung = token ? await einladungLesen(token, courseId) : null;
+
+  if (!kurs.verfuegbarkeit.buchbar && !einladung?.gueltig) {
     return (
       <BuchungHuelle schritt={1}>
-        <Ausgebucht kursName={kurs.kursart.name} />
+        {einladung ? (
+          <EinladungAbgelaufen
+            kursName={kurs.kursart.name}
+            grund={einladung.grund}
+          />
+        ) : null}
+        <WartelisteFormular
+          kursId={kurs.id}
+          kursName={kurs.kursart.name}
+          telefonnummern={[...TELEFONNUMMERN]}
+        />
       </BuchungHuelle>
     );
   }
 
   return (
     <BuchungHuelle schritt={1}>
+      {einladung?.gueltig ? (
+        <p className="mx-4 mt-6 border-l-4 border-brand-gelb bg-flaeche-1 p-4 text-sm leading-[1.55] sm:mx-8 lg:mx-12">
+          <strong>Dein Platz ist reserviert bis {datumZeit(einladung.frist)}.</strong>{" "}
+          Danach geben wir ihn an die nächste Person auf der Warteliste weiter.
+        </p>
+      ) : null}
+
       <AnmeldeFormular
         kursId={kurs.id}
+        einladungsToken={einladung?.gueltig ? token : undefined}
         titel="Deine Angaben"
         einleitung={`Für die Anmeldung zum ${kurs.kursart.name}, ${termine}.`}
         zusammenfassung={
@@ -95,37 +121,30 @@ export default async function AnmeldungSchritt1({
 }
 
 /**
- * Ausgebucht. Kein Formular, sondern der Weg, der jetzt noch offen ist:
- * anrufen. Geschaeftsregel 2 nimmt den Knopf weg, hier steht, was stattdessen
- * hilft.
+ * Eine Einladung, die nicht mehr gilt.
+ *
+ * Steht ueber dem Wartelisten-Formular: der Platz ist weg, aber der Weg zurueck
+ * in die Schlange ist gleich darunter. Ohne diesen Hinweis waere das Formular
+ * eine stumme Antwort auf einen Link, den jemand extra angeklickt hat.
  */
-function Ausgebucht({ kursName }: { kursName: string }) {
+function EinladungAbgelaufen({
+  kursName,
+  grund,
+}: {
+  kursName: string;
+  grund: "unbekannt" | "abgelaufen" | "verbraucht";
+}) {
+  const text = {
+    abgelaufen: `Die Frist für Deinen Platz im ${kursName} ist abgelaufen, wir haben ihn weitergegeben.`,
+    verbraucht: `Für diesen Link liegt bereits eine Anmeldung vor. Falls das nicht Du warst, ruf uns an.`,
+    unbekannt: `Dieser Einladungslink gilt nicht für diesen Kurs.`,
+  }[grund];
+
   return (
-    <div className="px-4 py-10 sm:px-8 lg:px-12 lg:py-14">
-      <h1 className="font-heading text-[30px] font-semibold leading-[1.05] tracking-[-0.025em] lg:text-[40px]">
-        Dieser Kurs ist ausgebucht
-      </h1>
-      <p className="mt-3 max-w-[520px] text-grau-text">
-        Für den {kursName} gibt es keinen freien Platz mehr. Ruf uns an, wir
-        sagen Dir, wann der nächste startet.
+    <div className="mx-4 mt-6 border-l-4 border-brand-rot bg-flaeche-1 p-4 sm:mx-8 lg:mx-12">
+      <p className="text-sm leading-[1.55]">
+        <strong>Der Link ist nicht mehr gültig.</strong> {text}
       </p>
-      <div className="mt-6 flex flex-wrap gap-3">
-        {TELEFONNUMMERN.map((nummer) => (
-          <a
-            key={nummer.tel}
-            href={`tel:${nummer.tel}`}
-            className="inline-flex min-h-12 items-center border border-brand-schwarz px-5 font-semibold tabular-nums"
-          >
-            {nummer.anzeige}
-          </a>
-        ))}
-        <Link
-          href="/kursdaten"
-          className="inline-flex min-h-12 items-center px-2 font-semibold underline underline-offset-4"
-        >
-          Andere Kurse ansehen
-        </Link>
-      </div>
     </div>
   );
 }

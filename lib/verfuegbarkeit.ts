@@ -19,6 +19,8 @@ export type AmpelZustand = "gruen" | "gelb" | "rot";
 export type Verfuegbarkeit = {
   frei: number;
   belegt: number;
+  /** Reservierte Plaetze aus offenen Wartelisten-Einladungen. */
+  reserviert: number;
   limit: number;
   zustand: AmpelZustand;
   text: string;
@@ -39,19 +41,31 @@ export async function ampelSchwellenLesen(): Promise<AmpelSchwellen> {
 /**
  * Reine Rechnung, damit sie ohne Datenbank und ohne Einstellungen pruefbar
  * bleibt. Die Aufrufer holen die Schwellen einmal und reichen sie durch.
+ *
+ * @param offeneEinladungen Wartelisten-Einladungen, deren Frist noch laeuft.
+ *   Sie belegen einen Platz wie eine Buchung. Ohne das koennte ein beliebiger
+ *   Besucher der Website den Platz nehmen, bevor die eingeladene Person ihre
+ *   Mail ueberhaupt gelesen hat — und die Einladung waere ein Versprechen, das
+ *   die Fahrschule nicht halten kann. Laeuft die Frist ab, faellt der Wert von
+ *   selbst weg; abgelaufene Einladungen zaehlt der Aufrufer gar nicht erst mit.
  */
 export function verfuegbarkeitBerechnen(
   limit: number,
   bestaetigteBuchungen: number,
   schwellen: AmpelSchwellen,
+  offeneEinladungen = 0,
 ): Verfuegbarkeit {
-  const frei = Math.max(0, limit - bestaetigteBuchungen);
+  const frei = Math.max(0, limit - bestaetigteBuchungen - offeneEinladungen);
+  const gemeinsam = {
+    belegt: bestaetigteBuchungen,
+    reserviert: offeneEinladungen,
+    limit,
+  };
 
   if (frei <= 0) {
     return {
+      ...gemeinsam,
       frei: 0,
-      belegt: bestaetigteBuchungen,
-      limit,
       zustand: "rot",
       text: "Kurs ausgebucht",
       buchbar: false,
@@ -60,9 +74,8 @@ export function verfuegbarkeitBerechnen(
 
   if (frei >= schwellen.gruen) {
     return {
+      ...gemeinsam,
       frei,
-      belegt: bestaetigteBuchungen,
-      limit,
       zustand: "gruen",
       text: "Noch viele Plätze frei",
       buchbar: true,
@@ -70,9 +83,8 @@ export function verfuegbarkeitBerechnen(
   }
 
   return {
+    ...gemeinsam,
     frei,
-    belegt: bestaetigteBuchungen,
-    limit,
     zustand: "gelb",
     text: "Nur noch wenige Plätze frei",
     buchbar: true,

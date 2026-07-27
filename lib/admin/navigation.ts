@@ -49,8 +49,18 @@ export const ADMIN_NAVIGATION: NavigationsEintrag[] = [
     text: "Einsatzplan",
     kurz: "Einsatz",
     beschreibung: "Kursleiter den Terminen zuweisen",
-    // Gehoert in die Leiste: das Zuweisen der Kursleiter ist Tagesarbeit,
-    // nicht etwas, das man einmal im Monat unter "Mehr" sucht.
+    // Das Zuweisen der Kursleiter ist Tagesarbeit, steht aber seit der
+    // Schuelerkartei hinter "Mehr": vier Ziele plus Menue sind auf 390px die
+    // Grenze, und die Kartei wird oefter geoeffnet.
+    imTab: false,
+  },
+  {
+    href: "/admin/schueler",
+    text: "Schüler",
+    kurz: "Schüler",
+    beschreibung: "Kartei, Abos, Lektionen und die WAB-Frist",
+    // Gehoert in die Leiste: Abos und Lektionen sind Tagesarbeit, und die
+    // WAB-Frist laeuft, ob jemand hinschaut oder nicht.
     imTab: true,
   },
   {
@@ -87,11 +97,11 @@ export const TAB_EINTRAEGE = ADMIN_NAVIGATION.filter((e) => e.imTab);
 export const MEHR_EINTRAEGE = ADMIN_NAVIGATION.filter((e) => !e.imTab);
 
 /**
- * Navigation des Fahrlehrer-Portals, PLAN.md Abschnitt 7.
+ * Navigation des Fahrlehrer-Portals, PLAN.md Abschnitt 7 und 14.
  *
- * Vier Ziele, also passen alle in die Leiste und es gibt kein "Mehr"-Menue.
- * Die Reihenfolge folgt der Haeufigkeit: den Einsatzplan schaut ein Kursleiter
- * regelmaessig an, sein Profil einmal.
+ * Seit "Meine Schüler" sind es fuenf Ziele, also gilt hier dieselbe Regel wie
+ * im Panel: vier in der Leiste, der Rest hinter "Mehr". Das Profil rutscht
+ * hinaus — das schaut ein Kursleiter einmal an, seine Schueler jede Woche.
  */
 export const PORTAL_NAVIGATION: NavigationsEintrag[] = [
   {
@@ -109,6 +119,13 @@ export const PORTAL_NAVIGATION: NavigationsEintrag[] = [
     imTab: true,
   },
   {
+    href: "/portal/schueler",
+    text: "Meine Schüler",
+    kurz: "Schüler",
+    beschreibung: "Meine Lektionen abhaken und die Prüfung eintragen",
+    imTab: true,
+  },
+  {
     href: "/portal/provisionen",
     text: "Meine Provisionen",
     kurz: "Provision",
@@ -120,11 +137,12 @@ export const PORTAL_NAVIGATION: NavigationsEintrag[] = [
     text: "Profil",
     kurz: "Profil",
     beschreibung: "Angaben und Passwort",
-    imTab: true,
+    imTab: false,
   },
 ];
 
 export const PORTAL_TABS = PORTAL_NAVIGATION.filter((e) => e.imTab);
+export const PORTAL_MEHR = PORTAL_NAVIGATION.filter((e) => !e.imTab);
 
 /**
  * Der aktive Eintrag. Die Startseiten "/admin" und "/portal" duerfen nur bei

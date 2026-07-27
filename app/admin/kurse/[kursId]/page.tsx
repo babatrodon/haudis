@@ -14,7 +14,9 @@ import {
   kursLesen,
 } from "@/lib/admin/kurse";
 import { requireRole } from "@/lib/auth-guard";
+import { prisma } from "@/lib/db";
 import { chf, datum, datumLang } from "@/lib/format";
+import { offeneEinladungenZaehlen } from "@/lib/warteliste";
 import { preisBerechnen } from "@/lib/preis";
 import {
   ampelSchwellenLesen,
@@ -40,9 +42,10 @@ export default async function KursDetailSeite({
   const kurs = await kursLesen(kursId);
   if (!kurs) notFound();
 
-  const [betroffene, schwellen] = await Promise.all([
+  const [betroffene, schwellen, reserviert] = await Promise.all([
     betroffeneBeiAbsage(kursId),
     ampelSchwellenLesen(),
+    offeneEinladungenZaehlen(prisma, kursId),
   ]);
 
   const belegt = kurs._count.bookings;
@@ -50,6 +53,7 @@ export default async function KursDetailSeite({
     kurs.onlineLimit,
     belegt,
     schwellen,
+    reserviert,
   );
   const preis = preisBerechnen(kurs, belegt);
   const abgesagt = kurs.status === "CANCELLED";

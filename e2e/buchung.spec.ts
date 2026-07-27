@@ -99,8 +99,9 @@ test("Anmeldung von den Kursdaten bis zur Bestaetigung", async ({ page }) => {
   await expect(page.getByRole("link", { name: /079 202 97 97/ }).first()).toBeVisible();
 });
 
-test("ausgebuchter Kurs laesst sich nicht anmelden", async ({ page }) => {
-  // Auf den Kursdaten fehlt der Knopf.
+test("ausgebuchter Kurs fuehrt auf die Warteliste", async ({ page }) => {
+  // Geschaeftsregel 2: bei Rot verschwindet der Anmelden-Knopf. Seit Sprint 7
+  // steht an seiner Stelle die Warteliste (Vorlage Zeile 151).
   await page.goto("/kursdaten");
   const ausgebuchteZeile = page
     .locator("article")
@@ -111,7 +112,7 @@ test("ausgebuchter Kurs laesst sich nicht anmelden", async ({ page }) => {
     ausgebuchteZeile.getByRole("link", { name: "Anmelden" }),
   ).toHaveCount(0);
   await expect(
-    ausgebuchteZeile.getByText("Ausgebucht, ruf uns an"),
+    ausgebuchteZeile.getByRole("link", { name: /Auf Warteliste eintragen/ }),
   ).toBeVisible();
 
   // Gegenprobe: ohne sie wuerde die Zaehlung oben auch dann null ergeben, wenn
@@ -124,7 +125,8 @@ test("ausgebuchter Kurs laesst sich nicht anmelden", async ({ page }) => {
       .getByRole("link", { name: "Anmelden" }),
   ).toBeVisible();
 
-  // Und auch der Direktlink fuehrt nicht in ein Formular.
+  // Der Direktlink fuehrt nicht in ein Buchungsformular, sondern auf die
+  // Warteliste.
   await page.goto(`/anmeldung/${KURS_ROT}`);
   await expect(
     page.getByRole("heading", { name: "Dieser Kurs ist ausgebucht" }),
@@ -133,6 +135,19 @@ test("ausgebuchter Kurs laesst sich nicht anmelden", async ({ page }) => {
     page.getByRole("button", { name: "Weiter zu Schritt 2" }),
   ).toHaveCount(0);
   await expect(page.getByRole("link", { name: /079 604 44 44/ }).first()).toBeVisible();
+
+  // Eintragen: danach steht die Position in der Schlange da, und zwar ohne
+  // Behauptung, die Person sei angemeldet.
+  await page.getByLabel(/^Vorname/).fill("Testperson");
+  await page.getByLabel(/^Nachname/).fill("Warteliste");
+  await page.getByLabel(/^Telefon/).fill("079 604 44 44");
+  await page.getByLabel(/^E-Mail/).fill(testEmail("warteliste"));
+  await page.getByRole("button", { name: "Auf Warteliste eintragen" }).click();
+
+  await expect(
+    page.getByRole("heading", { name: "Du stehst auf der Warteliste" }),
+  ).toBeVisible();
+  await expect(page.getByText(/Angemeldet bist Du damit noch nicht/)).toBeVisible();
 });
 
 test("Honigtopf: ausgefuelltes Falle-Feld legt keine Buchung an", async ({

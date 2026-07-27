@@ -66,10 +66,17 @@ export function BuchungBearbeitenDialog({
   buchung,
   kursId,
   instruktoren,
+  naechsteWartende,
 }: {
   buchung: BuchungZeile;
   kursId: string;
   instruktoren: InstruktorAuswahl[];
+  /**
+   * Wer als Naechstes von der Warteliste eingeladen wird, sobald dieser Platz
+   * frei wird. Steht im Dialog, bevor jemand storniert: eine Mail laesst sich
+   * nicht zurueckholen, und Ausilia soll wissen, was sie ausloest.
+   */
+  naechsteWartende?: string;
 }) {
   const [offen, setOffen] = useState(false);
   const [loeschenGefragt, setLoeschenGefragt] = useState(false);
@@ -247,6 +254,12 @@ export function BuchungBearbeitenDialog({
                 ? "Wieder anmelden"
                 : "Stornieren, Platz freigeben"}
             </Button>
+            {buchung.status !== "CANCELLED" && naechsteWartende ? (
+              <p className="mt-2 max-w-[280px] text-sm text-muted-foreground">
+                Danach wird <strong>{naechsteWartende}</strong> von der
+                Warteliste eingeladen.
+              </p>
+            ) : null}
           </form>
 
           {loeschenGefragt ? (

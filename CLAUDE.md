@@ -17,6 +17,7 @@ pnpm dev | pnpm build | pnpm typecheck | pnpm lint
 pnpm db:migrate | pnpm db:seed | pnpm db:verify | pnpm db:studio
 pnpm db:seed:demo | pnpm db:seed:demo:purge
 pnpm test:e2e | pnpm verify:buchung | pnpm verify:kurse | pnpm verify:abrechnung
+pnpm verify:warteliste | pnpm verify:schueler | pnpm verify:breite
 
 `db:migrate` und `db:deploy` hängen `prisma generate` an. Prisma 7 generiert
 nach einer Migration nicht mehr von selbst, und ein veralteter Client fällt erst
@@ -35,6 +36,17 @@ beim Typecheck auf.
 - `pnpm verify:abrechnung` prüft die Provisionsrechnung gegen von Hand
   ausgerechnete Beträge. Die Erwartungswerte stehen als Literale im Skript und
   werden nicht aus derselben Funktion gerechnet, die geprüft wird.
+- `pnpm verify:warteliste` prüft die Warteliste: dass ein reservierter Platz
+  für andere gesperrt ist, dass die Frist ihn von selbst wieder freigibt, dass
+  von acht gleichzeitigen Einlösungen desselben Tokens genau eine durchkommt,
+  und dass eine Kursabsage niemanden einlädt.
+- `pnpm verify:schueler` prüft den Abo-Stand und die WAB-Regel: dass
+  Rückgängig und doppeltes Abhaken den Stand nicht verfälschen, dass von acht
+  gleichzeitigen Zuordnungen auf die letzte offene Lektion genau eine
+  durchkommt, dass ein fremder Fahrlehrer keine Lektion abhaken kann, und dass
+  die Erinnerung erst nach elf Monaten fällig wird.
+- `pnpm verify:breite` lädt jede öffentliche Route in WebKit bei 390 Pixeln und
+  meldet Elemente, die breiter sind als das Fenster.
 - `pnpm db:verify` prüft die Zusicherungen des Seeds, unter anderem
   Geschäftsregel 11.
 
@@ -73,7 +85,8 @@ in der Datenbank steht, muss der Wert einmalig von Hand nachgezogen werden.
 
 - Server Components lesen, Server Actions schreiben, Zod-Validierung in jeder Action
 - Geld als Prisma Decimal, Anzeige de-CH; Datum UTC speichern, Europe/Zurich anzeigen
-- Sprachen: DE (Referenz), EN, IT, SQ via next-intl, Message-Files pro Sprache
+- Website einsprachig Deutsch, kein i18n (Kundenentscheid 27.07.2026). Der
+  Hinweis auf mehrsprachigen Fahrunterricht betrifft die Lektionen, nicht die Website
 - Mobile-first, Admin funktioniert bei 375px und auf iPad (768/1024)
 
 ## Domänenregeln (nie verletzen)
@@ -84,7 +97,10 @@ in der Datenbank steht, muss der Wert einmalig von Hand nachgezogen werden.
 - Ampel: frei>=4 grün, 1-3 gelb, 0 rot + Button weg
 - Frühbucherrabatt: erste N Buchungen pro Kurs
 - Provision: pro zuweisendem Fahrlehrer, Default CHF 50
-- Kein Kunden-Login, Buchung immer als Gast
+- Kein Kunden-Login, Buchung immer als Gast; auch die Schülerkartei ist rein
+  intern, es gibt keine Rolle STUDENT und keinen Zugang für Fahrschüler
+- Warteliste: Benachrichtigung mit Buchungslink, KEIN automatisches Nachrücken
+- Zahlung: nur Bar, bis Payrexx bestätigt ist
 - Fahrlehrer-Zuweisung nur durch Admin, Kunden wählen nie einen Fahrlehrer
 - Kursleiter-Dropdowns zeigen nur Instruktoren-Profile, User sind nie automatisch Instruktoren
 
@@ -197,6 +213,64 @@ in der Datenbank steht, muss der Wert einmalig von Hand nachgezogen werden.
   überall über `basisAus`; der gewählte Endtag zählt einschliesslich,
   und die Grenzen liegen je nach Basis auf Zürcher Mitternacht (`createdAt`)
   oder Mitternacht UTC (`@db.Date`). Beides steht in `zeitfensterAus`.
+- **Warteliste**: eigenes Modell `WaitlistEntry`, keine Buchung mit anderem
+  Status. Ein Wartender hat Name, Telefon und E-Mail, sonst nichts; `Booking`
+  verlangt Adresse, Geburtsdatum und Preis, die wären alle erfunden.
+  `BookingStatus` kennt deshalb nur noch CONFIRMED und CANCELLED.
+- **Reservierter Platz**: wird eine Buchung storniert, geht der älteste
+  wartende Eintrag auf `EINGELADEN` und hält den Platz 48 Stunden
+  (`EINLADUNG_STUNDEN` in [lib/warteliste.ts](lib/warteliste.ts)). Solange die
+  Frist läuft, zählt er wie eine Buchung gegen die Kapazität — sonst nimmt ein
+  beliebiger Besucher den Platz, bevor die eingeladene Person ihre Mail liest.
+  Nach Ablauf wird er von selbst wieder frei: es gibt keinen Aufräum-Job, die
+  Frist wird beim Lesen ausgewertet. Wer an `offeneEinladung` etwas ändert,
+  lässt danach `pnpm verify:warteliste` laufen.
+- **Kursabsage lädt niemanden ein.** Ein abgesagter Kurs hat keinen Platz zu
+  vergeben. Nur das Stornieren einer einzelnen Buchung löst eine Einladung aus,
+  und der Storno-Dialog sagt vorher an, wer benachrichtigt wird.
+- **Mailversand ist sichtbar.** Jede Einladung hält in `mailStatus` fest, was
+  passiert ist: `gesendet`, `protokolliert` oder `fehler`. Ohne
+  `RESEND_API_KEY` steht über der Warteliste ein roter Streifen, dass keine
+  E-Mails rausgehen. Eine eingeladene Person, die nichts davon weiss, ist
+  schlimmer als gar keine Einladung.
+- **Absender, Absendername und Antwortadresse sind Einstellungen**, nicht
+  Konstanten. Resend anzubinden ist damit eine Änderung im Panel plus
+  `RESEND_API_KEY` in der Umgebung, ohne Deploy. Die Antwortadresse bleibt
+  info@haudi.ch, auch wenn der Absender vorübergehend eine fremde Domain ist.
+- **Mailinhalte werden erst gerendert, wenn sie versendet werden.** `senden()`
+  in [lib/mail.ts](lib/mail.ts) nimmt die HTML-Fassung als Funktion. Ohne
+  Schlüssel wird sie nie aufgerufen — der Renderer zieht `react-dom/server`
+  nach, und das lässt sich unter den React-Server-Bedingungen der Prüfskripte
+  nicht laden.
+- **Zahlung**: [lib/zahlung.ts](lib/zahlung.ts) entscheidet anhand von
+  `PAYREXX_API_KEY`, welche Zahlungsarten erscheinen. Ohne Schlüssel nur Bar,
+  also genau das bisherige Bild. Bewusst kein Schalter in den Einstellungen:
+  der würde eine Zahlart einschalten, hinter der keine Anbindung steht.
+- **Schülerkartei** ist ein eigenes Modell ohne User-Bezug. Ein Fahrschüler
+  hat nie Zugang; die Kartei existiert für Ausilia und die Fahrlehrer.
+- **Abo-Stand wird gezählt, nicht geführt.** Verbraucht ist die Anzahl
+  Lektionen mit Status `ABSOLVIERT` auf dem Abo — es gibt kein `lessonsUsed`.
+  Rückgängig korrigiert sich damit von selbst, doppeltes Abhaken zählt nicht
+  doppelt, und der Stand kann nicht von der Wirklichkeit abweichen. Das Zuordnen
+  einer Lektion zu einem Abo läuft unter `SELECT … FOR UPDATE` auf der Abozeile,
+  aus demselben Grund wie die Kapazitätssperre beim Buchen.
+- **Lektionszuweisung nur durch die Admin** (Geschäftsregel 10, auf die Lektion
+  übertragen). Im Portal kann ein Fahrlehrer weder sich selbst noch jemand
+  anderen eintragen — er hakt ab, was ihm zugewiesen wurde, und trägt das
+  Prüfungsdatum ein. Beides serverseitig auf seine eigenen Lektionen begrenzt,
+  nicht bloss durch weggelassene Knöpfe.
+- **WAB-Erinnerung** läuft elf Monate nach der bestandenen Prüfung, einen Monat
+  vor Ablauf der Frist. `wabReminderSentAt` wird gesetzt, sobald der Versuch
+  gelaufen ist, und `wabMailStatus` hält fest, was dabei herauskam. Wer keine
+  E-Mail-Adresse hat, wird NICHT als benachrichtigt geführt und bleibt in der
+  Liste stehen — bei dieser Person muss jemand anrufen.
+- **`/api/cron/wab` verlangt `CRON_SECRET`.** Ohne den Wert antwortet die Route
+  mit 503 statt zu laufen: ein offener Endpunkt liesse jeden einen Massenversand
+  auslösen, und weil jeder Lauf die Betroffenen als erinnert markiert, liefe die
+  Frist danach still weiter.
+- **Kein `lib/schueler.ts` in Client-Komponenten**, aus demselben Grund wie bei
+  `lib/preis.ts`. Beschriftungen und Abo-Grössen stehen in
+  [lib/inhalte/lektionen.ts](lib/inhalte/lektionen.ts).
 - **Einstellungen** speichern gruppenweise und rufen danach
   `revalidatePath("/", "layout")` auf. Jeder Schlüssel muss in genau einer
   Gruppe in [lib/admin/einstellungen-meta.ts](lib/admin/einstellungen-meta.ts)
@@ -248,11 +322,20 @@ Siehe [.env.example](.env.example). `DATABASE_URL` ist die gepoolte Neon-URL
 
 ## Stand
 
-Sprint 0 bis 5 abgeschlossen: Scaffold, Datenmodell, Auth, öffentliche Website,
-die Onlineanmeldung mit Bestätigungsmail, das Admin-Panel (Übersicht, Kurse mit
-Wizard, Buchungen mit Teilnehmerliste, Einsatzplan, Konten, Einstellungen),
-Abrechnung und Accounting sowie das Fahrlehrer-Portal. Offen für den Versand:
-ein `RESEND_API_KEY` und die verifizierte Domain haudi.ch.
+Sprint 0 bis 8 abgeschlossen: Scaffold, Datenmodell, Auth, öffentliche Website
+nach der Designvorlage, die Onlineanmeldung mit Bestätigungsmail, das
+Admin-Panel (Übersicht, Kurse mit Wizard, Buchungen mit Teilnehmerliste,
+Einsatzplan, Konten, Einstellungen), Abrechnung und Accounting, das
+Fahrlehrer-Portal, die Warteliste mit reserviertem Platz sowie die
+Schülerkartei mit Abos, Lektionen und der WAB-Erinnerung.
+
+Offen für den Versand: ein `RESEND_API_KEY` und die verifizierte Domain
+haudi.ch. Bis dahin ist die Warteliste vollständig, aber jede Einladung wird
+nur protokolliert — das Panel sagt das bei jedem Eintrag.
+
+Offen für die Online-Zahlung: `PAYREXX_API_KEY` und die Bestätigung der Kundin.
+Der Schalter steht, die Anbindung selbst (Webhook, Zahlstatus im Admin,
+Erstattung bei Kursabsage) ist ein eigener Durchgang.
 
 Offen gegenüber PLAN.md, mit Ausilia zu klären:
 

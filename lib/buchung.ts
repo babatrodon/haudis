@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/db";
 import { Decimal } from "@/lib/decimal";
 import { preisBerechnen } from "@/lib/preis";
+import { offeneEinladung, offeneEinladungenZaehlen } from "@/lib/warteliste";
 import type { BuchungEingabe } from "@/lib/buchung-schema";
 
 /**
@@ -58,6 +59,14 @@ export type BuchungOptionen = {
   referredById?: string | null;
   /** Wird am Telefon oft gleich mitdiktiert. */
   lfaNummer?: string;
+  /**
+   * Einladung von der Warteliste.
+   *
+   * Ein gueltiger Token nimmt genau den Platz, den die Einladung reserviert
+   * hat. Ohne ihn waere der Kurs fuer diese Person ausgebucht — er ist es ja
+   * auch, der reservierte Platz zaehlt fuer alle anderen als belegt.
+   */
+  einladungsToken?: string;
 };
 
 /**
@@ -134,10 +143,35 @@ export async function buchungAnlegen(
       }
     }
 
+    // Einladung von der Warteliste, falls eine mitgegeben wurde. Innerhalb der
+    // Sperre gelesen, damit sie nicht zwischen Pruefen und Buchen von einem
+    // zweiten Aufruf verbraucht werden kann.
+    const jetzt = new Date();
+    const einladung = optionen.einladungsToken
+      ? await tx.waitlistEntry.findFirst({
+          where: {
+            token: optionen.einladungsToken,
+            courseId: kursId,
+            ...offeneEinladung(jetzt),
+          },
+          select: { id: true },
+        })
+      : null;
+
+    /**
+     * Kapazitaet.
+     *
+     * Reservierte Plaetze zaehlen wie Buchungen. Die eigene Einladung zaehlt
+     * nicht gegen einen selbst: sie ist genau der Platz, der hier eingeloest
+     * wird. Ohne diesen Abzug koennte die eingeladene Person ihren eigenen
+     * reservierten Platz nicht nehmen.
+     */
     const belegt = await tx.booking.count({
       where: { courseId: kursId, status: "CONFIRMED" },
     });
-    if (belegt >= kurs.onlineLimit) {
+    const reserviert = await offeneEinladungenZaehlen(tx, kursId, jetzt);
+    const eigene = einladung ? 1 : 0;
+    if (belegt + reserviert - eigene >= kurs.onlineLimit) {
       return { erfolg: false, fehler: "ausgebucht" };
     }
 
@@ -191,6 +225,16 @@ export async function buchungAnlegen(
       },
       select: { id: true },
     });
+
+    // Die Einladung ist eingeloest. Der Eintrag bleibt stehen, mit Verweis auf
+    // die Buchung: er ist der Beleg dafuer, dass die Person auf der Liste
+    // stand und den Platz bekommen hat.
+    if (einladung) {
+      await tx.waitlistEntry.update({
+        where: { id: einladung.id },
+        data: { status: "GEBUCHT", bookingId: buchung.id },
+      });
+    }
 
     return {
       erfolg: true,

@@ -8,9 +8,14 @@ import {
   buchungErgaenzen,
   buchungLesen,
 } from "@/lib/buchung";
-import { buchungSchema, ergaenzungSchema } from "@/lib/buchung-schema";
+import {
+  buchungSchema,
+  ergaenzungSchema,
+  wartelisteSchema,
+} from "@/lib/buchung-schema";
 import { bestaetigungSenden, interneBenachrichtigungSenden } from "@/lib/mail";
 import { ipAusHeadern, rateLimit } from "@/lib/rate-limit";
+import { wartelisteEintragen } from "@/lib/warteliste";
 
 /**
  * Server Actions des Buchungsablaufs.
@@ -70,7 +75,10 @@ export async function anmeldenAktion(
     redirect(`/anmeldung/${kursId}/bestaetigung`);
   }
 
-  const ergebnis = await buchungAnlegen(kursId, geprueft.data);
+  const einladungsToken = String(formular.get("einladungsToken") ?? "").trim();
+  const ergebnis = await buchungAnlegen(kursId, geprueft.data, {
+    einladungsToken: einladungsToken || undefined,
+  });
 
   if (!ergebnis.erfolg) {
     const meldungen: Record<typeof ergebnis.fehler, string> = {
@@ -150,4 +158,69 @@ export async function ergaenzenAktion(
   });
 
   redirect(`/anmeldung/${kursId}/bestaetigung`);
+}
+
+export type WartelisteErgebnis =
+  | { fehler: string }
+  | { erfolg: true; position: number }
+  | null;
+
+/**
+ * Eintragen auf die Warteliste eines ausgebuchten Kurses.
+ *
+ * Kein Redirect, anders als bei der Anmeldung: es entsteht keine Buchung, auf
+ * deren Bestaetigungsseite man weiterleiten koennte. Die Rueckmeldung steht
+ * an Ort und Stelle, mit der Position in der Schlange — die ist das Einzige,
+ * was die Person jetzt wissen will.
+ */
+export async function wartelisteEintragenAktion(
+  _bisher: WartelisteErgebnis,
+  formular: FormData,
+): Promise<WartelisteErgebnis> {
+  const kursId = String(formular.get("kursId") ?? "");
+  if (!kursId) {
+    return { fehler: "Kurs nicht gefunden." };
+  }
+
+  const kopfzeilen = await headers();
+  const grenze = rateLimit(`warteliste:${ipAusHeadern(kopfzeilen)}`, LIMIT);
+  if (!grenze.erlaubt) {
+    return {
+      fehler:
+        "Zu viele Versuche in kurzer Zeit. Bitte warte einen Moment oder ruf uns an.",
+    };
+  }
+
+  const geprueft = wartelisteSchema.safeParse({
+    vorname: formular.get("vorname"),
+    nachname: formular.get("nachname"),
+    telefon: formular.get("telefon"),
+    email: formular.get("email"),
+    webseite: formular.get("webseite") ?? "",
+  });
+
+  if (!geprueft.success) {
+    return { fehler: geprueft.error.issues[0].message };
+  }
+
+  // Honigtopf wie bei der Anmeldung: nach aussen Erfolg, ohne zu schreiben.
+  if (geprueft.data.webseite) {
+    return { erfolg: true, position: 1 };
+  }
+
+  const ergebnis = await wartelisteEintragen(kursId, geprueft.data);
+
+  if (!ergebnis.erfolg) {
+    const meldungen: Record<typeof ergebnis.fehler, string> = {
+      "kurs-nicht-buchbar":
+        "Dieser Kurs nimmt keine Anmeldungen mehr entgegen. Ruf uns an, wir finden einen Platz.",
+      "noch-plaetze-frei":
+        "Gute Nachricht: es ist wieder ein Platz frei. Lade die Seite neu, dann kannst Du Dich direkt anmelden.",
+      "schon-eingetragen":
+        "Du stehst mit dieser E-Mail-Adresse bereits auf der Warteliste. Wir melden uns, sobald ein Platz frei wird.",
+    };
+    return { fehler: meldungen[ergebnis.fehler] };
+  }
+
+  return { erfolg: true, position: ergebnis.position };
 }

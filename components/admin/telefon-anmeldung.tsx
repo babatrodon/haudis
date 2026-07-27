@@ -47,12 +47,26 @@ export function TelefonAnmeldung({
   instruktoren,
   kursId,
   variante = "default",
+  beschriftung,
+  vorbelegung,
 }: {
   kurse: KursAuswahl[];
   instruktoren: InstruktorAuswahl[];
   /** Auf der Kursseite steht der Kurs schon fest. */
   kursId?: string;
   variante?: "default" | "outline";
+  /** Abweichender Text auf dem Knopf, etwa beim Umwandeln eines Wartenden. */
+  beschriftung?: string;
+  /**
+   * Bekanntes aus einem Wartelisten-Eintrag. Adresse und Geburtsdatum stehen
+   * dort nicht — die fragt Ausilia am Telefon ab, statt sie zu erfinden.
+   */
+  vorbelegung?: {
+    vorname?: string;
+    nachname?: string;
+    telefon?: string;
+    email?: string;
+  };
 }) {
   const [offen, setOffen] = useState(false);
   const [ergebnis, absenden, laeuft] = useActionState<
@@ -67,7 +81,7 @@ export function TelefonAnmeldung({
       <DialogTrigger asChild>
         <Button variant={variante}>
           <PhoneIncoming aria-hidden="true" className="size-4" />
-          Telefonische Anmeldung
+          {beschriftung ?? "Telefonische Anmeldung"}
         </Button>
       </DialogTrigger>
 
@@ -140,8 +154,18 @@ export function TelefonAnmeldung({
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Feld name="nachname" label="Nachname" autoComplete="off" />
-            <Feld name="vorname" label="Vorname" autoComplete="off" />
+            <Feld
+              name="nachname"
+              label="Nachname"
+              autoComplete="off"
+              defaultValue={vorbelegung?.nachname}
+            />
+            <Feld
+              name="vorname"
+              label="Vorname"
+              autoComplete="off"
+              defaultValue={vorbelegung?.vorname}
+            />
           </div>
 
           <Feld name="strasse" label="Strasse und Nummer" autoComplete="off" />
@@ -151,7 +175,13 @@ export function TelefonAnmeldung({
             <Feld name="ort" label="Ort" autoComplete="off" />
           </div>
 
-          <Feld name="telefon" label="Telefon" type="tel" autoComplete="off" />
+          <Feld
+            name="telefon"
+            label="Telefon"
+            type="tel"
+            autoComplete="off"
+            defaultValue={vorbelegung?.telefon}
+          />
           {/* Freiwillig: nicht jede Person am Telefon hat eine Adresse, und
               eine erfundene waere schlimmer als keine. */}
           <Feld
@@ -160,6 +190,7 @@ export function TelefonAnmeldung({
             type="email"
             required={false}
             autoComplete="off"
+            defaultValue={vorbelegung?.email}
           />
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

@@ -25,12 +25,15 @@ export function BuchungKarte({
   kursId,
   kursName,
   instruktoren,
+  naechsteWartende,
 }: {
   buchung: BuchungZeile;
   nummer: number;
   kursId: string;
   kursName: string;
   instruktoren: InstruktorAuswahl[];
+  /** Wer beim Stornieren dieses Platzes eingeladen wird. */
+  naechsteWartende?: string;
 }) {
   const storniert = buchung.status === "CANCELLED";
   const telefonisch = buchung.quelle === "PHONE";
@@ -176,6 +179,7 @@ export function BuchungKarte({
           buchung={buchung}
           kursId={kursId}
           instruktoren={instruktoren}
+          naechsteWartende={naechsteWartende}
         />
       </div>
     </div>

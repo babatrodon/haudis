@@ -1,5 +1,6 @@
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "@/lib/generated/prisma/client";
+import type * as PrismaNamespace from "@/lib/generated/prisma/internal/prismaNamespace";
 
 /**
  * Einziger Zugang zur Datenbank.
@@ -37,6 +38,16 @@ if (process.env.NODE_ENV !== "production") {
 export type { Role } from "@/lib/generated/prisma/enums";
 
 export { Prisma } from "@/lib/generated/prisma/client";
+
+/**
+ * Der Client innerhalb einer Transaktion.
+ *
+ * Wird gebraucht, sobald ein Helfer sowohl direkt als auch innerhalb eines
+ * `$transaction`-Blocks laufen soll — zum Beispiel das Einladen der naechsten
+ * Person von der Warteliste, das unter derselben Kurssperre laufen muss wie
+ * das Stornieren.
+ */
+export type PrismaTx = PrismaNamespace.TransactionClient;
 
 /** Decimal liegt in lib/decimal.ts, damit reine Rechenmodule ohne Verbindung auskommen. */
 export { Decimal } from "@/lib/decimal";

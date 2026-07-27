@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { preisBerechnen, fruehbucherPlaetzeFrei } from "@/lib/preis";
+import { offeneEinladungenProKurs } from "@/lib/warteliste";
 import {
   ampelSchwellenLesen,
   verfuegbarkeitBerechnen,
@@ -136,6 +137,9 @@ export async function kommendeKurse({
   });
 
   const schwellen = await ampelSchwellenLesen();
+  // Reservierte Plaetze aus offenen Wartelisten-Einladungen. Ein Aufruf fuer
+  // alle Kurse statt einer pro Karte.
+  const reserviert = await offeneEinladungenProKurs(kurse.map((k) => k.id));
 
   const aufbereitet = kurse
     .map((kurs) => {
@@ -172,6 +176,7 @@ export async function kommendeKurse({
           kurs.onlineLimit,
           belegt,
           schwellen,
+          reserviert.get(kurs.id) ?? 0,
         ),
       };
     })

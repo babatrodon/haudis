@@ -394,7 +394,26 @@ pnpm dev | pnpm build | pnpm prisma migrate dev | pnpm prisma db seed | pnpm tes
 ## 11. Launch-Checkliste
 
 - [ ] AGB, Datenschutzerklärung (revDSG: Auftragsverarbeiter Vercel/Neon/Resend/ASPSMS aufführen, Aufbewahrung von Buchungsdaten definieren, z.B. Anonymisierung nach 3 Jahren), Impressum
-- [ ] SPF/DKIM/DMARC für Versand ab haudi.ch, Testmail an Gmail/Outlook/Bluewin
+- [ ] **Mailversand scharf schalten**, in dieser Reihenfolge:
+  1. Resend-Konto anlegen, API-Key erzeugen
+  2. haudi.ch bei Resend als Domain hinterlegen und verifizieren
+  3. Beim Domainanbieter SPF, DKIM und DMARC eintragen (die Werte kommen von
+     Resend), Propagation abwarten
+  4. `RESEND_API_KEY` in der Umgebung setzen — der einzige Schritt, der einen
+     Deploy braucht
+  5. Im Admin-Panel unter Einstellungen → Benachrichtigungen den Absender auf
+     eine Adresse bei haudi.ch setzen; Antwortadresse bleibt info@haudi.ch
+  6. Eine echte Testbuchung durchführen und die Bestätigung an Gmail, Outlook
+     und Bluewin prüfen (Zustellung, Absendername, Antwortadresse, kein Spam)
+  7. Erst danach die DNS umstellen
+
+  Absender, Absendername und Antwortadresse sind Einstellungen, kein Code.
+  Schritt 5 und 6 sind ohne Deploy wiederholbar, falls die Zustellung klemmt.
+- [ ] `CRON_SECRET` in der Umgebung setzen. Ohne diesen Wert antwortet
+  `/api/cron/wab` mit 503 und der monatliche Lauf der WAB-Erinnerung findet
+  nicht statt — still, denn ein nicht laufender Cron meldet sich nicht. Nach
+  dem Setzen einmal von Hand auslösen (Admin → Schüler → „Erinnerungen jetzt
+  verschicken") und prüfen, dass die Vermerke auf „gesendet" stehen.
 - [ ] Altes haudi.ch crawlen, 301-Redirect-Map für indexierte URLs
 - [ ] Google Business Profile aktualisieren (neue Site, Fotos, Buchungslink)
 - [ ] schema.org DrivingSchool + LocalBusiness, OG-Images, Favicons

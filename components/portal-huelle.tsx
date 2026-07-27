@@ -1,7 +1,11 @@
 import type { ReactNode } from "react";
 import { Seitenleiste } from "@/components/admin/seitenleiste";
 import { TabLeiste } from "@/components/admin/tab-leiste";
-import { PORTAL_NAVIGATION, PORTAL_TABS } from "@/lib/admin/navigation";
+import {
+  PORTAL_MEHR,
+  PORTAL_NAVIGATION,
+  PORTAL_TABS,
+} from "@/lib/admin/navigation";
 import type { AngemeldeterBenutzer } from "@/lib/auth";
 
 /**
@@ -47,7 +51,7 @@ export function PortalHuelle({
         </main>
       </div>
 
-      <TabLeiste benutzer={benutzer} tabs={PORTAL_TABS} mehr={[]} />
+      <TabLeiste benutzer={benutzer} tabs={PORTAL_TABS} mehr={PORTAL_MEHR} />
     </div>
   );
 }

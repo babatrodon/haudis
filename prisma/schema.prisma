@@ -45,12 +45,28 @@ enum BookingSource {
   INSTRUCTOR
 }
 
-/// WAITLIST ist bereits vorgesehen (PLAN.md Abschnitt 14), der Flow kommt in
-/// Sprint 7. Bis dahin entstehen ausschliesslich CONFIRMED-Buchungen.
+/// Eine Buchung ist bestaetigt oder storniert, mehr gibt es nicht.
+///
+/// Frueher stand hier zusaetzlich WAITLIST. Die Warteliste ist seit Sprint 7
+/// ein eigenes Modell: ein Wartender hat weder Adresse noch Geburtsdatum noch
+/// einen Preis, und Booking verlangt alle drei. Der Enum-Wert haette nur dazu
+/// eingeladen, diese Felder mit erfundenen Werten zu fuellen.
 enum BookingStatus {
   CONFIRMED
   CANCELLED
-  WAITLIST
+}
+
+/// Wartelisten-Eintrag, Lebenslauf von links nach rechts.
+///
+/// Kundenentscheid 26.07.2026: Benachrichtigung mit Buchungslink, KEIN
+/// automatisches Nachruecken. Die Person entscheidet selbst, ob sie den Platz
+/// nimmt — deshalb gibt es EINGELADEN als eigenen Zustand und nicht nur
+/// "gebucht oder nicht".
+enum WaitlistStatus {
+  WARTET
+  EINGELADEN
+  GEBUCHT
+  ENTFERNT
 }
 
 /// Welle 2: Online-Zahlung ueber Payrexx. Bar bleibt immer waehlbar.
@@ -167,6 +183,7 @@ model Instructor {
   updatedAt           DateTime        @updatedAt
   sessions            CourseSession[]
   referredBookings    Booking[]
+  lessons             Lesson[]
 
   @@index([active, lastName])
   @@map("instructor")
@@ -231,6 +248,7 @@ model Course {
   updatedAt         DateTime        @updatedAt
   sessions          CourseSession[]
   bookings          Booking[]
+  waitlist          WaitlistEntry[]
 
   @@index([status, courseTypeId])
   @@map("course")
@@ -322,6 +340,198 @@ model Booking {
   @@index([lastName])
   @@index([phone])
   @@map("booking")
+}
+
+/// Ein Platz auf der Warteliste eines ausgebuchten Kurses.
+///
+/// Bewusst ein eigenes Modell und keine Buchung mit anderem Status: wer sich
+/// eintraegt, gibt Name, Telefon und E-Mail an, sonst nichts. Booking verlangt
+/// Strasse, PLZ, Ort, Geburtsdatum und priceCharged; die muessten alle erfunden
+/// werden. Kein Konto, wie ueberall (Geschaeftsregel 9).
+///
+/// Wird ein Platz frei, geht der aelteste wartende Eintrag auf EINGELADEN und
+/// haelt den Platz bis invitedUntil. Bis dahin zaehlt er wie eine Buchung gegen
+/// die Kapazitaet — sonst waere die Einladung ein Versprechen, das ein
+/// beliebiger Besucher der Website einloesen kann, bevor die eingeladene Person
+/// ihre Mail liest. Nach Ablauf zaehlt er nicht mehr, ohne dass jemand
+/// aufraeumen muesste: die Frist wird beim Lesen ausgewertet.
+model WaitlistEntry {
+  id        String  @id @default(cuid())
+  courseId  String
+  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  firstName String
+  lastName  String
+  phone     String
+  /// Anders als bei Booking Pflicht: der ganze Zweck ist die Benachrichtigung.
+  email     String
+
+  status WaitlistStatus @default(WARTET)
+
+  /// Einladungslink. Einmalig, deshalb unique; null, solange nicht eingeladen.
+  token        String?   @unique
+  invitedAt    DateTime?
+  /// Bis wann der Platz reserviert ist.
+  invitedUntil DateTime?
+
+  /// Gesetzt, sobald aus dem Eintrag eine Buchung wurde. Keine Relation:
+  /// wird die Buchung spaeter geloescht, soll der Eintrag nicht mitgehen — er
+  /// ist der Beleg dafuer, dass die Person je auf der Liste stand.
+  bookingId String?
+
+  /// Was beim Verschicken der Einladung tatsaechlich passiert ist.
+  ///
+  /// Ohne RESEND_API_KEY wird nur protokolliert. Ohne diese beiden Felder
+  /// stuende im Panel eine eingeladene Person, von der niemand weiss, dass sie
+  /// nie eine Mail bekommen hat. Werte: "gesendet", "protokolliert", "fehler".
+  mailStatus String?
+  mailGrund  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// Traegt die Reihenfolge der Warteschlange und das Zaehlen offener
+  /// Einladungen fuer die Kapazitaet.
+  @@index([courseId, status, createdAt])
+  @@map("waitlist_entry")
+}
+
+/// Fahrzeugkategorie einer Lektion, PLAN.md Abschnitt 14.
+/// Dieselben Kategorien wie die Preisliste in lib/fahrstunden.ts.
+enum LessonCategory {
+  AUTO
+  TAXI
+  MOTORRAD
+  LKW
+  ANHAENGER_BE
+}
+
+/// Lebenslauf einer Lektion.
+///
+/// Nur ABSOLVIERT verbraucht eine Lektion aus dem Abo. STORNIERT und NO_SHOW
+/// unterscheiden sich fuer die Fahrschule: abgesagt heisst rechtzeitig
+/// abgemeldet, nicht erschienen heisst der Fahrlehrer stand da. Was daraus
+/// abrechnungsseitig folgt, entscheidet Ausilia von Fall zu Fall — deshalb
+/// zaehlt hier keines von beiden automatisch.
+enum LessonStatus {
+  GEPLANT
+  ABSOLVIERT
+  STORNIERT
+  NO_SHOW
+}
+
+/// Interne Schuelerkartei (PLAN.md Abschnitt 14).
+///
+/// KEIN Login, KEIN User-Bezug, keine Rolle STUDENT. Kundenentscheid vom
+/// 26.07.2026: Fahrschueler buchen als Gast und sehen sonst nichts. Das hier
+/// ist ein Werkzeug fuer Ausilia und die Fahrlehrer, damit jemand weiss, wer
+/// welches Abo hat und wann die Pruefung war.
+///
+/// Bewusst getrennt von Booking: eine Kursanmeldung ist ein einzelnes
+/// Ereignis, ein Fahrschueler eine Person ueber Monate. Wer einen VKU bucht,
+/// nimmt nicht zwingend Fahrstunden, und wer Fahrstunden nimmt, hat vielleicht
+/// nie online gebucht.
+model StudentRecord {
+  id        String  @id @default(cuid())
+  firstName String
+  lastName  String
+  phone     String
+  /// Ohne Adresse keine WAB-Erinnerung. Wie bei Booking kein Pflichtfeld: am
+  /// Schalter gibt es Leute ohne E-Mail, und eine erfundene waere schlimmer.
+  email     String?
+  notes     String? @db.Text
+
+  /// Bestandene praktische Pruefung. Basis der WAB-Frist: der Kurs muss
+  /// innerhalb von zwoelf Monaten danach absolviert sein.
+  practicalExamPassedAt DateTime? @db.Date
+
+  /// Wann der Erinnerungsversuch gelaufen ist. Verhindert den Doppelversand.
+  /// Gesetzt wird es auch dann, wenn nur protokolliert wurde — was wirklich
+  /// passiert ist, steht daneben.
+  wabReminderSentAt DateTime?
+  /// "gesendet", "protokolliert" oder "fehler", wie bei WaitlistEntry.
+  wabMailStatus     String?
+  wabMailGrund      String?
+
+  packages  LessonPackage[]
+  lessons   Lesson[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@index([lastName])
+  @@index([phone])
+  /// Traegt den monatlichen Lauf der WAB-Erinnerung.
+  @@index([practicalExamPassedAt, wabReminderSentAt])
+  @@map("student_record")
+}
+
+/// Ein gekauftes Lektionspaket, PLAN.md Abschnitt 5: einzeln, 5er oder 10er.
+///
+/// Wie viele Lektionen verbraucht sind, steht NICHT hier. Verbraucht ist, was
+/// an Lektionen mit Status ABSOLVIERT auf diesem Abo haengt. Ein mitgefuehrter
+/// Zaehler muesste bei jedem Statuswechsel richtig nachgezogen werden, und
+/// weicht er einmal ab, faellt es niemandem auf.
+model LessonPackage {
+  id        String        @id @default(cuid())
+  studentId String
+  student   StudentRecord @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  category LessonCategory
+  /// 1, 5 oder 10 Lektionen.
+  size     Int
+
+  /// Preis pro Lektion zum Zeitpunkt des Verkaufs, dieselbe Idee wie
+  /// priceCharged auf der Buchung: aendert Ausilia spaeter die Preisliste,
+  /// bleibt ein verkauftes Abo, was es war.
+  pricePerLesson Decimal @db.Decimal(8, 2)
+
+  paymentMethod PaymentMethod @default(BAR)
+  paymentStatus PaymentStatus @default(OFFEN)
+  paidAt        DateTime?
+
+  lessons   Lesson[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studentId, createdAt])
+  @@map("lesson_package")
+}
+
+/// Eine Fahrlektion.
+///
+/// Die Zuweisung des Fahrlehrers macht ausschliesslich die Admin
+/// (Geschaeftsregel 10, hier auf die Lektion uebertragen). Kunden waehlen nie
+/// einen Fahrlehrer, und im Portal kann ein Fahrlehrer weder sich selbst noch
+/// jemand anderen eintragen — er hakt ab, was ihm zugewiesen wurde.
+model Lesson {
+  id        String        @id @default(cuid())
+  studentId String
+  student   StudentRecord @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  instructorId String
+  instructor   Instructor @relation(fields: [instructorId], references: [id], onDelete: Restrict)
+
+  category    LessonCategory
+  date        DateTime       @db.Date
+  startTime   String
+  durationMin Int            @default(45)
+  /// Wo abgeholt wird, wenn nicht an der Haselstrasse.
+  pickupNote  String?
+  status      LessonStatus   @default(GEPLANT)
+
+  /// Ohne Abo ist erlaubt und normal: die Probelektion ist gratis, und nicht
+  /// jede Stunde laeuft ueber ein Paket.
+  packageId String?
+  package   LessonPackage? @relation(fields: [packageId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studentId, date])
+  /// Traegt "Meine Schueler" im Portal und die Tagesliste.
+  @@index([instructorId, date])
+  /// Traegt den Abo-Stand.
+  @@index([packageId, status])
+  @@map("lesson")
 }
 
 /// Schluessel-Wert-Speicher fuer die Einstellungen (PLAN.md Abschnitt 6.8).

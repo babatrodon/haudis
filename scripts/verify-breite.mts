@@ -64,15 +64,18 @@ async function main() {
   });
   const seite = await kontext.newPage();
 
-  // Eine Kurs-ID fuer den Buchungsablauf holen.
-  const kursAntwort = await kontext.request.get(`${BASIS}/kursdaten`);
-  const kursId =
-    (await kursAntwort.text()).match(/\/anmeldung\/([a-z0-9-]+)/)?.[1] ?? null;
-  const routen = kursId
-    ? [...ROUTEN, `/anmeldung/${kursId}`]
-    : ROUTEN;
-  if (!kursId) {
-    console.log("  Hinweis: kein buchbarer Kurs gefunden, Anmeldung übersprungen.");
+  // Je eine Kurs-ID fuer den Buchungsablauf und fuer die Warteliste. Beide
+  // Ansichten leben unter derselben Adresse und sehen voellig verschieden aus,
+  // also muessen beide geprueft werden.
+  const kursSeite = await (await kontext.request.get(`${BASIS}/kursdaten`)).text();
+  const kursIds = [
+    ...new Set(
+      [...kursSeite.matchAll(/\/anmeldung\/([a-z0-9-]+)/g)].map((t) => t[1]),
+    ),
+  ];
+  const routen = [...ROUTEN, ...kursIds.map((id) => `/anmeldung/${id}`)];
+  if (kursIds.length === 0) {
+    console.log("  Hinweis: kein Kurs gefunden, Anmeldung übersprungen.");
   }
 
   for (const route of routen) {

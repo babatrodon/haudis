@@ -6,6 +6,7 @@ import {
   verfuegbarkeitBerechnen,
   type Verfuegbarkeit,
 } from "@/lib/verfuegbarkeit";
+import { offeneEinladungenProKurs } from "@/lib/warteliste";
 import {
   dieseWoche,
   dieserMonatKalender,
@@ -98,6 +99,7 @@ export async function fuellstaende(): Promise<Fuellstand[]> {
   });
 
   const schwellen = await ampelSchwellenLesen();
+  const reserviert = await offeneEinladungenProKurs(kurse.map((k) => k.id));
 
   return kurse
     .map((kurs) => ({
@@ -110,6 +112,7 @@ export async function fuellstaende(): Promise<Fuellstand[]> {
         kurs.onlineLimit,
         kurs._count.bookings,
         schwellen,
+        reserviert.get(kurs.id) ?? 0,
       ),
       entwurf: kurs.status === "DRAFT",
     }))

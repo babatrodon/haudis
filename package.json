@@ -20,6 +20,8 @@
     "test:e2e:ui": "playwright test --ui",
     "verify:buchung": "cross-env NODE_OPTIONS=--conditions=react-server tsx prisma/verify-buchung.ts",
     "verify:kurse": "cross-env NODE_OPTIONS=--conditions=react-server tsx prisma/verify-kurse.ts",
+    "verify:warteliste": "cross-env NODE_OPTIONS=--conditions=react-server tsx prisma/verify-warteliste.ts",
+    "verify:schueler": "cross-env NODE_OPTIONS=--conditions=react-server tsx prisma/verify-schueler.ts",
     "verify:abrechnung": "cross-env NODE_OPTIONS=--conditions=react-server tsx prisma/verify-abrechnung.ts",
     "verify:breite": "tsx scripts/verify-breite.mts"
   },

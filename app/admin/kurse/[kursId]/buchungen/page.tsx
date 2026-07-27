@@ -4,8 +4,10 @@ import { CalendarDays, Download, Printer } from "lucide-react";
 import { SeitenKopf } from "@/components/admin/admin-huelle";
 import { BuchungKarte } from "@/components/admin/buchung-karte";
 import { TelefonAnmeldung } from "@/components/admin/telefon-anmeldung";
+import { WartelisteAbschnitt } from "@/components/admin/warteliste-abschnitt";
 import { Button } from "@/components/ui/button";
 import { buchungenFuerKurs, kursKopfLesen } from "@/lib/admin/buchungen";
+import { wartelisteFuerKurs } from "@/lib/admin/warteliste";
 import { requireRole } from "@/lib/auth-guard";
 import { datumLang } from "@/lib/format";
 import { aktiveInstruktoren } from "@/lib/instruktoren";
@@ -26,13 +28,23 @@ export default async function KursBuchungenSeite({
   await requireRole("ADMIN");
   const { kursId } = await params;
 
-  const [kurs, daten, instruktoren] = await Promise.all([
+  const [kurs, daten, instruktoren, warteliste] = await Promise.all([
     kursKopfLesen(kursId),
     buchungenFuerKurs(kursId),
     aktiveInstruktoren(),
+    wartelisteFuerKurs(kursId),
   ]);
 
   if (!kurs) notFound();
+
+  // Wer als Naechstes drankommt, sobald ein Platz frei wird. Steht im
+  // Storno-Dialog, damit niemand aus Versehen eine Mail ausloest.
+  const naechsteWartende = warteliste.zeilen.find(
+    (zeile) => zeile.status === "WARTET",
+  );
+  const naechsterName = naechsteWartende
+    ? `${naechsteWartende.nachname} ${naechsteWartende.vorname}`
+    : undefined;
 
   const bestaetigt = daten.zeilen.filter(
     (buchung) => buchung.status === "CONFIRMED",
@@ -140,7 +152,7 @@ export default async function KursBuchungenSeite({
             eine dritte Quelle, und sie unterscheidet sich in dem, was zaehlt —
             eine Anmeldung ueber einen Kursleiter loest eine Bestaetigung aus,
             eine telefonische nicht. */}
-        <div className="grid grid-cols-2 divide-flaeche-3 sm:grid-cols-4 sm:divide-x">
+        <div className="grid grid-cols-2 divide-flaeche-3 sm:grid-cols-5 sm:divide-x">
           <Zaehler titel="Online" wert={daten.zaehler.online} />
           <Zaehler titel="Telefonisch" wert={daten.zaehler.telefon} />
           <Zaehler titel="Fahrlehrer" wert={daten.zaehler.fahrlehrer} />
@@ -148,6 +160,17 @@ export default async function KursBuchungenSeite({
             titel="Total"
             wert={daten.zaehler.total}
             zusatz={`von ${kurs.onlineLimit}`}
+          />
+          {/* Vorlage Screen 07: die Warteliste steht als eigene Kennzahl im
+              Kopf, nicht erst unten in der Liste. */}
+          <Zaehler
+            titel="Warteliste"
+            wert={warteliste.offen}
+            zusatz={
+              warteliste.reserviert > 0
+                ? `${warteliste.reserviert} reserviert`
+                : undefined
+            }
           />
         </div>
 
@@ -186,6 +209,7 @@ export default async function KursBuchungenSeite({
                 kursId={kurs.id}
                 kursName={kurs.courseType.name}
                 instruktoren={instruktoren}
+                naechsteWartende={naechsterName}
               />
             </li>
           ))}
@@ -215,6 +239,14 @@ export default async function KursBuchungenSeite({
           </ul>
         </section>
       ) : null}
+
+      <WartelisteAbschnitt
+        kursId={kurs.id}
+        zeilen={warteliste.zeilen}
+        reserviert={warteliste.reserviert}
+        versandAktiv={Boolean(process.env.RESEND_API_KEY)}
+        instruktoren={instruktoren}
+      />
 
       {daten.zeilen.length > 0 ? (
         <div className="mt-8 flex flex-wrap gap-2 border-t border-flaeche-3 pt-6">

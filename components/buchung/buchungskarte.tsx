@@ -1,4 +1,6 @@
 import { chf } from "@/lib/format";
+import { cn } from "@/lib/utils";
+import { ZAHLUNGSART_TEXT, zahlungsartenVerfuegbar } from "@/lib/zahlung";
 import type { Decimal } from "@/lib/decimal";
 
 /**
@@ -83,16 +85,32 @@ function Zeile({ bezeichnung, wert }: { bezeichnung: string; wert: string }) {
  * Abschnitt 14, Welle 2).
  */
 export function Zahlungsarten() {
+  const arten = zahlungsartenVerfuegbar();
+
   return (
     <div>
       <p className="mb-2.5 text-sm font-semibold lg:mb-3">Zahlungsart</p>
       <ul className="flex flex-col gap-2 lg:gap-2.5">
-        <li className="flex min-h-12 items-center border border-brand-schwarz bg-brand-gelb px-3.5 py-3 font-semibold text-brand-schwarz lg:px-4">
-          Bar am ersten Kurstag
-        </li>
+        {arten.map((art, index) => (
+          <li
+            key={art}
+            className={cn(
+              "flex min-h-12 items-center border px-3.5 py-3 font-semibold lg:px-4",
+              // Die erste ist die gewaehlte. Solange nur Bar dasteht, ist das
+              // dieselbe Darstellung wie bisher.
+              index === 0
+                ? "border-brand-schwarz bg-brand-gelb text-brand-schwarz"
+                : "border-linie-stark bg-card",
+            )}
+          >
+            {ZAHLUNGSART_TEXT[art]}
+          </li>
+        ))}
       </ul>
       <p className="mt-2.5 text-[13px] text-grau-text-hell">
-        Der Betrag wird am ersten Kurstag bar bezahlt.
+        {arten.length === 1
+          ? "Der Betrag wird am ersten Kurstag bar bezahlt."
+          : "Du kannst online bezahlen oder bar am ersten Kurstag."}
       </p>
     </div>
   );

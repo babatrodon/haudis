@@ -1,5 +1,8 @@
 import "server-only";
 import { prisma } from "@/lib/db";
+import { datumLang, datumZeit } from "@/lib/format";
+import { versandVermerk, wartelistenEinladungSenden } from "@/lib/mail";
+import { einladungsLink, naechstePersonEinladen } from "@/lib/warteliste";
 import type { BookingSource, BookingStatus } from "@/lib/generated/prisma/enums";
 import type { Decimal } from "@/lib/decimal";
 
@@ -317,13 +320,86 @@ export async function buchungAendern(
  * Stornieren statt loeschen.
  *
  * Der Platz wird frei, die Zeile bleibt. Sonst verschwaende eine Absage
- * spurlos, und in Sprint 5 fehlte der Beleg dafuer, dass die Anmeldung je
- * bestand.
+ * spurlos, und es fehlte der Beleg dafuer, dass die Anmeldung je bestand.
+ *
+ * Mit dem frei gewordenen Platz wird die naechste Person von der Warteliste
+ * eingeladen (Kundenentscheid 26.07.2026). Das laeuft unter derselben
+ * Kurssperre wie eine Anmeldung: ohne sie koennten zwei gleichzeitige Stornos
+ * zwei Personen fuer denselben Platz einladen.
+ *
+ * Der Mailversand steht ausserhalb der Transaktion. Der Platz ist frei, auch
+ * wenn Resend ausfaellt — und ein Storno, der an einem Mailserver scheitert,
+ * waere eine Buchung, die Ausilia nicht loswird.
  */
 export async function buchungStornieren(buchungId: string): Promise<void> {
-  await prisma.booking.update({
-    where: { id: buchungId },
-    data: { status: "CANCELLED" },
+  const eingeladen = await prisma.$transaction(async (tx) => {
+    const buchung = await tx.booking.findUnique({
+      where: { id: buchungId },
+      select: { courseId: true, status: true },
+    });
+    if (!buchung || buchung.status === "CANCELLED") return null;
+
+    await tx.$queryRaw`SELECT id FROM course WHERE id = ${buchung.courseId} FOR UPDATE`;
+
+    await tx.booking.update({
+      where: { id: buchungId },
+      data: { status: "CANCELLED" },
+    });
+
+    return naechstePersonEinladen(tx, buchung.courseId);
+  });
+
+  if (eingeladen) {
+    await einladungVerschicken(eingeladen);
+  }
+}
+
+/**
+ * Verschickt eine Einladung und haelt auf dem Eintrag fest, was dabei
+ * herauskam.
+ *
+ * Ohne diesen Vermerk stuende im Panel eine eingeladene Person, von der
+ * niemand weiss, ob sie je eine Mail bekommen hat. Solange kein
+ * RESEND_API_KEY gesetzt ist, ist die Antwort naemlich: nein.
+ */
+export async function einladungVerschicken(eingeladen: {
+  id: string;
+  firstName: string;
+  email: string;
+  token: string;
+  invitedUntil: Date;
+}): Promise<void> {
+  const eintrag = await prisma.waitlistEntry.findUnique({
+    where: { id: eingeladen.id },
+    select: {
+      courseId: true,
+      course: {
+        select: {
+          courseType: { select: { name: true } },
+          sessions: { orderBy: [{ date: "asc" }, { startTime: "asc" }] },
+        },
+      },
+    },
+  });
+  if (!eintrag) return;
+
+  const ergebnis = await wartelistenEinladungSenden({
+    an: eingeladen.email,
+    vorname: eingeladen.firstName,
+    kursName: eintrag.course.courseType.name,
+    termine: eintrag.course.sessions.map((termin) => ({
+      datum: datumLang(termin.date),
+      von: termin.startTime,
+      bis: termin.endTime,
+    })),
+    buchungsLink: einladungsLink(eintrag.courseId, eingeladen.token),
+    frist: datumZeit(eingeladen.invitedUntil),
+  });
+
+  const vermerk = versandVermerk(ergebnis);
+  await prisma.waitlistEntry.update({
+    where: { id: eingeladen.id },
+    data: { mailStatus: vermerk.status, mailGrund: vermerk.grund },
   });
 }
 

@@ -70,3 +70,24 @@ export function datum(wert: Date): string {
 export function datumLang(wert: Date): string {
   return DATUM_LANG_FORMAT.format(wert);
 }
+
+const DATUM_ZEIT_FORMAT = new Intl.DateTimeFormat("de-CH", {
+  timeZone: "Europe/Zurich",
+  weekday: "short",
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
+/**
+ * "Di, 26.07.2026, 14:30" — fuer Fristen.
+ *
+ * Eine Frist ohne Uhrzeit ist keine Frist. Die Wartelisten-Einladung laeuft
+ * nach 48 Stunden ab, also mitten am Tag; "bis Donnerstag" waere eine halbe
+ * Auskunft.
+ */
+export function datumZeit(wert: Date): string {
+  return DATUM_ZEIT_FORMAT.format(wert);
+}

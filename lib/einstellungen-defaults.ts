@@ -105,9 +105,23 @@ export const EINSTELLUNG_DEFAULTS = {
   // Gutscheincode für den WAB-Kurs beim TCS, PLAN.md Abschnitt 5 Schritt 7.
   "wab.gutscheincode": "Ausilia20",
 
+  /**
+   * Absender jeder Mail. Frueher hiess der Schluessel so und meinte den
+   * Empfaenger der internen Kopie; seit Sprint 8 meint er, was er sagt.
+   *
+   * Absender, Anzeigename und Antwortadresse stehen bewusst hier und nicht im
+   * Code: Resend anzubinden soll eine Aenderung in den Einstellungen sein plus
+   * der RESEND_API_KEY in der Umgebung, ohne Deploy. Solange haudi.ch nicht
+   * per SPF/DKIM verifiziert ist, traegt Ausilia hier die Testadresse von
+   * Resend ein und danach die echte.
+   */
   "mail.absender": ADRESSE.email,
-  // Interne Kopie an die Admin pro Buchung (PLAN.md Abschnitt 8).
+  "mail.absenderName": ADRESSE.firma,
+  /** Wohin Antworten gehen. Bleibt info@haudi.ch, auch wenn der Absender wechselt. */
+  "mail.antwortAn": ADRESSE.email,
+  /** Interne Kopie an die Admin pro Buchung (PLAN.md Abschnitt 8). */
   "mail.internKopie": "true",
+  "mail.internEmpfaenger": ADRESSE.email,
 
   // SMS-Versand ist aus, bis ASPSMS in Sprint 6 angebunden ist.
   "sms.aktiv": "false",

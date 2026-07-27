@@ -78,8 +78,8 @@ export default async function KursdatenSeite({
         </div>
         <p className="leading-[1.6] text-grau-text lg:text-[15px]">
           Jeder Kurs zeigt alle Termine mit Zeiten. Die Ampel sagt Dir, wie
-          viele Plätze noch frei sind. Ist ein Kurs ausgebucht, ruf uns an — wir
-          merken Dich für den nächsten vor.
+          viele Plätze noch frei sind. Bei ausgebuchten Kursen kannst Du Dich
+          auf die Warteliste setzen.
         </p>
       </div>
 

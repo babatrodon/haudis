@@ -33,7 +33,7 @@ const plzSchema = z
  * Wer eine gueltige Nummer wegen eines Leerzeichens nicht eingeben kann,
  * ruft nicht an, sondern geht.
  */
-const telefonSchema = z
+export const telefonSchema = z
   .string()
   .trim()
   .min(1, pflicht("Telefonnummer"))
@@ -91,6 +91,33 @@ export const buchungSchema = z.object({
 });
 
 export type BuchungEingabe = z.infer<typeof buchungSchema>;
+
+/**
+ * Warteliste eines ausgebuchten Kurses.
+ *
+ * Nur die vier Felder, die es braucht, um jemanden zu erreichen. Adresse und
+ * Geburtsdatum fragt niemand ab, solange gar kein Platz da ist — das waeren
+ * Daten auf Vorrat, und wer den Platz nimmt, gibt sie ohnehin im
+ * Anmeldeformular an.
+ *
+ * E-Mail ist hier Pflicht, anders als auf der Buchung: der ganze Zweck des
+ * Eintrags ist die Benachrichtigung.
+ */
+export const wartelisteSchema = z.object({
+  vorname: z.string().trim().min(1, pflicht("Vorname")).max(80),
+  nachname: z.string().trim().min(1, pflicht("Nachname")).max(80),
+  telefon: telefonSchema,
+  email: z
+    .string()
+    .trim()
+    .min(1, pflicht("E-Mail-Adresse"))
+    .email("E-Mail-Adresse prüfen")
+    .max(160),
+  /** Honigtopf, siehe buchungSchema. */
+  webseite: z.string().optional(),
+});
+
+export type WartelisteEingabe = z.infer<typeof wartelisteSchema>;
 
 /**
  * Schritt 2. Beides freiwillig, deshalb darf hier nichts blockieren.
