@@ -1,9 +1,11 @@
 import {
   CalendarDays,
+  Calculator,
   ClipboardList,
   Coins,
   LayoutDashboard,
   Settings,
+  UserPlus,
   UserRound,
   Users,
   type LucideIcon,
@@ -23,7 +25,13 @@ const SYMBOLE: Record<string, LucideIcon> = {
   "/admin/einsatzplan": Users,
   "/admin/fahrlehrer": UserRound,
   "/admin/abrechnung": Coins,
+  "/admin/accounting": Calculator,
   "/admin/einstellungen": Settings,
+
+  "/portal": CalendarDays,
+  "/portal/anmelden": UserPlus,
+  "/portal/provisionen": Coins,
+  "/portal/profil": UserRound,
 };
 
 export function navigationsSymbol(href: string): LucideIcon {

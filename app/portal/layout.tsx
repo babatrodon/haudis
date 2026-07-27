@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { requireRole } from "@/lib/auth-guard";
-import { TeamHuelle } from "@/components/team-huelle";
+import { PortalHuelle } from "@/components/portal-huelle";
 
 export const metadata: Metadata = {
   title: "Fahrlehrer-Portal | Haudi's Fahrschule",
@@ -16,9 +16,5 @@ export default async function PortalLayout({
   // Echte Autorisierung. proxy.ts leitet nur frueher um.
   const benutzer = await requireRole("INSTRUCTOR");
 
-  return (
-    <TeamHuelle bereich="Fahrlehrer-Portal" benutzer={benutzer}>
-      {children}
-    </TeamHuelle>
-  );
+  return <PortalHuelle benutzer={benutzer}>{children}</PortalHuelle>;
 }

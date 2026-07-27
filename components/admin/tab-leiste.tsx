@@ -14,7 +14,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { MEHR_EINTRAEGE, TAB_EINTRAEGE, istAktiv } from "@/lib/admin/navigation";
+import { istAktiv, type NavigationsEintrag } from "@/lib/admin/navigation";
 import { cn } from "@/lib/utils";
 import type { AngemeldeterBenutzer } from "@/lib/auth";
 
@@ -28,10 +28,19 @@ import type { AngemeldeterBenutzer } from "@/lib/auth";
  * deutlich ueber den geforderten 44px, und tragen Symbol und Text: ein Symbol
  * allein raet man, und geraten wird taeglich.
  */
-export function TabLeiste({ benutzer }: { benutzer: AngemeldeterBenutzer }) {
+export function TabLeiste({
+  benutzer,
+  tabs,
+  mehr,
+}: {
+  benutzer: AngemeldeterBenutzer;
+  tabs: NavigationsEintrag[];
+  /** Leer, wenn alle Ziele in die Leiste passen: dann faellt "Mehr" weg. */
+  mehr: NavigationsEintrag[];
+}) {
   const pfad = usePathname();
   const [mehrOffen, setMehrOffen] = useState(false);
-  const mehrAktiv = MEHR_EINTRAEGE.some((e) => istAktiv(pfad, e.href));
+  const mehrAktiv = mehr.some((e) => istAktiv(pfad, e.href));
 
   return (
     <nav
@@ -41,7 +50,7 @@ export function TabLeiste({ benutzer }: { benutzer: AngemeldeterBenutzer }) {
       className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
       <ul className="mx-auto flex max-w-3xl">
-        {TAB_EINTRAEGE.map((eintrag) => {
+        {tabs.map((eintrag) => {
           const Symbol = navigationsSymbol(eintrag.href);
           const aktiv = istAktiv(pfad, eintrag.href);
 
@@ -64,6 +73,7 @@ export function TabLeiste({ benutzer }: { benutzer: AngemeldeterBenutzer }) {
           );
         })}
 
+        {mehr.length > 0 ? (
         <li className="flex-1">
           <Sheet open={mehrOffen} onOpenChange={setMehrOffen}>
             <SheetTrigger
@@ -87,7 +97,7 @@ export function TabLeiste({ benutzer }: { benutzer: AngemeldeterBenutzer }) {
               </SheetHeader>
 
               <ul className="px-4">
-                {MEHR_EINTRAEGE.map((eintrag) => {
+                {mehr.map((eintrag) => {
                   const Symbol = navigationsSymbol(eintrag.href);
                   const aktiv = istAktiv(pfad, eintrag.href);
 
@@ -136,6 +146,7 @@ export function TabLeiste({ benutzer }: { benutzer: AngemeldeterBenutzer }) {
             </SheetContent>
           </Sheet>
         </li>
+        ) : null}
       </ul>
     </nav>
   );

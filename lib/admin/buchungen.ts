@@ -37,6 +37,8 @@ export type BuchungZeile = {
 export type Zaehler = {
   online: number;
   telefon: number;
+  /** Ueber das Fahrlehrer-Portal angemeldet. */
+  fahrlehrer: number;
   total: number;
   /** Storniert, zaehlt nicht zur Kapazitaet, bleibt aber sichtbar. */
   storniert: number;
@@ -143,6 +145,8 @@ export async function buchungenFuerKurs(kursId: string): Promise<{
     zaehler: {
       online: bestaetigt.filter((eintrag) => eintrag.quelle === "ONLINE").length,
       telefon: bestaetigt.filter((eintrag) => eintrag.quelle === "PHONE").length,
+      fahrlehrer: bestaetigt.filter((eintrag) => eintrag.quelle === "INSTRUCTOR")
+        .length,
       total: bestaetigt.length,
       storniert: zeilen.filter((eintrag) => eintrag.status === "CANCELLED").length,
       ohneAusweis: bestaetigt.filter((eintrag) => !eintrag.lfaNummer).length,
@@ -260,13 +264,40 @@ export type BuchungAenderung = {
   fahrlehrerId: string;
 };
 
+/**
+ * Buchung aendern.
+ *
+ * Der festgehaltene Provisionssatz wird nur angefasst, wenn sich die Zuweisung
+ * aendert. Bleibt derselbe Fahrlehrer stehen, bleibt auch sein damaliger Satz
+ * stehen — sonst wuerde das Korrigieren einer Telefonnummer nebenbei die
+ * Abrechnung eines vergangenen Monats neu schreiben.
+ */
 export async function buchungAendern(
   buchungId: string,
   daten: BuchungAenderung,
 ): Promise<void> {
+  const bisher = await prisma.booking.findUnique({
+    where: { id: buchungId },
+    select: { referredById: true, commissionRate: true },
+  });
+
+  const neuerFahrlehrer = daten.fahrlehrerId || null;
+  const satz =
+    bisher && bisher.referredById === neuerFahrlehrer
+      ? bisher.commissionRate
+      : neuerFahrlehrer
+        ? ((
+            await prisma.instructor.findUnique({
+              where: { id: neuerFahrlehrer },
+              select: { provisionPerBooking: true },
+            })
+          )?.provisionPerBooking ?? null)
+        : null;
+
   await prisma.booking.update({
     where: { id: buchungId },
     data: {
+      commissionRate: satz,
       salutation: daten.anrede,
       firstName: daten.vorname,
       lastName: daten.nachname,

@@ -125,24 +125,48 @@ function textfassung(d: BestaetigungDaten): string {
 }
 
 /**
+ * Bekommt diese Buchung eine Bestaetigung?
+ *
+ * Geschaeftsregel 4 haengt an der Quelle, und die Quelle steht auf der
+ * Buchung:
+ *
+ *   ONLINE      Bestaetigung, das ist der Sinn des Formulars
+ *   INSTRUCTOR  Bestaetigung, ein Kursleiter hat im Portal angemeldet
+ *   PHONE       nie, die Kursdaten werden am Telefon durchgegeben
+ *
+ * Eigene Funktion, damit die Regel geprueft werden kann, ohne eine Mail zu
+ * rendern: der Renderer laeuft nicht unter den React-Server-Bedingungen, unter
+ * denen die Pruefskripte starten. Die Entscheidung ist ohnehin das, worauf es
+ * ankommt.
+ */
+export function bestaetigungFaellig(buchung: {
+  source: string;
+  email: string | null;
+}): { faellig: boolean; grund?: string } {
+  if (buchung.source === "PHONE") {
+    return { faellig: false, grund: "telefonische Anmeldung, keine Mail" };
+  }
+  // Seit die Adresse optional ist, kann sie fehlen. Das ist kein Fehler,
+  // sondern ein gueltiger Zustand: die Person wurde am Schalter erfasst und
+  // ist ueber ihre Nummer erreichbar.
+  if (!buchung.email) {
+    return { faellig: false, grund: "keine E-Mail-Adresse hinterlegt" };
+  }
+  return { faellig: true };
+}
+
+/**
  * Bestaetigung an die anmeldende Person.
  *
- * Geschaeftsregel 4: Telefonische Anmeldungen bekommen KEINE Bestaetigung.
- * Diese Funktion wird deshalb nur im Onlineablauf aufgerufen; zur Sicherheit
- * prueft sie die Quelle trotzdem selbst.
+ * Prueft die Regel selbst, statt sich darauf zu verlassen, dass jeder
+ * Aufrufer sie kennt.
  */
 export async function bestaetigungSenden(
   buchung: BuchungMitKurs,
 ): Promise<VersandErgebnis> {
-  if (buchung.source !== "ONLINE") {
-    return { gesendet: false, grund: "telefonische Anmeldung, keine Mail" };
-  }
-
-  // Seit die Adresse optional ist, kann sie fehlen. Das ist kein Fehler,
-  // sondern ein gueltiger Zustand: die Person wurde am Telefon erfasst und ist
-  // ueber ihre Nummer erreichbar.
-  if (!buchung.email) {
-    return { gesendet: false, grund: "keine E-Mail-Adresse hinterlegt" };
+  const entscheidung = bestaetigungFaellig(buchung);
+  if (!entscheidung.faellig) {
+    return { gesendet: false, grund: entscheidung.grund };
   }
 
   const inhalt = daten(buchung);
@@ -150,7 +174,7 @@ export async function bestaetigungSenden(
   const html = await render(element);
 
   return senden({
-    an: buchung.email,
+    an: buchung.email as string,
     betreff: `Anmeldung bestätigt: ${inhalt.kursName}`,
     html,
     text: textfassung(inhalt),
@@ -215,8 +239,10 @@ export async function interneBenachrichtigungSenden(
   const empfaenger = werte["mail.absender"].trim() || ADRESSE.email;
   const kurs = buchung.course.courseType.name;
   const ersterTermin = buchung.course.sessions[0];
+  const herkunft =
+    buchung.source === "INSTRUCTOR" ? "Anmeldung über einen Kursleiter" : "Neue Onlineanmeldung";
   const text = [
-    `Neue Onlineanmeldung: ${kurs}`,
+    `${herkunft}: ${kurs}`,
     "",
     `${buchung.salutation} ${buchung.firstName} ${buchung.lastName}`,
     `${buchung.street}, ${buchung.zip} ${buchung.city}`,

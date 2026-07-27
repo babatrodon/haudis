@@ -43,6 +43,25 @@ export type InstruktorAuswahl = {
 const AUSWAHL_STIL =
   "h-12 w-full border border-input bg-card px-3.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
 
+/**
+ * Woher die Anmeldung kommt und was das fuer die Bestaetigung heisst.
+ *
+ * Steht zuoberst im Dialog, weil davon abhaengt, ob man beim Rueckruf auf eine
+ * Mail verweisen kann oder die Kursdaten durchgeben muss.
+ */
+function herkunftText(buchung: BuchungZeile): string {
+  if (buchung.quelle === "PHONE") {
+    return "Telefonisch angemeldet, hat nichts Schriftliches erhalten.";
+  }
+  const wer =
+    buchung.quelle === "INSTRUCTOR"
+      ? `Über ${buchung.fahrlehrer?.kuerzel ?? "einen Kursleiter"} angemeldet`
+      : "Online angemeldet";
+  return buchung.email
+    ? `${wer}, Bestätigung ging an ${buchung.email}.`
+    : `${wer}, ohne E-Mail-Adresse also ohne Bestätigung.`;
+}
+
 export function BuchungBearbeitenDialog({
   buchung,
   kursId,
@@ -104,11 +123,7 @@ export function BuchungBearbeitenDialog({
           <DialogTitle>
             {buchung.nachname} {buchung.vorname}
           </DialogTitle>
-          <DialogDescription>
-            {buchung.quelle === "PHONE"
-              ? "Telefonisch angemeldet, hat nichts Schriftliches erhalten."
-              : "Online angemeldet, hat eine Bestätigung per E-Mail."}
-          </DialogDescription>
+          <DialogDescription>{herkunftText(buchung)}</DialogDescription>
         </DialogHeader>
 
         {meldung && "fehler" in meldung ? (

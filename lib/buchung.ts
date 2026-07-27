@@ -49,8 +49,11 @@ export type BuchungErgebnis =
  * und das Ueberbuchen kaeme durch die Hintertuer zurueck.
  */
 export type BuchungOptionen = {
-  /** Default ONLINE. PHONE loest kein Bestaetigungsmail aus (Regel 4). */
-  quelle?: "ONLINE" | "PHONE";
+  /**
+   * Default ONLINE. PHONE loest kein Bestaetigungsmail aus (Regel 4),
+   * INSTRUCTOR schon: dort meldet ein Kursleiter im Portal an.
+   */
+  quelle?: "ONLINE" | "PHONE" | "INSTRUCTOR";
   /** Zuweisender Fahrlehrer, Grundlage der Provision (Regel 5). */
   referredById?: string | null;
   /** Wird am Telefon oft gleich mitdiktiert. */
@@ -138,6 +141,18 @@ export async function buchungAnlegen(
       return { erfolg: false, fehler: "ausgebucht" };
     }
 
+    // Provisionssatz festhalten, sobald eine Zuweisung vorliegt. Genau wie der
+    // Preis: die Abrechnung eines vergangenen Monats darf sich nicht aendern,
+    // nur weil der Satz heute ein anderer ist.
+    const satz = optionen.referredById
+      ? ((
+          await tx.instructor.findUnique({
+            where: { id: optionen.referredById },
+            select: { provisionPerBooking: true },
+          })
+        )?.provisionPerBooking ?? null)
+      : null;
+
     // Derselbe Rechenweg wie in der Anzeige. Der Zaehlstand stammt aus dieser
     // Transaktion, damit greift der Fruehbucherrabatt fuer genau die ersten N.
     const preis = preisBerechnen(
@@ -168,6 +183,7 @@ export async function buchungAnlegen(
         agbAcceptedAt: quelle === "ONLINE" ? new Date() : null,
         lfaNumber: optionen.lfaNummer?.trim() || null,
         referredById: optionen.referredById ?? null,
+        commissionRate: satz,
         source: quelle,
         status: "CONFIRMED",
         priceCharged: preis.total,

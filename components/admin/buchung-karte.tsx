@@ -1,4 +1,4 @@
-import { Mail, MessageCircle, Phone } from "lucide-react";
+import { Mail, MessageCircle, Phone, UserPlus } from "lucide-react";
 import { BuchungBearbeitenDialog } from "@/components/admin/buchung-bearbeiten-dialog";
 import { SariKnopf } from "@/components/admin/sari-knopf";
 import { chf, datum } from "@/lib/format";
@@ -70,6 +70,17 @@ export function BuchungKarte({
             >
               <Phone aria-hidden="true" className="size-3" />
               Telefonisch
+            </span>
+          ) : null}
+          {/* Ueber das Portal angemeldet: hat eine Bestaetigung bekommen,
+              anders als eine telefonische Erfassung. */}
+          {buchung.quelle === "INSTRUCTOR" ? (
+            <span
+              data-kennzeichen="fahrlehrer"
+              className="inline-flex items-center gap-1.5 border border-flaeche-3 bg-flaeche-2 px-2 py-1 text-xs font-semibold"
+            >
+              <UserPlus aria-hidden="true" className="size-3" />
+              Fahrlehrer
             </span>
           ) : null}
           {buchung.fruehbucher ? (

@@ -66,7 +66,13 @@ export const ADMIN_NAVIGATION: NavigationsEintrag[] = [
     kurz: "Abrechnung",
     beschreibung: "Provisionen und Umsatz pro Zeitraum",
     imTab: false,
-    kommt: "Sprint 5",
+  },
+  {
+    href: "/admin/accounting",
+    text: "Accounting",
+    kurz: "Accounting",
+    beschreibung: "Periodensummen pro Kursart",
+    imTab: false,
   },
   {
     href: "/admin/einstellungen",
@@ -81,9 +87,52 @@ export const TAB_EINTRAEGE = ADMIN_NAVIGATION.filter((e) => e.imTab);
 export const MEHR_EINTRAEGE = ADMIN_NAVIGATION.filter((e) => !e.imTab);
 
 /**
- * Der aktive Eintrag. "/admin" darf nur bei exakter Uebereinstimmung
- * aufleuchten, sonst waere die Uebersicht auf jeder Unterseite aktiv.
+ * Navigation des Fahrlehrer-Portals, PLAN.md Abschnitt 7.
+ *
+ * Vier Ziele, also passen alle in die Leiste und es gibt kein "Mehr"-Menue.
+ * Die Reihenfolge folgt der Haeufigkeit: den Einsatzplan schaut ein Kursleiter
+ * regelmaessig an, sein Profil einmal.
+ */
+export const PORTAL_NAVIGATION: NavigationsEintrag[] = [
+  {
+    href: "/portal",
+    text: "Mein Einsatzplan",
+    kurz: "Einsatz",
+    beschreibung: "Meine kommenden Termine",
+    imTab: true,
+  },
+  {
+    href: "/portal/anmelden",
+    text: "Schüler anmelden",
+    kurz: "Anmelden",
+    beschreibung: "Anmeldung erfassen, Provision inklusive",
+    imTab: true,
+  },
+  {
+    href: "/portal/provisionen",
+    text: "Meine Provisionen",
+    kurz: "Provision",
+    beschreibung: "Meine Anmeldungen und Provisionen pro Zeitraum",
+    imTab: true,
+  },
+  {
+    href: "/portal/profil",
+    text: "Profil",
+    kurz: "Profil",
+    beschreibung: "Angaben und Passwort",
+    imTab: true,
+  },
+];
+
+export const PORTAL_TABS = PORTAL_NAVIGATION.filter((e) => e.imTab);
+
+/**
+ * Der aktive Eintrag. Die Startseiten "/admin" und "/portal" duerfen nur bei
+ * exakter Uebereinstimmung aufleuchten, sonst waeren sie auf jeder Unterseite
+ * aktiv.
  */
 export function istAktiv(pfad: string, href: string): boolean {
-  return href === "/admin" ? pfad === "/admin" : pfad.startsWith(href);
+  return href === "/admin" || href === "/portal"
+    ? pfad === href
+    : pfad.startsWith(href);
 }

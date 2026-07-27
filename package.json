@@ -19,7 +19,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "verify:buchung": "cross-env NODE_OPTIONS=--conditions=react-server tsx prisma/verify-buchung.ts",
-    "verify:kurse": "cross-env NODE_OPTIONS=--conditions=react-server tsx prisma/verify-kurse.ts"
+    "verify:kurse": "cross-env NODE_OPTIONS=--conditions=react-server tsx prisma/verify-kurse.ts",
+    "verify:abrechnung": "cross-env NODE_OPTIONS=--conditions=react-server tsx prisma/verify-abrechnung.ts"
   },
   "dependencies": {
     "@better-auth/prisma-adapter": "^1.6.25",

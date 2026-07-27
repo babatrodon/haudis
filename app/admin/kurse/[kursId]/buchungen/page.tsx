@@ -136,9 +136,14 @@ export default async function KursBuchungenSeite({
           {kursleitung}
         </p>
 
-        <div className="grid grid-cols-3 divide-x divide-flaeche-3">
+        {/* Vier Zaehler statt der drei aus PLAN.md 6.3: seit dem Portal gibt es
+            eine dritte Quelle, und sie unterscheidet sich in dem, was zaehlt —
+            eine Anmeldung ueber einen Kursleiter loest eine Bestaetigung aus,
+            eine telefonische nicht. */}
+        <div className="grid grid-cols-2 divide-flaeche-3 sm:grid-cols-4 sm:divide-x">
           <Zaehler titel="Online" wert={daten.zaehler.online} />
           <Zaehler titel="Telefonisch" wert={daten.zaehler.telefon} />
+          <Zaehler titel="Fahrlehrer" wert={daten.zaehler.fahrlehrer} />
           <Zaehler
             titel="Total"
             wert={daten.zaehler.total}

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AbmeldenKnopf } from "@/components/abmelden-knopf";
 import { navigationsSymbol } from "@/components/admin/navigations-symbole";
-import { ADMIN_NAVIGATION, istAktiv } from "@/lib/admin/navigation";
+import { istAktiv, type NavigationsEintrag } from "@/lib/admin/navigation";
 import { cn } from "@/lib/utils";
 import type { AngemeldeterBenutzer } from "@/lib/auth";
 
@@ -15,7 +15,15 @@ import type { AngemeldeterBenutzer } from "@/lib/auth";
  * Einsatzplan staendig hin und her, und ein Ziel, das man erst hochscrollen
  * muss, kostet bei jedem Wechsel Zeit.
  */
-export function Seitenleiste({ benutzer }: { benutzer: AngemeldeterBenutzer }) {
+export function Seitenleiste({
+  benutzer,
+  navigation,
+  bereich,
+}: {
+  benutzer: AngemeldeterBenutzer;
+  navigation: NavigationsEintrag[];
+  bereich: string;
+}) {
   const pfad = usePathname();
 
   return (
@@ -24,12 +32,12 @@ export function Seitenleiste({ benutzer }: { benutzer: AngemeldeterBenutzer }) {
         <p className="font-heading text-xs font-semibold uppercase tracking-widest text-muted-foreground">
           Haudi&apos;s
         </p>
-        <p className="font-heading text-lg font-bold">Administration</p>
+        <p className="font-heading text-lg font-bold">{bereich}</p>
       </div>
 
       <nav aria-label="Hauptnavigation" className="flex-1 overflow-y-auto p-3">
         <ul className="space-y-1">
-          {ADMIN_NAVIGATION.map((eintrag) => {
+          {navigation.map((eintrag) => {
             const Symbol = navigationsSymbol(eintrag.href);
             const aktiv = istAktiv(pfad, eintrag.href);
 

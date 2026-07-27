@@ -1,6 +1,11 @@
 import type { ReactNode } from "react";
 import { Seitenleiste } from "@/components/admin/seitenleiste";
 import { TabLeiste } from "@/components/admin/tab-leiste";
+import {
+  ADMIN_NAVIGATION,
+  MEHR_EINTRAEGE,
+  TAB_EINTRAEGE,
+} from "@/lib/admin/navigation";
 import type { AngemeldeterBenutzer } from "@/lib/auth";
 
 /**
@@ -20,7 +25,11 @@ export function AdminHuelle({
 }) {
   return (
     <div className="flex min-h-dvh flex-col lg:flex-row">
-      <Seitenleiste benutzer={benutzer} />
+      <Seitenleiste
+        benutzer={benutzer}
+        navigation={ADMIN_NAVIGATION}
+        bereich="Administration"
+      />
 
       {/*
         Kopf nur auf schmalen Screens. Bewusst ohne den Titel "Administration":
@@ -48,7 +57,11 @@ export function AdminHuelle({
         </main>
       </div>
 
-      <TabLeiste benutzer={benutzer} />
+      <TabLeiste
+        benutzer={benutzer}
+        tabs={TAB_EINTRAEGE}
+        mehr={MEHR_EINTRAEGE}
+      />
     </div>
   );
 }

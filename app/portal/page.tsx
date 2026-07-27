@@ -1,88 +1,98 @@
+import Link from "next/link";
+import { CalendarDays } from "lucide-react";
+import { SeitenKopf } from "@/components/admin/admin-huelle";
+import { ProfilFehlt } from "@/components/portal/profil-fehlt";
+import { Button } from "@/components/ui/button";
 import { requireInstruktorProfil } from "@/lib/auth-guard";
-import { chf } from "@/lib/format";
-import { TELEFONNUMMERN } from "@/lib/kontakt";
+import { datumLang } from "@/lib/format";
+import { eigeneTermine } from "@/lib/portal";
 
 /**
- * Platzhalter. Einsatzplan, Schueler anmelden und Provisionen entstehen in
- * Sprint 5, PLAN.md Abschnitt 7.
+ * Mein Einsatzplan.
  *
- * Was hier schon zaehlt: Das Portal arbeitet mit dem Instruktoren-Profil, nicht
- * mit dem Konto. Provision und Einsatzplan haengen am Profil
- * (Geschaeftsregel 11).
+ * Die Startseite des Portals, weil sie die haeufigste Frage beantwortet: wann
+ * muss ich wo sein. Der Fuellstand steht dabei, damit man vorher weiss, wie
+ * viele Leute im Raum sitzen.
  */
 export default async function PortalStart() {
   const { benutzer, profil } = await requireInstruktorProfil();
+  if (!profil) return <ProfilFehlt name={benutzer.name} />;
 
-  if (!profil) {
-    return <ProfilFehlt name={benutzer.name} />;
-  }
+  const termine = await eigeneTermine(profil.id);
+
+  // Nach Kurstag buendeln: ein VKU-Abend besteht aus zwei Bloecken, und zwei
+  // Zeilen mit demselben Datum liest man zweimal.
+  const tage = [
+    ...termine
+      .reduce((sammlung, termin) => {
+        const schluessel = termin.datum.toISOString();
+        const bisher = sammlung.get(schluessel) ?? [];
+        bisher.push(termin);
+        sammlung.set(schluessel, bisher);
+        return sammlung;
+      }, new Map<string, typeof termine>())
+      .entries(),
+  ];
 
   return (
-    <div className="border border-border bg-card p-8">
-      <h1 className="font-heading text-2xl font-bold">
-        Hoi {profil.firstName}
-      </h1>
-      <p className="mt-2 text-muted-foreground">
-        Das Fahrlehrer-Portal wird in Sprint 5 gebaut.
-      </p>
+    <>
+      <SeitenKopf
+        titel={`Hoi ${profil.firstName}`}
+        beschreibung={
+          termine.length === 0
+            ? "Für Dich ist zurzeit kein Termin eingeteilt."
+            : `${termine.length} ${termine.length === 1 ? "Termin" : "Termine"} in den nächsten Wochen`
+        }
+      />
 
-      <dl className="mt-8 grid gap-px border border-border bg-border sm:grid-cols-3">
-        <div className="bg-card p-4">
-          <dt className="text-xs uppercase tracking-wider text-muted-foreground">
-            Kürzel
-          </dt>
-          <dd className="mt-1 font-heading text-lg font-bold">
-            {profil.shortCode}
-          </dd>
-        </div>
-        <div className="bg-card p-4">
-          <dt className="text-xs uppercase tracking-wider text-muted-foreground">
-            Name
-          </dt>
-          <dd className="mt-1 font-medium">
-            {profil.lastName} {profil.firstName}
-          </dd>
-        </div>
-        <div className="bg-card p-4">
-          <dt className="text-xs uppercase tracking-wider text-muted-foreground">
-            Provision pro Buchung
-          </dt>
-          <dd className="mt-1 font-medium">
-            {chf(profil.provisionPerBooking)}
-          </dd>
-        </div>
-      </dl>
-    </div>
-  );
-}
+      {termine.length === 0 ? (
+        <p className="border border-border bg-card p-5 text-muted-foreground">
+          Sobald Dich die Administration einem Kurstermin zuweist, erscheint er
+          hier.
+        </p>
+      ) : (
+        <ul className="flex flex-col gap-3">
+          {tage.map(([schluessel, bloecke]) => (
+            <li key={schluessel} className="border border-border bg-card">
+              <h2 className="flex items-center gap-2 border-b border-flaeche-3 px-4 py-3 font-heading font-bold sm:px-5">
+                <CalendarDays
+                  aria-hidden="true"
+                  className="size-4 text-muted-foreground"
+                />
+                {datumLang(bloecke[0].datum)}
+              </h2>
 
-/**
- * Ein Konto mit der Rolle INSTRUCTOR, dem kein Instruktoren-Profil zugeordnet
- * ist. Gueltiger Zustand, aber ohne Profil gibt es weder Einsatzplan noch
- * Provision, also wird das klar gesagt statt eine leere Seite zu zeigen.
- */
-function ProfilFehlt({ name }: { name: string }) {
-  return (
-    <div className="border border-border bg-card p-8">
-      <h1 className="font-heading text-2xl font-bold">
-        Konto noch nicht zugeordnet
-      </h1>
-      <p className="mt-4 max-w-prose text-muted-foreground">
-        Hoi {name}, Dein Login funktioniert, aber es ist noch keinem
-        Fahrlehrer-Profil zugeordnet. Ohne Profil gibt es keinen Einsatzplan und
-        keine Provisionsabrechnung. Bitte melde Dich bei der Administration.
-      </p>
-      <div className="mt-6 flex flex-wrap gap-3">
-        {TELEFONNUMMERN.map((nummer) => (
-          <a
-            key={nummer.tel}
-            href={`tel:${nummer.tel}`}
-            className="inline-flex min-h-11 items-center border border-border bg-secondary px-4 font-heading font-semibold transition-colors hover:bg-accent"
-          >
-            {nummer.anzeige}
-          </a>
-        ))}
+              <ul>
+                {bloecke.map((termin) => (
+                  <li
+                    key={termin.id}
+                    className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-flaeche-3 px-4 py-3 last:border-b-0 sm:px-5"
+                  >
+                    <span className="font-medium tabular-nums">
+                      {termin.von}–{termin.bis}
+                    </span>
+                    <span className="min-w-0 flex-1 text-muted-foreground">
+                      {termin.kursName}
+                    </span>
+                    <span className="tabular-nums text-muted-foreground">
+                      {termin.belegt}/{termin.limit} angemeldet
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="mt-8 flex flex-wrap gap-2 border-t border-flaeche-3 pt-6">
+        <Button asChild variant="outline">
+          <Link href="/portal/anmelden">Schüler anmelden</Link>
+        </Button>
+        <Button asChild variant="ghost">
+          <Link href="/portal/provisionen">Meine Provisionen</Link>
+        </Button>
       </div>
-    </div>
+    </>
   );
 }

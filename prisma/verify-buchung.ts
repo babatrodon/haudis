@@ -3,8 +3,8 @@ import {
   buchungReaktivieren,
   buchungStornieren,
 } from "../lib/admin/buchungen";
-import { buchungAnlegen, buchungLesen } from "../lib/buchung";
-import { bestaetigungSenden } from "../lib/mail";
+import { buchungAnlegen } from "../lib/buchung";
+import { bestaetigungFaellig } from "../lib/mail";
 import { prismaOeffnen, type PrismaSeedClient } from "./seed-lib";
 
 /**
@@ -321,14 +321,14 @@ async function telefonischPruefen(prisma: PrismaSeedClient) {
         "zuweisender Fahrlehrer gespeichert",
       );
 
-      // Geschaeftsregel 4: der Mailversand lehnt eine PHONE-Buchung selbst ab,
-      // unabhaengig davon, wer ihn aufruft.
-      const mitKurs = await buchungLesen(ergebnis.buchungId);
-      const versand = await bestaetigungSenden(mitKurs!);
+      // Geschaeftsregel 4: die Regel lehnt eine PHONE-Buchung ab, unabhaengig
+      // davon, wer den Versand aufruft.
+      const entscheidung = bestaetigungFaellig(buchung);
       pruefe(
-        !versand.gesendet && versand.grund === "telefonische Anmeldung, keine Mail",
+        !entscheidung.faellig &&
+          entscheidung.grund === "telefonische Anmeldung, keine Mail",
         "kein Bestätigungsmail für eine telefonische Anmeldung",
-        versand.grund ?? "es ging hinaus",
+        entscheidung.grund ?? "es ginge hinaus",
       );
 
       // Ohne E-Mail-Adresse: am Schalter ein Alltagsfall, vor allem bei den
@@ -350,16 +350,15 @@ async function telefonischPruefen(prisma: PrismaSeedClient) {
           gespeichert.email ?? "null",
         );
 
-        const mitKursOhne = await buchungLesen(ohneAdresse.buchungId);
-        const versandOhne = await bestaetigungSenden({
-          ...mitKursOhne!,
+        const entscheidungOhne = bestaetigungFaellig({
+          ...gespeichert,
           source: "ONLINE",
         });
         pruefe(
-          !versandOhne.gesendet &&
-            versandOhne.grund === "keine E-Mail-Adresse hinterlegt",
-          "der Mailversand bricht sauber ab statt zu scheitern",
-          versandOhne.grund ?? "er ging hinaus",
+          !entscheidungOhne.faellig &&
+            entscheidungOhne.grund === "keine E-Mail-Adresse hinterlegt",
+          "auch online bricht es ohne Adresse sauber ab",
+          entscheidungOhne.grund ?? "sie waere faellig",
         );
       }
 
@@ -370,6 +369,85 @@ async function telefonischPruefen(prisma: PrismaSeedClient) {
         "telefonische Anmeldung über das Limit wird abgewiesen",
         dritte.erfolg ? "sie ging durch" : dritte.fehler,
       );
+    },
+  );
+}
+
+/**
+ * Anmeldung durch einen Kursleiter im Portal.
+ *
+ * Der Unterschied zur telefonischen Erfassung ist genau einer: hier geht eine
+ * Bestaetigung hinaus. Geschaeftsregel 4 haengt an PHONE, nicht an "alles
+ * ausser online" — sonst bekaeme der Schueler nichts, obwohl er eine Adresse
+ * hinterlegt hat.
+ */
+async function portalAnmeldungPruefen(prisma: PrismaSeedClient) {
+  console.log("Anmeldung über das Fahrlehrer-Portal");
+
+  await mitTestkurs(
+    prisma,
+    { id: `${PRAEFIX}portal`, onlineLimit: 5, preis: "140.00", material: "30.00" },
+    async (kursId) => {
+      const instruktor = await prisma.instructor.findFirstOrThrow({
+        where: { active: true },
+      });
+
+      const ergebnis = await buchungAnlegen(kursId, person(1), {
+        quelle: "INSTRUCTOR",
+        referredById: instruktor.id,
+      });
+      pruefe(ergebnis.erfolg, "Anmeldung über das Portal gelingt");
+      if (!ergebnis.erfolg) return;
+
+      const buchung = await prisma.booking.findUniqueOrThrow({
+        where: { id: ergebnis.buchungId },
+      });
+      pruefe(
+        buchung.source === "INSTRUCTOR",
+        "Quelle ist INSTRUCTOR, nicht PHONE",
+        buchung.source,
+      );
+      pruefe(
+        buchung.referredById === instruktor.id,
+        "der Kursleiter ist sich selbst zugewiesen",
+      );
+      pruefe(
+        buchung.commissionRate?.toString() ===
+          instruktor.provisionPerBooking.toString(),
+        "Provisionssatz festgehalten",
+        buchung.commissionRate?.toString() ?? "keiner",
+      );
+      pruefe(
+        buchung.agbAcceptedAt === null,
+        "kein AGB-Zeitstempel: das Häkchen hat niemand gesetzt",
+      );
+
+      // Die Regel selbst pruefen, nicht den Versand: das Rendern der Mail
+      // laeuft nicht unter den React-Server-Bedingungen dieses Skripts, und
+      // worauf es ankommt, ist die Entscheidung.
+      pruefe(
+        bestaetigungFaellig(buchung).faellig,
+        "eine Bestaetigung ist faellig, anders als bei einer telefonischen",
+      );
+
+      // Ohne Adresse faellt keine Bestaetigung an.
+      const ohneAdresse = await buchungAnlegen(
+        kursId,
+        { ...person(2), email: undefined },
+        { quelle: "INSTRUCTOR", referredById: instruktor.id },
+      );
+      if (ohneAdresse.erfolg) {
+        const zweite = await prisma.booking.findUniqueOrThrow({
+          where: { id: ohneAdresse.buchungId },
+        });
+        const entscheidung = bestaetigungFaellig(zweite);
+        pruefe(
+          !entscheidung.faellig &&
+            entscheidung.grund === "keine E-Mail-Adresse hinterlegt",
+          "ohne Adresse keine Bestaetigung, sauber begruendet",
+          entscheidung.grund ?? "sie waere faellig",
+        );
+      }
     },
   );
 }
@@ -432,6 +510,7 @@ async function main() {
     await ausgebuchtPruefen(prisma);
     await nichtBuchbarPruefen(prisma);
     await telefonischPruefen(prisma);
+    await portalAnmeldungPruefen(prisma);
     await stornoPruefen(prisma);
 
     // Sicherheitsnetz: nichts von dieser Pruefung darf zurueckbleiben.

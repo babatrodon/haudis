@@ -16,7 +16,7 @@ Better Auth (Rollen ADMIN, INSTRUCTOR, nur Team-Login), Resend, ASPSMS.
 pnpm dev | pnpm build | pnpm typecheck | pnpm lint
 pnpm db:migrate | pnpm db:seed | pnpm db:verify | pnpm db:studio
 pnpm db:seed:demo | pnpm db:seed:demo:purge
-pnpm test:e2e | pnpm verify:buchung | pnpm verify:kurse
+pnpm test:e2e | pnpm verify:buchung | pnpm verify:kurse | pnpm verify:abrechnung
 
 `db:migrate` und `db:deploy` hängen `prisma generate` an. Prisma 7 generiert
 nach einer Migration nicht mehr von selbst, und ein veralteter Client fällt erst
@@ -32,6 +32,9 @@ beim Typecheck auf.
 - `pnpm verify:kurse` prüft die Kursverwaltung: dass eine Absage die Buchungen
   mitnimmt, dass ein Duplikat jeden Termin um dieselbe Spanne verschiebt und
   dass Bearbeiten die Kursleiter-Zuweisungen behält.
+- `pnpm verify:abrechnung` prüft die Provisionsrechnung gegen von Hand
+  ausgerechnete Beträge. Die Erwartungswerte stehen als Literale im Skript und
+  werden nicht aus derselben Funktion gerechnet, die geprüft wird.
 - `pnpm db:verify` prüft die Zusicherungen des Seeds, unter anderem
   Geschäftsregel 11.
 
@@ -126,6 +129,12 @@ in der Datenbank steht, muss der Wert einmalig von Hand nachgezogen werden.
   Prisma-Client, und der lässt sich nicht ins Browser-Bundle packen (Turbopack
   bricht mit `node:module` ab). Werte, die das Formular im Browser braucht,
   stehen in [lib/inhalte/kursmuster.ts](lib/inhalte/kursmuster.ts).
+- **Drei Anmeldequellen.** `ONLINE` und `INSTRUCTOR` lösen eine Bestätigung
+  aus, `PHONE` nie (Geschäftsregel 4). Die Entscheidung steht als
+  `bestaetigungFaellig()` in [lib/mail.ts](lib/mail.ts) und ist deshalb ohne
+  Mailrenderer prüfbar. `INSTRUCTOR` ist ein eigener Wert und nicht `PHONE`,
+  weil die Buchungsansicht telefonisch Angemeldete markiert: das sind die
+  Leute ohne etwas Schriftliches, und eine Portal-Anmeldung bekommt eine Mail.
 - **Telefonische Anmeldung** läuft durch dasselbe `buchungAnlegen` wie die
   Onlineanmeldung, nur mit `quelle: "PHONE"`. Ein zweiter Schreibweg wäre ein
   zweiter Weg ohne Zeilensperre. Zwei Unterschiede sind Absicht:
@@ -162,6 +171,18 @@ in der Datenbank steht, muss der Wert einmalig von Hand nachgezogen werden.
   Gehasht wird mit `hashPassword` aus `better-auth/crypto`, derselben Funktion
   wie in [prisma/seed-lib.ts](prisma/seed-lib.ts) — wird der Algorithmus in
   [lib/auth.ts](lib/auth.ts) je umgestellt, müssen beide Stellen mitziehen.
+- **Provision**: der Satz wird beim Zuweisen auf der Buchung festgehalten
+  (`commissionRate`), genau wie `priceCharged` den Preis festhält. Ändert
+  Ausilia später einen Satz, bleiben vergangene Abrechnungen unverändert. Das
+  Feld wird nur angefasst, wenn sich die Zuweisung ändert — eine korrigierte
+  Telefonnummer schreibt die Abrechnung nicht neu. Gerechnet wird nach (Person,
+  Satz) gebündelt, damit bei zwei Sätzen zwei Rechenzeilen dastehen statt einer
+  Multiplikation, die nicht aufgeht.
+- **Abrechnung**: [lib/abrechnung.ts](lib/abrechnung.ts) ist die einzige
+  Quelle für Panel, Accounting und Portal. Der Zeitraum läuft wahlweise über
+  das Anmelde- oder das Kursdatum; der gewählte Endtag zählt einschliesslich,
+  und die Grenzen liegen je nach Basis auf Zürcher Mitternacht (`createdAt`)
+  oder Mitternacht UTC (`@db.Date`). Beides steht in `zeitfensterAus`.
 - **Einstellungen** speichern gruppenweise und rufen danach
   `revalidatePath("/", "layout")` auf. Jeder Schlüssel muss in genau einer
   Gruppe in [lib/admin/einstellungen-meta.ts](lib/admin/einstellungen-meta.ts)
@@ -198,6 +219,7 @@ technisch erzwungene Abweichungen und keine offene Diskussion.
   transaktional und die Bestätigung zeigt Personendaten. Lighthouse zieht
   dafür den SEO-Wert auf 60, das ist gewollt.
 - `/team/login` Team-Login, `/team` verteilt nach Rolle
+- `/druck/...` Druckansichten ausserhalb der Panel-Hülle, trotzdem geschützt
 - `/admin` Rolle ADMIN, `/portal` Rolle INSTRUCTOR
 - `/api/auth/[...all]` Better Auth
 
@@ -212,11 +234,11 @@ Siehe [.env.example](.env.example). `DATABASE_URL` ist die gepoolte Neon-URL
 
 ## Stand
 
-Sprint 0 bis 4 abgeschlossen: Scaffold, Datenmodell, Auth, öffentliche Website,
-die Onlineanmeldung mit Bestätigungsmail und das Admin-Panel (Übersicht, Kurse
-mit Wizard, Buchungen mit Teilnehmerliste, Einsatzplan, Konten, Einstellungen).
-Offen für den Versand: ein `RESEND_API_KEY` und die verifizierte Domain
-haudi.ch.
+Sprint 0 bis 5 abgeschlossen: Scaffold, Datenmodell, Auth, öffentliche Website,
+die Onlineanmeldung mit Bestätigungsmail, das Admin-Panel (Übersicht, Kurse mit
+Wizard, Buchungen mit Teilnehmerliste, Einsatzplan, Konten, Einstellungen),
+Abrechnung und Accounting sowie das Fahrlehrer-Portal. Offen für den Versand:
+ein `RESEND_API_KEY` und die verifizierte Domain haudi.ch.
 
 Offen gegenüber PLAN.md, mit Ausilia zu klären:
 

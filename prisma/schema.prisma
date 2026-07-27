@@ -31,9 +31,18 @@ enum CourseStatus {
   ARCHIVED
 }
 
+/// Wie die Anmeldung entstanden ist. Entscheidet ueber den Mailversand:
+/// ONLINE und INSTRUCTOR bekommen eine Bestaetigung, PHONE nie
+/// (Geschaeftsregel 4).
+///
+/// INSTRUCTOR heisst: ein Kursleiter hat den Schueler im Portal angemeldet und
+/// ist damit automatisch der zuweisende Fahrlehrer. Eigener Wert und nicht
+/// PHONE, weil die Buchungsansicht telefonisch Angemeldete markiert, damit
+/// Ausilia sieht, wer nichts Schriftliches hat — das waere sonst falsch.
 enum BookingSource {
   ONLINE
   PHONE
+  INSTRUCTOR
 }
 
 /// WAITLIST ist bereits vorgesehen (PLAN.md Abschnitt 14), der Flow kommt in
@@ -289,6 +298,11 @@ model Booking {
   /// Zuweisender Fahrlehrer, Grundlage der Provision (Geschaeftsregel 5).
   referredById  String?
   referredBy    Instructor?   @relation(fields: [referredById], references: [id], onDelete: SetNull)
+  /// Provisionssatz zum Zeitpunkt der Zuweisung, dieselbe Idee wie
+  /// priceCharged: die Abrechnung eines vergangenen Monats darf sich nicht
+  /// aendern, nur weil Ausilia heute einen Satz anpasst. null heisst: keine
+  /// Zuweisung, also keine Provision.
+  commissionRate Decimal?     @db.Decimal(8, 2)
   /// Welle 2, PLAN.md Abschnitt 14. Bis Sprint 7 immer BAR und OFFEN.
   paymentMethod PaymentMethod @default(BAR)
   paymentStatus PaymentStatus @default(OFFEN)
