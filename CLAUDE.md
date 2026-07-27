@@ -18,7 +18,7 @@ pnpm db:migrate | pnpm db:seed | pnpm db:verify | pnpm db:studio
 pnpm db:seed:demo | pnpm db:seed:demo:purge
 pnpm test:e2e | pnpm verify:buchung | pnpm verify:kurse | pnpm verify:abrechnung
 pnpm verify:warteliste | pnpm verify:schueler | pnpm verify:breite
-pnpm verify:redirects
+pnpm verify:redirects | pnpm verify:kopfzeile
 
 `db:migrate` und `db:deploy` hängen `prisma generate` an. Prisma 7 generiert
 nach einer Migration nicht mehr von selbst, und ein veralteter Client fällt erst
@@ -53,6 +53,10 @@ beim Typecheck auf.
   antwortet, dass die Regeln in der richtigen Reihenfolge stehen, und dass das
   canonical verschachtelter Seiten auf sich selbst zeigt statt auf den
   Elternpfad. Braucht einen laufenden Server.
+- `pnpm verify:kopfzeile` misst im Browser, wo der gelbe Streifen der Kopfzeile
+  liegt: dass er das Logo kreuzt, dabei aber über dem gelben Untertitel im Logo
+  bleibt und über den Navigationsbeschriftungen durchläuft statt hindurch.
+  Braucht einen laufenden Server.
 - `pnpm db:verify` prüft die Zusicherungen des Seeds, unter anderem
   Geschäftsregel 11.
 
@@ -133,6 +137,18 @@ in der Datenbank steht, muss der Wert einmalig von Hand nachgezogen werden.
 - **Ampel-Farben**: als Tokens in [app/globals.css](app/globals.css) hinterlegt
   (`--ampel-gruen`, `--ampel-gelb`, `--ampel-rot` je mit Hintergrund und Linie),
   abgelesen aus der Designvorlage.
+- **Gelber Streifen in der Kopfzeile**: Kundenwunsch vom 27.07.2026, ein
+  Erkennungsmerkmal der alten Seite. Er läuft durch
+  [components/oeffentlich/kopfzeile.tsx](components/oeffentlich/kopfzeile.tsx)
+  und durch das Logo. Seine Höhe ist nicht frei wählbar: der Untertitel im
+  Logo ist selbst gelb (72,5 % bis 93,9 % der Bildhöhe), darunter verschwände
+  er; die Navigation darunter darf er nicht waagrecht teilen. Deshalb tragen
+  die Knöpfe der Kopfzeile schwarze statt hellgraue Ränder und die aktive
+  Seite eine schwarze statt gelbe Unterstreichung — auf dem Streifen wäre
+  beides unsichtbar. Geprüft mit `pnpm verify:kopfzeile`. Nicht zu verwechseln
+  mit dem Diagonalstreifen aus
+  [components/oeffentlich/diagonalstreifen.tsx](components/oeffentlich/diagonalstreifen.tsx),
+  der auf den Flächen liegt.
 - **Kapazität**: [lib/buchung.ts](lib/buchung.ts) sperrt die Kurszeile mit
   `SELECT … FOR UPDATE`, bevor es zählt und schreibt. Ohne diese Sperre nehmen
   zwei gleichzeitige Anmeldungen denselben letzten Platz. Wer dort etwas

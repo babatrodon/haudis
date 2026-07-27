@@ -24,7 +24,8 @@
     "verify:schueler": "cross-env NODE_OPTIONS=--conditions=react-server tsx prisma/verify-schueler.ts",
     "verify:abrechnung": "cross-env NODE_OPTIONS=--conditions=react-server tsx prisma/verify-abrechnung.ts",
     "verify:breite": "tsx scripts/verify-breite.mts",
-    "verify:redirects": "tsx scripts/verify-redirects.mts"
+    "verify:redirects": "tsx scripts/verify-redirects.mts",
+    "verify:kopfzeile": "tsx scripts/verify-kopfzeile.mts"
   },
   "dependencies": {
     "@better-auth/prisma-adapter": "^1.6.25",

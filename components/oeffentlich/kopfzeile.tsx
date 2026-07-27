@@ -13,7 +13,12 @@ import { ADRESSE, TELEFONNUMMERN } from "@/lib/kontakt";
  * Screen 02.
  *
  * Zwei Zeilen: oben ein dunkler Streifen mit Adresse und Kontakt, darunter
- * Logo, Navigation und der gelbe Knopf fuer die Probelektion.
+ * Logo links, Navigation und der Knopf fuer die Probelektion rechts.
+ *
+ * Durch die untere Zeile laeuft der gelbe Streifen der alten Seite. Er ist
+ * kein Schmuck, sondern ein Wiedererkennungsmerkmal (Kundenwunsch
+ * 27.07.2026), und er bestimmt drei Details weiter unten: seine Hoehe, die
+ * Raender der Knoepfe und die Farbe der aktiven Unterstreichung.
  *
  * Geschaeftsregel 6: beide Telefonnummern erscheinen hier, als tel:-Links. Auf
  * schmalen Screens steckt die Navigation hinter einem Menue, die Nummern
@@ -72,8 +77,46 @@ export function Kopfzeile({ whatsappUrl }: { whatsappUrl: string }) {
         </div>
       </div>
 
-      <div className="border-b border-flaeche-3">
-        <div className="mx-auto flex w-full max-w-[1344px] items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:h-22 lg:py-0">
+      <div className="relative border-b border-flaeche-3">
+        {/*
+          Der gelbe Streifen der alten Seite (Kundenwunsch 27.07.2026). Er
+          laeuft durch die ganze Kopfzeile und durch das Logo hindurch — ein
+          Erkennungsmerkmal, das die Kundschaft von frueher kennt.
+
+          DIE HOEHE IST NICHT FREI WAEHLBAR
+
+          Im Logo ist der Untertitel "Fahrschule Verkehrszentrum" selbst gelb.
+          Laege der Streifen dort, stuende Gelb auf Gelb und vom Untertitel
+          bliebe nur die dunkle Kontur. Er kreuzt deshalb den roten Schriftzug
+          darueber, genau wie auf der alten Seite.
+
+          Gemessen: der gelbe Untertitel belegt 72,5% bis 93,9% der Bildhoehe.
+          Bei 58px Logo in einer 89px hohen Zeile beginnt er auf 57px.
+
+          Nach unten begrenzt ihn ausserdem die Navigation. Lag er tiefer, teilte
+          er jede Beschriftung waagrecht in eine Haelfte auf Gelb und eine auf
+          Weiss. Beide Haelften haben fuer sich genug Kontrast — Schwarz auf
+          Gelb liegt bei 15,9:1 —, aber ein Wort, durch das eine Kante laeuft,
+          liest sich schlechter als eines ohne, und die Zeile sah aus, als waere
+          sie durchgestrichen.
+
+          top-[31%] loest beides: der Streifen liegt auf 23 bis 33px, kreuzt den
+          roten Schriftzug und laeuft knapp ueber den Beschriftungen durch. Wer
+          die Logohoehe, die Schriftgroesse oder die Zeilenhoehe aendert,
+          rechnet den Wert nach — scripts/verify-kopfzeile.mts schlaegt sonst
+          an.
+
+          Nicht der Diagonalstreifen aus diagonalstreifen.tsx: der ist das
+          Element auf den Flaechen, dieser hier ist eine gerade Linie.
+        */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-[31%] h-2 -translate-y-1/2 bg-brand-gelb lg:h-2.5"
+        />
+
+        {/* relative: die Zeile liegt ueber dem Streifen, sonst deckte er das
+            Logo zur Haelfte zu. */}
+        <div className="relative mx-auto flex w-full max-w-[1344px] items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:h-22 lg:py-0">
           <Link href="/" onClick={() => setOffen(false)}>
             {/*
               Das Schriftlogo der Fahrschule, unveraendert uebernommen
@@ -92,36 +135,53 @@ export function Kopfzeile({ whatsappUrl }: { whatsappUrl: string }) {
             />
           </Link>
 
-          <nav aria-label="Hauptnavigation" className="hidden lg:block">
-            <ul className="flex items-center gap-8">
-              {NAVIGATION.map((eintrag) => {
-                const aktiv = pfad === eintrag.href;
-                return (
-                  <li key={eintrag.href}>
-                    <Link
-                      href={eintrag.href}
-                      aria-current={aktiv ? "page" : undefined}
-                      className={cn(
-                        "inline-flex min-h-11 items-center border-b-[3px] text-[15px] transition-colors",
-                        aktiv
-                          ? "border-brand-gelb font-semibold"
-                          : "border-transparent hover:text-brand-rot",
-                      )}
-                    >
-                      {eintrag.text}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
+          {/*
+            Navigation rechts statt mittig (Kundenwunsch 27.07.2026, wie auf
+            der alten Seite). Sie steht mit dem Probelektion-Knopf in einer
+            Gruppe, damit zwischen Logo und erstem Menuepunkt eine freie
+            Strecke bleibt, auf der der Streifen sichtbar durchlaeuft.
+          */}
+          <div className="flex items-center gap-2 lg:gap-8">
+            <nav aria-label="Hauptnavigation" className="hidden lg:block">
+              {/*
+                Die aktive Seite ist schwarz unterstrichen, nicht mehr gelb:
+                seit der Streifen durch die Zeile laeuft, waere ein gelber
+                Strich auf gelbem Grund kein Hinweis mehr, sondern nichts.
+              */}
+              <ul className="flex items-center gap-8">
+                {NAVIGATION.map((eintrag) => {
+                  const aktiv = pfad === eintrag.href;
+                  return (
+                    <li key={eintrag.href}>
+                      <Link
+                        href={eintrag.href}
+                        aria-current={aktiv ? "page" : undefined}
+                        className={cn(
+                          "inline-flex min-h-11 items-center border-b-[3px] text-[15px] transition-colors",
+                          aktiv
+                            ? "border-brand-schwarz font-semibold"
+                            : "border-transparent hover:text-brand-rot",
+                        )}
+                      >
+                        {eintrag.text}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
 
-          <div className="flex items-center gap-2">
+            {/*
+              Die Raender sind schwarz statt flaeche-3: alle drei Knoepfe
+              stehen auf dem gelben Streifen, und eine hellgraue Linie ist dort
+              nicht mehr zu sehen. Beim Probelektion-Knopf verschwaende ohne
+              Rand die Form ganz, weil er dieselbe Farbe hat wie der Streifen.
+            */}
             <a
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden min-h-11 items-center gap-2 bg-brand-gelb px-4.5 font-semibold text-brand-schwarz transition-colors hover:bg-brand-gelb-dunkel sm:inline-flex"
+              className="hidden min-h-11 items-center gap-2 border border-brand-schwarz bg-brand-gelb px-4.5 font-semibold text-brand-schwarz transition-colors hover:bg-brand-gelb-dunkel sm:inline-flex"
             >
               <MessageCircle aria-hidden="true" className="size-[18px]" />
               Probelektion
@@ -130,7 +190,7 @@ export function Kopfzeile({ whatsappUrl }: { whatsappUrl: string }) {
             <a
               href={`tel:${TELEFONNUMMERN[0].tel}`}
               aria-label={`Anrufen: ${TELEFONNUMMERN[0].anzeige}`}
-              className="inline-flex size-11 items-center justify-center border border-flaeche-3 sm:hidden"
+              className="inline-flex size-11 items-center justify-center border border-brand-schwarz bg-card sm:hidden"
             >
               <Phone aria-hidden="true" className="size-5" />
             </a>
@@ -141,7 +201,7 @@ export function Kopfzeile({ whatsappUrl }: { whatsappUrl: string }) {
               aria-expanded={offen}
               aria-controls="hauptmenue"
               aria-label={offen ? "Menü schliessen" : "Menü öffnen"}
-              className="inline-flex size-11 items-center justify-center border border-flaeche-3 lg:hidden"
+              className="inline-flex size-11 items-center justify-center border border-brand-schwarz bg-card lg:hidden"
             >
               {offen ? (
                 <X aria-hidden="true" className="size-5" />
