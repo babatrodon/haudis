@@ -1,45 +1,50 @@
 /**
- * "Warum uns wählen?" fuer die Startseite, aus PLAN.md Abschnitt 5.
+ * "Warum uns wählen?" fuer die Startseite.
  *
- * Die Oeffnungszeiten sind bewusst als Verkaufsargument dabei: die alte Seite
- * hat sie nie gezeigt, dabei sind Montag bis Samstag von 07:00 bis 21:00 fuer
- * Berufstaetige und Schuelerinnen genau das Argument.
+ * Text und Reihenfolge stammen aus design/haudis-design.dc.html Screen 02.
+ * Die Vorlage liefert hier fertige Copy, und wo sie das tut, gilt sie: PLAN.md
+ * bestimmt die Regeln, die Vorlage alles Sichtbare.
  *
- * Der Zeitentext wird zur Laufzeit aus den Einstellungen eingesetzt, damit er
- * nicht doppelt gepflegt werden muss.
+ * Sechs Zellen in einem Raster von drei Spalten. Das Symbol steht als Name
+ * hier und wird erst in der Komponente aufgeloest, damit diese Datei ohne
+ * Oberflaechen-Abhaengigkeit bleibt.
  */
 
 export type Vorteil = {
   titel: string;
   text: string;
-  /** Platzhalter, den die Seite durch die Oeffnungszeiten ersetzt. */
-  zeitenPlatzhalter?: boolean;
+  symbol: "bahnhof" | "sprachen" | "dach" | "kategorien" | "familie" | "probe";
 };
 
 export const VORTEILE: Vorteil[] = [
   {
-    titel: "Sechs Tage die Woche für Dich da",
-    text: "{{zeiten}} Früh vor der Arbeit, spät nach der Schule oder am Samstag: wir finden einen Termin, der in Deinen Alltag passt.",
-    zeitenPlatzhalter: true,
-  },
-  {
-    titel: "Schritt für Schritt statt Druck",
-    text: "Wir gehen in Deinem Tempo vor und bauen auf dem auf, was Du schon kannst. Geduldige, persönliche Betreuung von der ersten Lektion bis zur Prüfung.",
-  },
-  {
-    titel: "Moderne Fahrzeuge mit Doppelsteuerung",
-    text: "Unsere Ausbildungsfahrzeuge sind aktuell gewartet und haben eine Doppelsteuerung. Du sitzt vom ersten Moment an sicher am Steuer.",
-  },
-  {
-    titel: "Fahrlehrer in fünf Sprachen",
-    text: "Deutsch, Italienisch, Spanisch, Englisch und Französisch. Du lernst in der Sprache, in der Du am besten denkst.",
-  },
-  {
-    titel: "Abos und Familienrabatt",
-    text: "Mit dem 5er- oder 10er-Abo sinkt der Preis pro Lektion. Für Geschwister und Familien gibt es zusätzlich einen Rabatt.",
-  },
-  {
     titel: "350 m vom Bahnhof Baden",
-    text: "Unser Schulungsraum an der Haselstrasse 33 ist zu Fuss in fünf Minuten vom Bahnhof erreichbar. Kein Umweg, kein Parkplatzsuchen.",
+    text: "Kurse und Theorie an der Haselstrasse 33. Du kommst mit dem Zug direkt hin.",
+    symbol: "bahnhof",
+  },
+  {
+    titel: "Fünf Unterrichtssprachen",
+    text: "Deutsch, Italienisch, Spanisch, Englisch, Französisch – im Kurs und in der Fahrstunde.",
+    symbol: "sprachen",
+  },
+  {
+    titel: "Alles unter einem Dach",
+    text: "Fahrstunden, VKU, Nothelfer, BTU und Bögle. Du musst nichts zusammensuchen.",
+    symbol: "dach",
+  },
+  {
+    titel: "Alle Kategorien",
+    text: "Auto, Taxi, Motorrad, LKW und Anhänger BE.",
+    symbol: "kategorien",
+  },
+  {
+    titel: "Familienrabatt",
+    text: "Für Geschwister und Eltern. Frag uns kurz per WhatsApp.",
+    symbol: "familie",
+  },
+  {
+    titel: "Gratis Probelektion",
+    text: "Erste Lektion kostenlos. Termin per WhatsApp in zwei Minuten.",
+    symbol: "probe",
   },
 ];

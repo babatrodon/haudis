@@ -1,14 +1,12 @@
 import Image from "next/image";
-import {
-  AbrechnungBericht,
-} from "@/components/admin/abrechnung-bericht";
+import { AbrechnungBericht } from "@/components/admin/abrechnung-bericht";
 import { DruckKnopf } from "@/components/admin/druck-knopf";
 import {
+  BASIS_TEXT,
   abrechnungLesen,
+  basisAus,
   monatsVorgabe,
   zeitfensterAus,
-  BASIS_TEXT,
-  type Basis,
 } from "@/lib/abrechnung";
 import { requireSession } from "@/lib/auth-guard";
 import { datum } from "@/lib/format";
@@ -44,7 +42,7 @@ export default async function AbrechnungDruckSeite({
 
   const von = gueltigerTag(parameter.von) ?? vorgabe.von;
   const bis = gueltigerTag(parameter.bis) ?? vorgabe.bis;
-  const basis: Basis = parameter.basis === "kurs" ? "kurs" : "anmeldung";
+  const basis = basisAus(parameter.basis);
 
   let fahrlehrerId: string | undefined;
   if (benutzer.role === "ADMIN") {

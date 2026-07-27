@@ -32,18 +32,35 @@ import { zuercherMitternacht } from "@/lib/admin/zeitraum";
 /**
  * Nach welchem Datum der Zeitraum eingegrenzt wird.
  *
- * "anmeldung" ist der Default: die Provision faellt pro Anmeldung an. "kurs"
- * liegt naeher an der Buchhaltung, weil das Geld bar am ersten Kurstag
- * fliesst. Ein im Januar gebuchter Maerzkurs steht in der einen Sicht im
- * Januar, in der anderen im Maerz — beide sind richtig, deshalb steht die
- * gewaehlte Basis auf jedem Ausdruck.
+ * Ein im Januar gebuchter Maerzkurs steht in der einen Sicht im Januar, in der
+ * anderen im Maerz. Beide sind richtig, deshalb steht die gewaehlte Basis auf
+ * jedem Ausdruck.
  */
 export type Basis = "anmeldung" | "kurs";
+
+/**
+ * Kundenentscheid 27.07.2026: abgerechnet wird nach dem Kursdatum.
+ *
+ * Das Geld fliesst bar am ersten Kurstag, also faellt die Provision in denselben
+ * Monat wie die Einnahme. Der Weg ueber das Anmeldedatum bleibt waehlbar; wer
+ * ihn nimmt, sieht das auf dem Ausdruck.
+ */
+export const BASIS_STANDARD: Basis = "kurs";
 
 export const BASIS_TEXT: Record<Basis, string> = {
   anmeldung: "Anmeldedatum",
   kurs: "Kursdatum",
 };
+
+/**
+ * Basis aus einem Suchparameter, mit dem Standard als Rueckfall.
+ *
+ * An einer Stelle, damit der Standard eine Entscheidung ist und nicht vier
+ * gleichlautende Zeilen, die beim naechsten Wechsel auseinanderlaufen.
+ */
+export function basisAus(wert: string | undefined): Basis {
+  return wert === "anmeldung" || wert === "kurs" ? wert : BASIS_STANDARD;
+}
 
 export type Zeitfenster = {
   von: Date;

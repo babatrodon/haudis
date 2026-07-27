@@ -1,13 +1,18 @@
 /**
- * Haeufige Fragen fuer die Startseite, Fragen aus PLAN.md Abschnitt 5.
+ * Haeufige Fragen fuer die Startseite.
  *
- * Die Antworten sind neu redigiert, die Tippfehler der WordPress-Fassung
- * ("Fahrnterricht", "Lernen?A") bleiben draussen.
+ * Fragen und Antworten stammen aus design/haudis-design.dc.html Screen 02.
+ * Wo die Vorlage fertige Copy liefert, gilt sie.
  *
  * Die rechtlichen Angaben sind am 26.07.2026 gegen ag.ch und ch.ch geprueft:
- * Lernfahrausweis ab 17, praktische Pruefung ab 18, Theoriepruefung und VKU
- * unbefristet gueltig, zwoelf Monate Lernphase bei Erwerb vor dem
- * 20. Geburtstag. Alles seit der Revision vom 1. Januar 2021.
+ * VKU vier Lektionen à zwei Stunden waehrend der Gueltigkeit des
+ * Lernfahrausweises, Nothelferausweis sechs Jahre gueltig, WAB-Kurs innert
+ * zwoelf Monaten nach der praktischen Pruefung.
+ *
+ * Preise und Gutscheincode stehen bewusst auch hier im Text: eine Antwort, die
+ * auf eine andere Seite verweist, beantwortet die Frage nicht. Aendert sich
+ * ein Preis, aendert er sich in den Einstellungen und hier — deshalb steht der
+ * Betrag als Platzhalter, den die Seite ersetzt.
  */
 
 export type FaqEintrag = {
@@ -17,42 +22,33 @@ export type FaqEintrag = {
 
 export const FAQ: FaqEintrag[] = [
   {
-    frage: "In welchen Sprachen wird der Fahrunterricht angeboten?",
+    frage: "Ist der VKU obligatorisch?",
     antwort:
-      "Unsere Fahrlehrerinnen und Fahrlehrer unterrichten auf Deutsch, Italienisch, Spanisch, Englisch und Französisch. Sag uns bei der Anmeldung, welche Sprache Dir am liebsten ist, dann teilen wir Dich passend ein.",
+      "Ja. Der Verkehrskundeunterricht umfasst 4 Lektionen à 2 Stunden und muss besucht werden, solange Dein Lernfahrausweis gültig ist. Bei uns gibt es Abend- und Wochenendkurse.",
   },
   {
-    frage: "Gibt es Abos oder Rabatte?",
+    frage: "Wie lange ist der Nothelferausweis gültig?",
     antwort:
-      "Ja. Beim 5er-Abo kostet die Lektion CHF 90.00 statt CHF 95.00, beim 10er-Abo CHF 88.00. Dazu kommt einmalig CHF 100.00 als Anteil an Versicherung und Administration. Für Geschwister und Familien haben wir einen Familienrabatt, frag uns einfach danach.",
+      "Sechs Jahre. Wir führen den Nothelferkurs als Intensivkurs am Freitagabend und Samstag durch.",
   },
   {
-    frage: "Wo finden die Fahrstunden statt?",
+    frage: "Was kostet eine Fahrlektion?",
     antwort:
-      "Wir sind in Baden und der ganzen Region unterwegs. Der Treffpunkt lässt sich absprechen, viele starten beim Bahnhof Baden oder bei unserem Schulungsraum an der Haselstrasse 33, nur 350 m vom Bahnhof entfernt.",
+      "Eine Lektion kostet {{einzel}}, im 5er-Abo {{abo5}} und im 10er-Abo {{abo10}} pro Lektion. Einmalig kommen {{admin}} als Anteil für Versicherung und Administration dazu.",
   },
   {
-    // TODO Mit Ausilia klären, welche Fahrzeuge zur Verfügung stehen. Die
-    // Antwort nennt bewusst keine Getriebeart und keine Prüfungsfolgen, weil
-    // beides ungeprüft wäre.
-    frage: "Fahre ich mit Schaltgetriebe oder Automat?",
+    frage: "Gibt es einen Familienrabatt?",
     antwort:
-      "Das besprechen wir in der Gratis-Probelektion. Wir schauen zusammen an, was zu Dir passt, und Du entscheidest danach. Ruf uns an, wenn Du es vorher schon wissen möchtest.",
+      "Ja. Wenn Geschwister oder Eltern ebenfalls bei uns fahren oder einen Kurs buchen, gibt es einen Rabatt. Schreib uns per WhatsApp, wir rechnen es Dir aus.",
   },
   {
-    frage: "Ab welchem Alter kann ich mit dem Autofahren beginnen?",
+    frage: "In welchen Sprachen unterrichtet ihr?",
     antwort:
-      "Den Lernfahrausweis der Kategorie B bekommst Du ab 17 Jahren. Die praktische Prüfung darfst Du ab dem 18. Geburtstag ablegen. Fang früh genug mit dem Nothelferkurs und dem Gesuch an, das Strassenverkehrsamt braucht für die Bearbeitung vier bis sechs Wochen.",
+      "Deutsch, Italienisch, Spanisch, Englisch und Französisch. Sag bei der Anmeldung, welche Sprache Dir am besten passt.",
   },
   {
-    frage: "Wie lange ist die Theorieprüfung gültig?",
+    frage: "Muss ich den WAB-Kurs machen?",
     antwort:
-      "Unbefristet. Seit der Revision vom 1. Januar 2021 verfällt die bestandene Theorieprüfung nicht mehr, ebenso wenig der Verkehrskundeunterricht.",
-  },
-  {
-    frage:
-      "Wie lange muss ich den Lernfahrausweis besitzen, bevor ich die praktische Prüfung ablegen darf?",
-    antwort:
-      "Wenn Du den Lernfahrausweis vor Deinem 20. Geburtstag erhältst, gilt eine Lernphase von zwölf Monaten. Erst danach wirst Du zur praktischen Prüfung zugelassen. Wer den Ausweis ab dem 20. Geburtstag löst, hat diese Wartefrist nicht.",
+      "Ja, innert 12 Monaten nach der praktischen Prüfung. Die Buchung läuft über den TCS. Mit dem Gutscheincode {{gutschein}} bekommst Du CHF 20 Rabatt.",
   },
 ];

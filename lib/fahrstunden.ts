@@ -16,6 +16,8 @@ import type { EinstellungSchluessel } from "@/lib/einstellungen-defaults";
 type AboKategorie = {
   slug: string;
   name: string;
+  /** Kurzform unter dem Namen, zum Beispiel "Kategorie B". */
+  untertitel: string;
   beschreibung: string;
   preisform: "abo";
   schluessel: {
@@ -29,6 +31,7 @@ type AboKategorie = {
 type LkwKategorie = {
   slug: string;
   name: string;
+  untertitel: string;
   beschreibung: string;
   preisform: "lkw";
   schluessel: {
@@ -40,9 +43,18 @@ type LkwKategorie = {
 
 export type FahrstundenKategorie = AboKategorie | LkwKategorie;
 
+/**
+ * Reihenfolge wie in design/haudis-design.dc.html Screen 05. Die ersten beiden
+ * bekommen auf der Seite die grossen Karten, der Rest die kleinen. Das ist eine
+ * redaktionelle Entscheidung und keine Ableitung aus den Preisen: Auto und Taxi
+ * sind das, wonach die meisten fragen, und der Lastwagen bleibt klein, obwohl
+ * seine Preise hinterlegt sind. Soll eine Kategorie nach vorne, genuegt es, sie
+ * hier hoeher zu setzen.
+ */
 export const FAHRSTUNDEN_KATEGORIEN: FahrstundenKategorie[] = [
   {
     slug: "auto",
+    untertitel: "Kategorie B",
     name: "Auto",
     beschreibung:
       "Fahrlektionen in der Kategorie B, im modernen Schulungsfahrzeug mit Doppelsteuerung.",
@@ -55,7 +67,22 @@ export const FAHRSTUNDEN_KATEGORIEN: FahrstundenKategorie[] = [
     whatsappText: "whatsapp.text.auto",
   },
   {
+    slug: "taxi",
+    untertitel: "Berufsfahren",
+    name: "Taxi",
+    beschreibung:
+      "Fahrlektionen für den Taxiausweis, gleiche Ansätze wie beim Auto.",
+    preisform: "abo",
+    schluessel: {
+      einzel: "fahrstunden.taxi.einzel",
+      abo5: "fahrstunden.taxi.abo5",
+      abo10: "fahrstunden.taxi.abo10",
+    },
+    whatsappText: "whatsapp.text.taxi",
+  },
+  {
     slug: "motorrad",
+    untertitel: "Kategorie A1 / A35 / A",
     name: "Motorrad",
     beschreibung: "Fahrlektionen für die Kategorien A1 und A.",
     preisform: "abo",
@@ -67,19 +94,8 @@ export const FAHRSTUNDEN_KATEGORIEN: FahrstundenKategorie[] = [
     whatsappText: "whatsapp.text.motorrad",
   },
   {
-    slug: "anhaenger-be",
-    name: "Anhänger BE",
-    beschreibung: "Ausbildung für das Fahren mit Anhänger, Kategorie BE.",
-    preisform: "abo",
-    schluessel: {
-      einzel: "fahrstunden.anhaenger.einzel",
-      abo5: "fahrstunden.anhaenger.abo5",
-      abo10: "fahrstunden.anhaenger.abo10",
-    },
-    whatsappText: "whatsapp.text.anhaenger",
-  },
-  {
     slug: "lastwagen",
+    untertitel: "Kategorie C / C1",
     name: "Lastwagen",
     beschreibung:
       "Fahrlektionen für die Kategorie C, praktisch und theoretisch.",
@@ -91,17 +107,17 @@ export const FAHRSTUNDEN_KATEGORIEN: FahrstundenKategorie[] = [
     whatsappText: "whatsapp.text.lkw",
   },
   {
-    slug: "taxi",
-    name: "Taxi",
-    beschreibung:
-      "Fahrlektionen für den Taxiausweis, gleiche Ansätze wie beim Auto.",
+    slug: "anhaenger-be",
+    untertitel: "Kategorie BE",
+    name: "Anhänger BE",
+    beschreibung: "Ausbildung für das Fahren mit Anhänger, Kategorie BE.",
     preisform: "abo",
     schluessel: {
-      einzel: "fahrstunden.taxi.einzel",
-      abo5: "fahrstunden.taxi.abo5",
-      abo10: "fahrstunden.taxi.abo10",
+      einzel: "fahrstunden.anhaenger.einzel",
+      abo5: "fahrstunden.anhaenger.abo5",
+      abo10: "fahrstunden.anhaenger.abo10",
     },
-    whatsappText: "whatsapp.text.taxi",
+    whatsappText: "whatsapp.text.anhaenger",
   },
 ];
 

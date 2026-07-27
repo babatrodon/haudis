@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { KontaktStreifen } from "@/components/oeffentlich/kontakt-streifen";
+import { SeitenKopf } from "@/components/oeffentlich/seiten-kopf";
 import { Button } from "@/components/ui/button";
 import { whatsappLink } from "@/lib/einstellungen";
 import {
@@ -25,29 +26,25 @@ export default async function FuehrerausweisSeite() {
   ]);
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-14 sm:px-6 sm:py-20">
-      <header>
-        <p className="inline-block border-b-4 border-brand-gelb pb-1 font-heading text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-          Dein Weg
-        </p>
-        <h1 className="mt-5 font-heading text-4xl font-bold leading-[1.1] sm:text-5xl">
-          In sieben Schritten zum Führerausweis
-        </h1>
-        <p className="mt-5 max-w-prose text-lg text-muted-foreground">
-          {FUEHRERAUSWEIS_EINLEITUNG}
-        </p>
-        <div className="mt-6 flex flex-wrap gap-3">
-          {TELEFONNUMMERN.map((nummer) => (
-            <a
-              key={nummer.tel}
-              href={`tel:${nummer.tel}`}
-              className="inline-flex min-h-12 items-center border border-border bg-card px-4 font-heading font-semibold transition-colors hover:bg-accent"
-            >
-              {nummer.anzeige}
-            </a>
-          ))}
-        </div>
-      </header>
+    <div className="bg-card">
+      <div className="mx-auto w-full max-w-4xl px-4 py-12 sm:px-6 lg:px-12 lg:py-16">
+      <SeitenKopf
+        bezeichnung="Dein Weg"
+        titel="In sieben Schritten zum Führerausweis"
+      >
+        {FUEHRERAUSWEIS_EINLEITUNG}
+      </SeitenKopf>
+      <div className="mt-7 flex flex-wrap gap-3">
+        {TELEFONNUMMERN.map((nummer) => (
+          <a
+            key={nummer.tel}
+            href={`tel:${nummer.tel}`}
+            className="inline-flex min-h-12 items-center border border-brand-schwarz px-5 font-semibold tabular-nums transition-colors hover:bg-flaeche-2"
+          >
+            {nummer.anzeige}
+          </a>
+        ))}
+      </div>
 
       <ol className="mt-14 space-y-6">
         {SCHRITTE.map((schritt) => (
@@ -57,6 +54,7 @@ export default async function FuehrerausweisSeite() {
 
       <div className="mt-16">
         <KontaktStreifen zeiten={zeiten} whatsappUrl={kontaktUrl} />
+      </div>
       </div>
     </div>
   );

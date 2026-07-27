@@ -4,11 +4,11 @@ import { SeitenKopf } from "@/components/admin/admin-huelle";
 import { ZeitraumFilter } from "@/components/admin/zeitraum-filter";
 import { Button } from "@/components/ui/button";
 import {
+  BASIS_TEXT,
   accountingLesen,
+  basisAus,
   monatsVorgabe,
   zeitfensterAus,
-  BASIS_TEXT,
-  type Basis,
 } from "@/lib/abrechnung";
 import { requireRole } from "@/lib/auth-guard";
 import { chf, datum } from "@/lib/format";
@@ -35,7 +35,7 @@ export default async function AccountingSeite({
 
   const von = gueltigerTag(parameter.von) ?? vorgabe.von;
   const bis = gueltigerTag(parameter.bis) ?? vorgabe.bis;
-  const basis: Basis = parameter.basis === "kurs" ? "kurs" : "anmeldung";
+  const basis = basisAus(parameter.basis);
 
   const accounting = await accountingLesen(zeitfensterAus(von, bis, basis));
   const motorrad = accounting.kursarten.filter((eintrag) => eintrag.motorrad);

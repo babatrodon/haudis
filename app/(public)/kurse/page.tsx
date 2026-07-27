@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { KontaktStreifen } from "@/components/oeffentlich/kontakt-streifen";
+import { SeitenKopf } from "@/components/oeffentlich/seiten-kopf";
 import { Button } from "@/components/ui/button";
 import { whatsappLink } from "@/lib/einstellungen";
 import { chf } from "@/lib/format";
@@ -21,25 +22,21 @@ export default async function KurseSeite() {
   ]);
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
-      <header className="max-w-3xl">
-        <p className="inline-block border-b-4 border-brand-gelb pb-1 font-heading text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-          Unser Angebot
-        </p>
-        <h1 className="mt-5 font-heading text-4xl font-bold leading-[1.1] sm:text-5xl">
-          Kurse
-        </h1>
-        <p className="mt-5 text-lg text-muted-foreground">
-          Alles, was Du für den Führerausweis brauchst, bei uns an der
-          Haselstrasse 33 in Baden. Die aktuellen Daten findest Du bei den
-          Kursdaten.
-        </p>
-        <div className="mt-6">
-          <Button asChild>
-            <Link href="/kursdaten">Zu den Kursdaten</Link>
-          </Button>
-        </div>
-      </header>
+    <div className="bg-card">
+      <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 lg:px-12 lg:py-16">
+      <SeitenKopf bezeichnung="Unser Angebot" titel="Kurse">
+        Alles, was Du für den Führerausweis brauchst, bei uns an der
+        Haselstrasse 33 in Baden. Die aktuellen Daten findest Du bei den
+        Kursdaten.
+      </SeitenKopf>
+      <p className="mt-7">
+        <Link
+          href="/kursdaten"
+          className="inline-flex min-h-12 items-center bg-brand-schwarz px-6 font-semibold text-flaeche-1 transition-colors hover:bg-brand-schwarz-weich"
+        >
+          Zu den Kursdaten
+        </Link>
+      </p>
 
       <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {kursarten.map((kursart) => (
@@ -49,6 +46,7 @@ export default async function KurseSeite() {
 
       <div className="mt-16">
         <KontaktStreifen zeiten={zeiten} whatsappUrl={kontaktUrl} />
+      </div>
       </div>
     </div>
   );

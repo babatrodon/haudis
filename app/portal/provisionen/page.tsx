@@ -5,14 +5,14 @@ import {
   AbrechnungBericht,
   AbrechnungKopf,
 } from "@/components/admin/abrechnung-bericht";
-import { ProfilFehlt } from "@/components/portal/profil-fehlt";
 import { ZeitraumFilter } from "@/components/admin/zeitraum-filter";
+import { ProfilFehlt } from "@/components/portal/profil-fehlt";
 import { Button } from "@/components/ui/button";
 import {
   abrechnungLesen,
+  basisAus,
   monatsVorgabe,
   zeitfensterAus,
-  type Basis,
 } from "@/lib/abrechnung";
 import { requireInstruktorProfil } from "@/lib/auth-guard";
 
@@ -35,7 +35,7 @@ export default async function ProvisionenSeite({
   const vorgabe = monatsVorgabe();
   const von = gueltigerTag(parameter.von) ?? vorgabe.von;
   const bis = gueltigerTag(parameter.bis) ?? vorgabe.bis;
-  const basis: Basis = parameter.basis === "kurs" ? "kurs" : "anmeldung";
+  const basis = basisAus(parameter.basis);
 
   const abrechnung = await abrechnungLesen(
     zeitfensterAus(von, bis, basis),

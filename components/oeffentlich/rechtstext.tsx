@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { AlertTriangle } from "lucide-react";
+import { SeitenKopf } from "@/components/oeffentlich/seiten-kopf";
 
 /**
  * Rahmen fuer AGB, Datenschutzerklaerung und Impressum.
@@ -32,11 +33,11 @@ export function Rechtstext({
   children: ReactNode;
 }) {
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-14 sm:px-6 sm:py-20">
-      <h1 className="font-heading text-4xl font-bold leading-[1.1] sm:text-5xl">
-        {titel}
-      </h1>
-      <p className="mt-3 text-sm text-muted-foreground">Stand: {stand}</p>
+    /* Rechtstexte bleiben schmal. Auf der Breite der uebrigen Seiten waeren
+       die Zeilen zu lang zum Lesen, und gelesen werden sollen sie. */
+    <div className="bg-card">
+      <div className="mx-auto w-full max-w-[760px] px-4 py-12 sm:px-6 lg:py-16">
+      <SeitenKopf bezeichnung={`Stand: ${stand}`} titel={titel} />
 
       <div
         role="note"
@@ -47,8 +48,10 @@ export function Rechtstext({
           className="mt-0.5 size-5 shrink-0 text-brand-rot"
         />
         <div>
-          <p className="font-heading font-bold">Entwurf, noch nicht freigegeben</p>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="font-heading font-semibold">
+            Entwurf, noch nicht freigegeben
+          </p>
+          <p className="mt-1 text-sm text-grau-text">
             Dieser Text ist ein Arbeitsstand. Vor der Aufschaltung muss er
             juristisch geprüft und um die fehlenden Angaben der Fahrschule
             ergänzt werden. Stellen in eckigen Klammern sind offen.
@@ -57,6 +60,7 @@ export function Rechtstext({
       </div>
 
       <div className="mt-10 space-y-8">{children}</div>
+      </div>
     </div>
   );
 }
@@ -70,8 +74,8 @@ export function Abschnitt({
 }) {
   return (
     <section>
-      <h2 className="font-heading text-2xl font-bold">{titel}</h2>
-      <div className="mt-3 space-y-3 text-muted-foreground">{children}</div>
+      <h2 className="font-heading text-2xl font-semibold">{titel}</h2>
+      <div className="mt-3 space-y-3 leading-[1.6] text-grau-text">{children}</div>
     </section>
   );
 }

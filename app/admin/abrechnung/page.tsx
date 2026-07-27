@@ -9,9 +9,9 @@ import { ZeitraumFilter } from "@/components/admin/zeitraum-filter";
 import { Button } from "@/components/ui/button";
 import {
   abrechnungLesen,
+  basisAus,
   monatsVorgabe,
   zeitfensterAus,
-  type Basis,
 } from "@/lib/abrechnung";
 import { requireRole } from "@/lib/auth-guard";
 import { aktiveInstruktoren } from "@/lib/instruktoren";
@@ -40,7 +40,7 @@ export default async function AbrechnungSeite({
 
   const von = gueltigerTag(parameter.von) ?? vorgabe.von;
   const bis = gueltigerTag(parameter.bis) ?? vorgabe.bis;
-  const basis: Basis = parameter.basis === "kurs" ? "kurs" : "anmeldung";
+  const basis = basisAus(parameter.basis);
   const fahrlehrer = parameter.fahrlehrer || undefined;
 
   const [abrechnung, instruktoren] = await Promise.all([

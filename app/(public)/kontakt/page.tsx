@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { ExternalLink, Mail, MapPin, Phone } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { GoogleBewertung } from "@/components/google-bewertung";
-import { Button } from "@/components/ui/button";
+import { Abschnitt, AbschnittTitel, Bezeichnung } from "@/components/oeffentlich/abschnitt";
+import { KontaktKarte } from "@/components/oeffentlich/kontakt-karte";
 import { einstellungenLesen, whatsappLink } from "@/lib/einstellungen";
 import { googleProfilLesen } from "@/lib/google";
-import { ADRESSE, TELEFONNUMMERN } from "@/lib/kontakt";
+import { ADRESSE } from "@/lib/kontakt";
 import { oeffnungszeitenLesen } from "@/lib/oeffnungszeiten";
 
 export const metadata: Metadata = {
@@ -13,6 +14,13 @@ export const metadata: Metadata = {
     "Haselstrasse 33, 5400 Baden, 350 m vom Bahnhof. Telefon 079 604 44 44 und 079 202 97 97, info@haudi.ch. Montag bis Samstag von 07:00 bis 21:00 Uhr.",
 };
 
+/**
+ * Kontakt.
+ *
+ * Traegt denselben Block wie der Fuss der Startseite, nur mit der Ueberschrift
+ * als h1. Darunter das, was nur hierher gehoert: Oeffnungszeiten, der Weg vom
+ * Bahnhof mit dem Knopf zur Navigation, und die Bewertungen.
+ */
 export default async function KontaktSeite() {
   const [zeiten, profil, werte, whatsappUrl] = await Promise.all([
     oeffnungszeitenLesen(),
@@ -22,69 +30,45 @@ export default async function KontaktSeite() {
   ]);
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
-      <header className="max-w-3xl">
-        <p className="inline-block border-b-4 border-brand-gelb pb-1 font-heading text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-          So erreichst Du uns
-        </p>
-        <h1 className="mt-5 font-heading text-4xl font-bold leading-[1.1] sm:text-5xl">
-          Kontakt
-        </h1>
-        <p className="mt-5 text-lg text-muted-foreground">
-          Am schnellsten geht es telefonisch. Beide Nummern führen zu uns, ruf
-          einfach an.
-        </p>
-      </header>
+    <div className="bg-card">
+      <section className="border-b border-flaeche-3">
+        <KontaktKarte
+          alsUeberschrift="h1"
+          titelId="kontakt-titel"
+          whatsappUrl={whatsappUrl}
+          einleitung="Am schnellsten geht es telefonisch. Beide Nummern führen zu uns, ruf einfach an."
+        />
+      </section>
 
-      <div className="mt-12 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <section
-          aria-labelledby="telefon-titel"
-          className="border border-border bg-card p-6 sm:p-8"
-        >
-          <h2 id="telefon-titel" className="font-heading text-2xl font-bold">
-            Telefon und Nachricht
-          </h2>
+      <Abschnitt aria-labelledby="hierher-titel">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-16">
+          <div>
+            <Bezeichnung>Anfahrt</Bezeichnung>
+            <AbschnittTitel id="hierher-titel">
+              350 m vom Bahnhof Baden
+            </AbschnittTitel>
+            <p className="mt-5 max-w-[520px] leading-[1.6] text-grau-text">
+              Rund fünf Minuten zu Fuss. Du brauchst kein Auto, um zu uns zu
+              kommen. Wer trotzdem fährt: in der Umgebung gibt es
+              Parkmöglichkeiten.
+            </p>
 
-          <ul className="mt-6 space-y-3">
-            {TELEFONNUMMERN.map((nummer) => (
-              <li key={nummer.tel}>
-                <a
-                  href={`tel:${nummer.tel}`}
-                  className="flex min-h-14 items-center justify-between gap-4 border border-border px-5 font-heading text-xl font-bold transition-colors hover:bg-accent"
-                >
-                  <span className="flex items-center gap-3">
-                    <Phone aria-hidden="true" className="size-5" />
-                    {nummer.anzeige}
-                  </span>
-                  <span className="text-sm font-normal text-muted-foreground">
-                    anrufen
-                  </span>
-                </a>
-              </li>
-            ))}
-          </ul>
-
-          <div className="mt-4 flex flex-wrap gap-3">
-            <Button asChild variant="akzent">
-              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                WhatsApp schreiben
+            <p className="mt-7">
+              <a
+                href={profil.routeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-12 items-center gap-2 bg-brand-schwarz px-5 font-semibold text-flaeche-1 transition-colors hover:bg-brand-schwarz-weich"
+              >
+                Route planen
+                <ExternalLink aria-hidden="true" className="size-4" />
+                <span className="sr-only">(öffnet Google Maps in neuem Tab)</span>
               </a>
-            </Button>
-            <Button asChild variant="outline">
-              <a href={`mailto:${ADRESSE.email}`}>
-                <Mail aria-hidden="true" className="size-4" />
-                {ADRESSE.email}
-              </a>
-            </Button>
+            </p>
           </div>
 
-          <p className="mt-4 text-sm text-muted-foreground">
-            WhatsApp läuft über {TELEFONNUMMERN[0].anzeige}.
-          </p>
-
-          <div className="mt-6 border-t border-border pt-6">
-            <h3 className="font-heading font-bold">Öffnungszeiten</h3>
-            <p className="mt-2 text-muted-foreground">
+          <dl className="border-t border-flaeche-3">
+            <Angabe bezeichnung="Öffnungszeiten">
               {zeiten.anzeige}
               {zeiten.hinweis ? (
                 <>
@@ -92,74 +76,47 @@ export default async function KontaktSeite() {
                   {zeiten.hinweis}
                 </>
               ) : null}
-            </p>
-          </div>
-        </section>
-
-        {/*
-          Bewusst kein eingebetteter Kartendienst: eine Karte im iframe laedt
-          bei jedem Aufruf Daten zu einem Dritten und muesste in der
-          Datenschutzerklaerung als Auftragsverarbeiter stehen. Der Knopf
-          oeffnet die Navigation erst auf Klick, mit den exakten Koordinaten.
-        */}
-        <section
-          aria-labelledby="adresse-titel"
-          className="border border-border bg-card p-6 sm:p-8"
-        >
-          <h2 id="adresse-titel" className="font-heading text-2xl font-bold">
-            Standort
-          </h2>
-
-          <address className="mt-6 flex gap-3 not-italic">
-            <MapPin
-              aria-hidden="true"
-              className="mt-1 size-5 shrink-0 text-muted-foreground"
-            />
-            <span className="text-lg">
-              <span className="font-heading font-bold">{ADRESSE.firma}</span>
+            </Angabe>
+            <Angabe bezeichnung="Anschrift">
+              {ADRESSE.firma}
               <br />
               {ADRESSE.strasse}
               <br />
               {ADRESSE.plz} {ADRESSE.ort}
-            </span>
-          </address>
-
-          <p className="mt-5 border-l-4 border-brand-gelb pl-4 text-muted-foreground">
-            350 m vom Bahnhof Baden, rund fünf Minuten zu Fuss. Du brauchst kein
-            Auto, um zu uns zu kommen.
-          </p>
-
-          <div className="mt-6">
-            <Button asChild className="w-full sm:w-auto">
-              <a
-                href={profil.routeUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Route planen
-                <ExternalLink aria-hidden="true" className="size-4" />
-                <span className="sr-only">
-                  (öffnet Google Maps in neuem Tab)
-                </span>
-              </a>
-            </Button>
-          </div>
-
-          <dl className="mt-6 border-t border-border pt-6 text-sm">
-            <dt className="text-muted-foreground">Koordinaten</dt>
-            <dd className="mt-1 tabular-nums">
-              {werte["geo.breitengrad"]}, {werte["geo.laengengrad"]}
-            </dd>
+            </Angabe>
+            <Angabe bezeichnung="Koordinaten">
+              <span className="tabular-nums">
+                {werte["geo.breitengrad"]}, {werte["geo.laengengrad"]}
+              </span>
+            </Angabe>
           </dl>
-        </section>
-      </div>
+        </div>
+      </Abschnitt>
 
-      <section aria-labelledby="bewertungen-titel" className="mt-6">
+      <Abschnitt aria-labelledby="bewertungen-titel">
         <h2 id="bewertungen-titel" className="sr-only">
           Bewertungen
         </h2>
         <GoogleBewertung profil={profil} />
-      </section>
+      </Abschnitt>
+    </div>
+  );
+}
+
+function Angabe({
+  bezeichnung,
+  children,
+}: {
+  bezeichnung: string;
+  children: React.ReactNode;
+}) {
+  return (
+    // Auf dem Handy uebereinander: "Öffnungszeiten" passt in keine Spalte, die
+    // neben sich noch Platz fuer die Angabe laesst, und wurde mitten im Wort
+    // umgebrochen.
+    <div className="grid grid-cols-1 gap-x-5 border-b border-flaeche-3 py-3.5 leading-[1.5] sm:grid-cols-[140px_minmax(0,1fr)]">
+      <dt className="text-grau-text-hell">{bezeichnung}</dt>
+      <dd>{children}</dd>
     </div>
   );
 }

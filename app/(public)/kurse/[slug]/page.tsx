@@ -63,8 +63,9 @@ export default async function KursDetailSeite({
   const gratis = kursart.gesamtpreis.lte(0);
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
-      <nav aria-label="Brotkrumen" className="text-sm text-muted-foreground">
+    <div className="bg-card">
+      <div className="mx-auto w-full max-w-[1344px] px-4 py-12 sm:px-6 lg:px-12 lg:py-16">
+      <nav aria-label="Brotkrumen" className="text-sm text-grau-text">
         <Link href="/kurse" className="underline underline-offset-4">
           Kurse
         </Link>
@@ -74,10 +75,13 @@ export default async function KursDetailSeite({
 
       <div className="mt-6 grid grid-cols-1 gap-10 lg:grid-cols-3">
         <header className="lg:col-span-2">
-          <h1 className="font-heading text-4xl font-bold leading-[1.1] sm:text-5xl">
+          <h1
+            lang="de"
+            className="font-heading text-[32px] font-semibold leading-[1.02] tracking-[-0.03em] sm:text-[44px] lg:text-[56px] lg:leading-none"
+          >
             {kursart.name}
           </h1>
-          <p className="mt-5 max-w-prose text-lg text-muted-foreground">
+          <p className="mt-5 max-w-[620px] leading-[1.55] text-grau-text lg:text-lg">
             {kursart.beschreibung}
           </p>
 
@@ -98,7 +102,7 @@ export default async function KursDetailSeite({
 
         <aside className="lg:sticky lg:top-24 lg:self-start">
           <div className="border border-border bg-card p-6">
-            <p className="font-heading text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+            <p className="mb-2 inline-block border-b-[3px] border-brand-gelb pb-1 text-[13px] font-semibold text-grau-text">
               Preis
             </p>
             {gratis ? (
@@ -185,6 +189,7 @@ export default async function KursDetailSeite({
 
       <div className="mt-16">
         <KontaktStreifen zeiten={zeiten} whatsappUrl={kontaktUrl} />
+      </div>
       </div>
     </div>
   );

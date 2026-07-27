@@ -174,8 +174,14 @@
      * entsteht daraus waagrechtes Scrollen auf jeder Seite, die so ein Wort
      * in der Überschrift trägt. lang="de-CH" steht am html-Element, damit die
      * Trennstellen stimmen.
+     *
+     * Die Grenze ist wichtig: ohne sie trennt der Browser auch "Bahn-hof" und
+     * "un-sere", und die Überschriften sehen zerhackt aus. Erst ab zwölf
+     * Zeichen wird getrennt, mit mindestens fünf davor und vier danach. Damit
+     * bleiben normale Wörter ganz und nur die echten Komposita brechen.
      */
     hyphens: auto;
+    hyphenate-limit-chars: 12 5 4;
   }
 }
 

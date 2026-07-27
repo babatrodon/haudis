@@ -43,6 +43,14 @@ type DemoBuchung = {
   // Buchungsflow, sonst prueft der Demo-Seed etwas anderes als die Anwendung.
   /** Kuerzel des zuweisenden Fahrlehrers, Grundlage der Provision. */
   vermitteltVon?: string;
+  /**
+   * Provisionssatz, wie er beim Zuweisen festgehalten wurde. Ohne Angabe gilt
+   * der aktuelle Satz des Fahrlehrers. Ein abweichender Wert bildet den Fall
+   * ab, dass Ausilia den Satz spaeter geaendert hat: alte Buchungen behalten
+   * ihren, und die Abrechnung zeigt dann zwei Rechenzeilen statt einer
+   * Multiplikation, die nicht aufgeht.
+   */
+  provisionssatz?: string;
 };
 
 const ORTE = [
@@ -146,8 +154,135 @@ type DemoKurs = {
   fruehbucherPlaetze?: number;
   /** Bloecke als [Wochentag, Tagesversatz, Start, Ende]. */
   bloecke: [number, number, string, string][];
+  /**
+   * Vorlauf in Tagen bis zum ersten Kurstag. Negative Werte liegen in der
+   * Vergangenheit: solche Kurse erscheinen oeffentlich nicht mehr, fuellen
+   * aber die Abrechnung. Ohne Angabe 21 Tage wie bisher.
+   */
+  vorlaufTage?: number;
   buchungen: DemoBuchung[];
 };
+
+/**
+ * Vergangene Kurse mit zugewiesenen Buchungen, Grundlage der Abrechnung.
+ *
+ * Aufbau je Monat: ein VKU, dazu abwechselnd ein BTU oder ein zweiter VKU.
+ * Die Zuweisungen laufen ueber sechs Kuerzel, damit im Bericht mehrere
+ * Fahrlehrer mit verschiedenen Summen stehen. Ein Teil der Buchungen bleibt
+ * ohne Zuweisung — auch das gehoert ins Bild, sonst sieht der Bericht
+ * vollstaendiger aus, als eine echte Abrechnung je ist.
+ */
+function abrechnungsKurse(): DemoKurs[] {
+  const vkuBloecke: [number, number, string, string][] = [
+    [2, 0, "18:00", "20:00"],
+    [2, 0, "20:00", "22:00"],
+    [3, 1, "18:00", "20:00"],
+    [3, 1, "20:00", "22:00"],
+  ];
+  const btuBloecke: [number, number, string, string][] = [
+    [2, 0, "19:00", "21:00"],
+    [3, 1, "19:00", "21:00"],
+  ];
+
+  /** Kuerzel im Wechsel, damit die Summen pro Person auseinanderliegen. */
+  const zuweisung = (muster: (string | null)[]): { vermitteltVon?: string }[] =>
+    muster.map((kuerzel) => (kuerzel ? { vermitteltVon: kuerzel } : {}));
+
+  const monate: {
+    monat: number;
+    /** Tage zurueck bis zum ersten Kurstag. */
+    vorlauf: number;
+  }[] = [
+    { monat: 1, vorlauf: -30 },
+    { monat: 2, vorlauf: -60 },
+    { monat: 3, vorlauf: -90 },
+  ];
+
+  const muster: (string | null)[][] = [
+    ["VaSh", "VaSh", "HaLu", null, "EgBe", "VaSh", "HaLu", null],
+    ["HaLu", "EgBe", "EgBe", "HaAu", null, "VaSh", "HaAu", "HaBr"],
+    ["EgBe", "HaAu", "VaSh", "VaSh", "HaBr", null, "HaLu", "AnDu"],
+  ];
+
+  return monate.flatMap(({ monat, vorlauf }, i) => {
+    const versatz = 200 + monat * 40;
+    const zuweisungen = zuweisung(muster[i]);
+
+    /**
+     * Der aeltere Satz gilt fuer den jeweils zweiten Kurs des Monats. Damit
+     * faellt in einem Monat beides zusammen: derselbe Fahrlehrer hat
+     * Buchungen zu 50.00 und zu 40.00. Genau dafuer buendelt die Abrechnung
+     * nach (Person, Satz) — sonst stuende dort eine Multiplikation, die nicht
+     * aufgeht.
+     */
+    const alterSatz = monat >= 2 ? { provisionssatz: "40.00" } : {};
+
+    const vku: DemoKurs = {
+      id: `${DEMO_PRAEFIX}abr-${monat}-vku`,
+      kursartCode: "VKU",
+      preis: "140.00",
+      materialpreis: "30.00",
+      onlineLimit: 12,
+      status: "PUBLISHED",
+      notiz: `Demo: Abrechnung, VKU vor ${monat} Monat(en)`,
+      vorlaufTage: vorlauf,
+      bloecke: vkuBloecke,
+      buchungen: teilnehmer(8, versatz).map((b, index) => ({
+        ...b,
+        ...zuweisungen[index],
+        // Jede achte Anmeldung kam telefonisch herein.
+        ...(index === 4 ? { quelle: "PHONE" as const } : {}),
+        // Ein Storno pro Kurs: darf keine Provision ausloesen. Bewusst auf
+        // einer zugewiesenen Buchung, sonst prueft der Ausschluss nichts.
+        ...(index === 2 ? { status: "CANCELLED" as const } : {}),
+      })),
+    };
+
+    const zweiter: DemoKurs =
+      monat === 2
+        ? {
+            id: `${DEMO_PRAEFIX}abr-${monat}-btu`,
+            kursartCode: "BTU",
+            preis: "200.00",
+            materialpreis: "0.00",
+            onlineLimit: 12,
+            status: "PUBLISHED",
+            notiz: `Demo: Abrechnung, BTU vor ${monat} Monaten`,
+            vorlaufTage: vorlauf + 7,
+            bloecke: btuBloecke,
+            buchungen: teilnehmer(5, versatz + 20).map((b, index) => ({
+              ...b,
+              ...zuweisungen[index],
+              ...(zuweisungen[index].vermitteltVon ? alterSatz : {}),
+            })),
+          }
+        : {
+            id: `${DEMO_PRAEFIX}abr-${monat}-vku-weekend`,
+            kursartCode: "VKU",
+            preis: "180.00",
+            materialpreis: "30.00",
+            onlineLimit: 12,
+            status: "PUBLISHED",
+            notiz: `Demo: Abrechnung, Weekend-VKU vor ${monat} Monat(en)`,
+            vorlaufTage: vorlauf + 7,
+            fruehbucherProzent: "10.00",
+            fruehbucherPlaetze: 5,
+            bloecke: [
+              [5, 0, "18:00", "20:00"],
+              [5, 0, "20:00", "22:00"],
+              [6, 1, "08:30", "10:30"],
+              [6, 1, "10:30", "12:30"],
+            ],
+            buchungen: teilnehmer(6, versatz + 20).map((b, index) => ({
+              ...b,
+              ...zuweisungen[index],
+              ...(zuweisungen[index].vermitteltVon ? alterSatz : {}),
+            })),
+          };
+
+    return [vku, zweiter];
+  });
+}
 
 function demoKurse(): DemoKurs[] {
   // VKU-Muster aus PLAN.md Abschnitt 6.2: Di und Mi, je zwei Bloecke.
@@ -246,6 +381,24 @@ function demoKurse(): DemoKurs[] {
       ],
       buchungen: teilnehmer(3, 80),
     },
+    // ------------------------------------------------------------------
+    // Vergangene Kurse fuer die Abrechnung.
+    //
+    // Abgerechnet wird nach dem Kursdatum (Kundenentscheid 27.07.2026), also
+    // braucht ein Monatsbericht Kurse, die in diesem Monat stattgefunden
+    // haben. Die Kurse oben liegen alle in denselben drei Wochen und ergaeben
+    // fuer jeden anderen Monat eine leere Seite.
+    //
+    // Diese hier liegen einen, zwei und drei Monate zurueck. Sie erscheinen
+    // oeffentlich nicht mehr — kommendeKurse verlangt einen Termin ab heute —
+    // und beeinflussen deshalb weder die Ampel-Demos noch die Startseite.
+    //
+    // Verteilt auf sechs Fahrlehrer und drei Kursarten, damit der Bericht
+    // unterschiedliche Summen zeigt und nicht eine Zeile pro Person. Stornos
+    // stehen absichtlich dazwischen: sie duerfen keine Provision ausloesen,
+    // und der Bericht weist sie als ausgeschlossen aus.
+    ...abrechnungsKurse(),
+
     {
       id: `${DEMO_PRAEFIX}vku-entwurf`,
       kursartCode: "VKU",
@@ -284,10 +437,13 @@ async function schreiben(prisma: PrismaSeedClient) {
   }
 
   const instruktoren = await prisma.instructor.findMany({
-    select: { id: true, shortCode: true },
+    select: { id: true, shortCode: true, provisionPerBooking: true },
   });
   const instruktorNachKuerzel = new Map(
     instruktoren.map((i) => [i.shortCode, i.id]),
+  );
+  const satzNachKuerzel = new Map(
+    instruktoren.map((i) => [i.shortCode, i.provisionPerBooking]),
   );
 
   let kurseGeschrieben = 0;
@@ -322,7 +478,10 @@ async function schreiben(prisma: PrismaSeedClient) {
     await prisma.courseSession.deleteMany({ where: { courseId: kurs.id } });
     await prisma.booking.deleteMany({ where: { courseId: kurs.id } });
 
-    const start = naechsterWochentag(kurs.bloecke[0][0], 21);
+    const start = naechsterWochentag(
+      kurs.bloecke[0][0],
+      kurs.vorlaufTage ?? 21,
+    );
     for (const [, versatz, von, bis] of kurs.bloecke) {
       await prisma.courseSession.create({
         data: {
@@ -352,6 +511,9 @@ async function schreiben(prisma: PrismaSeedClient) {
 
     for (const [index, buchung] of kurs.buchungen.entries()) {
       const status = buchung.status ?? "CONFIRMED";
+      const instruktorId = buchung.vermitteltVon
+        ? (instruktorNachKuerzel.get(buchung.vermitteltVon) ?? null)
+        : null;
       // Dieselbe Funktion, die Sprint 3 bei jeder echten Buchung aufruft.
       const preis = preisBerechnen(preisDaten, bestaetigte);
       if (status === "CONFIRMED") {
@@ -376,8 +538,15 @@ async function schreiben(prisma: PrismaSeedClient) {
           status,
           priceCharged: preis.total,
           earlyBird: preis.fruehbucher,
-          referredById: buchung.vermitteltVon
-            ? (instruktorNachKuerzel.get(buchung.vermitteltVon) ?? null)
+          referredById: instruktorId,
+          // Der Satz gehoert auf die Buchung, nicht nur an den Fahrlehrer:
+          // genau wie priceCharged den Preis festhaelt. Ohne ihn zaehlt die
+          // Abrechnung die Zuweisung gar nicht — lib/abrechnung.ts verlangt
+          // referredBy UND commissionRate, sonst bliebe der Bericht leer.
+          commissionRate: instruktorId
+            ? (buchung.provisionssatz ??
+              satzNachKuerzel.get(buchung.vermitteltVon ?? "") ??
+              null)
             : null,
         },
       });

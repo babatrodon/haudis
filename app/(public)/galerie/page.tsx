@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Bildplatzhalter } from "@/components/bildplatzhalter";
 import { KontaktStreifen } from "@/components/oeffentlich/kontakt-streifen";
+import { SeitenKopf } from "@/components/oeffentlich/seiten-kopf";
 import { whatsappLink } from "@/lib/einstellungen";
 import { oeffnungszeitenLesen } from "@/lib/oeffnungszeiten";
 
@@ -39,19 +40,14 @@ export default async function GalerieSeite() {
   ]);
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
-      <header className="max-w-3xl">
-        <p className="inline-block border-b-4 border-brand-gelb pb-1 font-heading text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-          Einblick
-        </p>
-        <h1 className="mt-5 font-heading text-4xl font-bold leading-[1.1] sm:text-5xl">
-          Galerie
-        </h1>
-        <p className="mt-5 text-lg text-muted-foreground">
+    <div className="bg-card">
+      <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 lg:px-12 lg:py-16">
+      <SeitenKopf bezeichnung="Einblick" titel="Galerie">
+        <p>
           Unsere Fahrzeuge, der Schulungsraum und das Team. Komm vorbei und
           schau es Dir selbst an, wir sind an der Haselstrasse 33 in Baden.
         </p>
-      </header>
+      </SeitenKopf>
 
       <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {BILDER.map((bild) => (
@@ -65,6 +61,7 @@ export default async function GalerieSeite() {
 
       <div className="mt-16">
         <KontaktStreifen zeiten={zeiten} whatsappUrl={kontaktUrl} />
+      </div>
       </div>
     </div>
   );

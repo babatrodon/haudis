@@ -42,7 +42,7 @@ async function schritt1Ausfuellen(
 test("Anmeldung von den Kursdaten bis zur Bestaetigung", async ({ page }) => {
   await page.goto("/kursdaten");
   await expect(
-    page.getByRole("heading", { name: "Kursdaten", level: 1 }),
+    page.getByRole("heading", { name: "Alle Kurse auf einen Blick", level: 1 }),
   ).toBeVisible();
 
   // Ueber die Kurskarte gehen, nicht direkt auf die Adresse: der Weg der
@@ -102,14 +102,27 @@ test("Anmeldung von den Kursdaten bis zur Bestaetigung", async ({ page }) => {
 test("ausgebuchter Kurs laesst sich nicht anmelden", async ({ page }) => {
   // Auf den Kursdaten fehlt der Knopf.
   await page.goto("/kursdaten");
-  const ausgebuchteKarte = page
+  const ausgebuchteZeile = page
     .locator("article")
     .filter({ hasText: "Kurs ausgebucht" })
     .first();
-  await expect(ausgebuchteKarte).toBeVisible();
+  await expect(ausgebuchteZeile).toBeVisible();
   await expect(
-    ausgebuchteKarte.getByRole("link", { name: "Jetzt anmelden" }),
+    ausgebuchteZeile.getByRole("link", { name: "Anmelden" }),
   ).toHaveCount(0);
+  await expect(
+    ausgebuchteZeile.getByText("Ausgebucht, ruf uns an"),
+  ).toBeVisible();
+
+  // Gegenprobe: ohne sie wuerde die Zaehlung oben auch dann null ergeben, wenn
+  // der Knopf schlicht anders hiesse und auf keiner Zeile mehr auftauchte.
+  await expect(
+    page
+      .locator("article")
+      .filter({ hasText: "Noch viele Plätze frei" })
+      .first()
+      .getByRole("link", { name: "Anmelden" }),
+  ).toBeVisible();
 
   // Und auch der Direktlink fuehrt nicht in ein Formular.
   await page.goto(`/anmeldung/${KURS_ROT}`);

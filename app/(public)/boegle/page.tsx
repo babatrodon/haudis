@@ -7,6 +7,7 @@ import { whatsappLink } from "@/lib/einstellungen";
 import { BOEGLE_FRAGEN } from "@/lib/inhalte/boegle-fragen";
 import { EXTERNE_LINKS } from "@/lib/inhalte/links";
 import { oeffnungszeitenLesen } from "@/lib/oeffnungszeiten";
+import { SeitenKopf } from "@/components/oeffentlich/seiten-kopf";
 import { Quiz } from "./quiz";
 
 export const metadata: Metadata = {
@@ -29,21 +30,14 @@ export default async function BoegleSeite() {
   ]);
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-14 sm:px-6 sm:py-20">
-      <header>
-        <p className="inline-block border-b-4 border-brand-gelb pb-1 font-heading text-sm font-semibold uppercase tracking-widest text-muted-foreground">
-          Gratis und ohne Anmeldung
-        </p>
-        <h1 className="mt-5 font-heading text-4xl font-bold leading-[1.1] sm:text-5xl">
-          Bögle
-        </h1>
-        <p className="mt-5 max-w-prose text-lg text-muted-foreground">
-          Jeden Montag von 19 bis 21 Uhr üben wir zusammen die
-          Theorieprüfungsfragen. Du kommst einfach vorbei, ohne Anmeldung und
-          ohne Kosten. Wir gehen die Fragen durch, die Dir Mühe machen, und
-          erklären, warum eine Antwort stimmt.
-        </p>
-      </header>
+    <div className="bg-card">
+      <div className="mx-auto w-full max-w-4xl px-4 py-12 sm:px-6 lg:px-12 lg:py-16">
+      <SeitenKopf bezeichnung="Gratis und ohne Anmeldung" titel="Bögle">
+        Jeden Montag von 19 bis 21 Uhr üben wir zusammen die
+        Theorieprüfungsfragen. Du kommst einfach vorbei, ohne Anmeldung und ohne
+        Kosten. Wir gehen die Fragen durch, die Dir Mühe machen, und erklären,
+        warum eine Antwort stimmt.
+      </SeitenKopf>
 
       <section
         aria-labelledby="pruefung-titel"
@@ -127,15 +121,18 @@ export default async function BoegleSeite() {
       <div className="mt-16">
         <KontaktStreifen zeiten={zeiten} whatsappUrl={kontaktUrl} />
       </div>
+      </div>
     </div>
   );
 }
 
 function Kennzahl({ wert, text }: { wert: string; text: string }) {
   return (
-    <div className="bg-card p-5">
-      <dt className="font-heading text-4xl font-bold tabular-nums">{wert}</dt>
-      <dd className="mt-1 text-sm text-muted-foreground">{text}</dd>
+    <div className="bg-flaeche-1 p-5">
+      <dt className="font-heading text-4xl font-semibold tabular-nums">
+        {wert}
+      </dt>
+      <dd className="mt-1 text-sm text-grau-text">{text}</dd>
     </div>
   );
 }

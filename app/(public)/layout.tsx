@@ -3,6 +3,7 @@ import { Kopfzeile } from "@/components/oeffentlich/kopfzeile";
 import { Fusszeile } from "@/components/oeffentlich/fusszeile";
 import { StrukturierteDaten } from "@/components/strukturierte-daten";
 import { googleProfilLesen } from "@/lib/google";
+import { whatsappLink } from "@/lib/einstellungen";
 import { oeffnungszeitenLesen } from "@/lib/oeffnungszeiten";
 
 /**
@@ -28,15 +29,16 @@ export default async function OeffentlichLayout({
 }: {
   children: ReactNode;
 }) {
-  const [profil, zeiten] = await Promise.all([
+  const [profil, zeiten, whatsappUrl] = await Promise.all([
     googleProfilLesen(),
     oeffnungszeitenLesen(),
+    whatsappLink("whatsapp.text.auto"),
   ]);
 
   return (
     <>
       <StrukturierteDaten profil={profil} zeiten={zeiten} />
-      <Kopfzeile />
+      <Kopfzeile whatsappUrl={whatsappUrl} />
       <div className="flex flex-1 flex-col">{children}</div>
       <Fusszeile zeiten={zeiten} />
     </>

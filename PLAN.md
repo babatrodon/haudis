@@ -42,7 +42,7 @@ Neu: eine massgeschneiderte Plattform aus einem Guss.
 | Monitoring | Sentry (free) + UptimeRobot | |
 | E2E-Test | Playwright: 1 Smoke-Test für den Buchungsflow | Der eine Test, der den Client-GAU verhindert |
 
-Konventionen: Beträge als Prisma `Decimal` in CHF, Format `de-CH`. Zeiten in Europe/Zurich, Speicherung UTC. Hauptsprache Deutsch (Schweiz, kein ß), zusätzlich EN, IT und SQ via next-intl. Die deutsche Fassung ist die Referenz, UI-Strings liegen in Message-Files pro Sprache.
+Konventionen: Beträge als Prisma `Decimal` in CHF, Format `de-CH`. Zeiten in Europe/Zurich, Speicherung UTC. Sprache: ausschliesslich Deutsch (Schweiz, kein ß). Kundenentscheid 27.07.2026: keine Mehrsprachigkeit, kein i18n-Framework, kein Sprachumschalter. UI-Strings bleiben direkt im Code bzw. in `lib/inhalte/`.
 
 ---
 
@@ -370,7 +370,7 @@ pnpm dev | pnpm build | pnpm prisma migrate dev | pnpm prisma db seed | pnpm tes
 ## Konventionen
 - Server Components lesen, Server Actions schreiben, Zod-Validierung in jeder Action
 - Geld als Prisma Decimal, Anzeige de-CH; Datum UTC speichern, Europe/Zurich anzeigen
-- Sprachen: DE (Referenz), EN, IT, SQ via next-intl, Message-Files pro Sprache
+- Sprache: nur Deutsch (CH). Keine Mehrsprachigkeit, kein i18n-Framework.
 - Mobile-first, Admin funktioniert bei 375px und auf iPad (768/1024)
 
 ## Domänenregeln (nie verletzen)
@@ -430,7 +430,7 @@ Beides sind Inhalte, keine Bausteine. Sprint 2 und die Buchung laufen unabhängi
 ### Weiterhin offen, nicht blockierend
 
 6. Lektionsdauer für die interne Erfassung (45 oder 90 Minuten).
-7. Übersetzungen: SQ liefert Loli, wer liest EN und IT gegen? Nur UI und Kernseiten oder auch alle Kursbeschreibungen?
+7. ENTFÄLLT: Übersetzungen. Die Website bleibt einsprachig Deutsch (Entscheid 27.07.2026).
 8. Hosting-Eigentum und Abrechnung: LoliT Managed Hosting empfohlen (siehe Abschnitt 13).
 
 ## 13. Kommerziell (LoliT, intern)
@@ -504,7 +504,7 @@ model Lesson {
 3. **Schülerkartei & Lektionsverwaltung (intern)**: Admin und Fahrlehrer legen Schüler an, erfassen Abos (1/5/10, Preise aus Abschnitt 5) und Lektionen. Der Admin weist den Fahrlehrer pro Lektion zu. Abgehakte Lektion zählt das Abo herunter (Entscheidung 11). Kunden sehen davon nichts, der Fahrstunden-Kontakt bleibt WhatsApp und Telefon.
 4. **WAB-Erinnerung**: Admin oder Fahrlehrer trägt die bestandene praktische Prüfung in der Schülerkartei ein. Monatlicher Cron: 11 Monate nach Prüfungsdatum Mail mit TCS-Link + Gutscheincode Ausilia20, `wabReminderSentAt` verhindert Doppelversand.
 5. **Google-Reviews-Widget**: Places API oder in Settings gepflegte Reviews, immer mit Sternen, Namen und Google-Link.
-6. **Mehrsprachigkeit**: next-intl mit DE als Referenz, EN/IT/SQ. Sprachumschalter im Header, hreflang-Tags, Kursbeschreibungen mit Übersetzungsfeldern im Admin (Entscheidung 12).
+6. **Mehrsprachigkeit: GESTRICHEN** (Kundenentscheid 27.07.2026). Die Website bleibt einsprachig Deutsch. Der Hinweis auf mehrsprachigen Fahrunterricht (Deutsch, Italienisch, Spanisch, Englisch, Französisch) bleibt als Inhalt bestehen, das betrifft die Lektionen, nicht die Website.
 
 ### Sprints Welle 2
 
@@ -513,7 +513,6 @@ model Lesson {
 | 7 Zahlung + Warteliste (2 T) | Payrexx-Integration, Webhooks, Zahlstatus im Admin und in der Abrechnung, WAITLIST-Flow | Testzahlung Ende-zu-Ende als Gast, Warteliste greift nach Storno |
 | 8 Schülerkartei & Lektionen (2 T) | StudentRecord, Abo-Erfassung, Lektionen planen und abhaken im Admin und im Fahrlehrer-Portal, Fahrlehrer-Zuweisung pro Lektion | Abo-Stand stimmt nach abgehakter Lektion, Zuweisung nur durch Admin möglich |
 | 9 WAB + Reviews (1 T) | Prüfungsdatum-Erfassung, WAB-Cron, Reviews-Widget | Test-Erinnerung ausgelöst und geloggt, Widget live |
-| 10 Mehrsprachigkeit (2-3 T) | next-intl, Übersetzungen EN/IT/SQ, Sprachumschalter, hreflang, Sitemap pro Sprache | Alle Kernseiten in 4 Sprachen, SEO-Tags korrekt |
 | Go-Live 2 (0.5 T) | Feature-Ankündigung, Schulung Ausilia + Fahrlehrer | Volle Plattform live |
 
 ---

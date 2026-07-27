@@ -101,12 +101,21 @@ export async function kursartNachSlug(
  * Kommende Kurse, aufsteigend nach dem ersten Termin.
  *
  * @param kursartCode Auf eine Kursart einschraenken, zum Beispiel "VKU".
+ * @param kursartCodes Auf mehrere einschraenken. Die Filterleiste auf
+ *   /kursdaten fasst Kursarten zu Gruppen zusammen: "Nothelfer" meint NHI und
+ *   NH. Eine leere Liste ergibt keine Kurse, nicht alle — sonst zeigte ein
+ *   Filter ohne Treffer versehentlich das ganze Programm.
  * @param limit Anzahl, zum Beispiel drei fuer die Startseite.
  */
 export async function kommendeKurse({
   kursartCode,
+  kursartCodes,
   limit,
-}: { kursartCode?: string; limit?: number } = {}): Promise<KursOeffentlich[]> {
+}: {
+  kursartCode?: string;
+  kursartCodes?: string[];
+  limit?: number;
+} = {}): Promise<KursOeffentlich[]> {
   const stichtag = heute();
 
   const kurse = await prisma.course.findMany({
@@ -115,6 +124,7 @@ export async function kommendeKurse({
       courseType: {
         active: true,
         ...(kursartCode ? { code: kursartCode } : {}),
+        ...(kursartCodes ? { code: { in: kursartCodes } } : {}),
       },
       sessions: { some: { date: { gte: stichtag } } },
     },

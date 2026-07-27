@@ -54,8 +54,10 @@ export function ZeitraumFilter({
           defaultValue={basis}
           className={`${auswahlStil} w-48`}
         >
-          <option value="anmeldung">Anmeldedatum</option>
+          {/* Kursdatum zuerst: es ist der Standard (Kundenentscheid
+              27.07.2026), und die Reihenfolge sagt das mit. */}
           <option value="kurs">Kursdatum</option>
+          <option value="anmeldung">Anmeldedatum</option>
         </select>
       </div>
 

@@ -1,7 +1,9 @@
 import "dotenv/config";
 import {
+  BASIS_STANDARD,
   abrechnungLesen,
   accountingLesen,
+  basisAus,
   zeitfensterAus,
 } from "../lib/abrechnung";
 import { Decimal } from "../lib/decimal";
@@ -497,6 +499,33 @@ async function main() {
       where: { id: vaSh.id },
       data: { provisionPerBooking: "50.00" },
     });
+
+    // --- Standardbasis -----------------------------------------------------
+    //
+    // Kundenentscheid 27.07.2026: abgerechnet wird nach dem Kursdatum. Wer den
+    // Standard umstellt, faellt hier auf und nicht erst, wenn eine Abrechnung
+    // stillschweigend in einem anderen Monat landet.
+    console.log("Standardbasis");
+    pruefe(
+      BASIS_STANDARD === "kurs",
+      "Standard ist das Kursdatum",
+      BASIS_STANDARD,
+    );
+    pruefe(
+      basisAus(undefined) === "kurs",
+      "ohne Suchparameter gilt das Kursdatum",
+      basisAus(undefined),
+    );
+    pruefe(
+      basisAus("unsinn") === "kurs",
+      "ein unbekannter Wert faellt auf das Kursdatum zurueck",
+      basisAus("unsinn"),
+    );
+    pruefe(
+      basisAus("anmeldung") === "anmeldung",
+      "das Anmeldedatum bleibt waehlbar",
+      basisAus("anmeldung"),
+    );
 
     // --- Basis Kursdatum ---------------------------------------------------
     console.log("Abrechnung, Basis Kursdatum");

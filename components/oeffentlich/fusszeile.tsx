@@ -13,7 +13,7 @@ import type { Oeffnungszeiten } from "@/lib/oeffnungszeiten";
 export function Fusszeile({ zeiten }: { zeiten: Oeffnungszeiten }) {
   return (
     <footer className="mt-20 border-t border-border bg-flaeche-2">
-      <div className="mx-auto grid grid-cols-1 w-full max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-3">
+      <div className="mx-auto grid grid-cols-1 w-full max-w-[1344px] gap-10 px-4 py-12 sm:px-6 md:grid-cols-3">
         <div>
           {/* Kein priority: die Fusszeile steht unter der Falz und soll die
               erste Anzeige nicht ausbremsen. */}
@@ -105,7 +105,7 @@ export function Fusszeile({ zeiten }: { zeiten: Oeffnungszeiten }) {
       </div>
 
       <div className="border-t border-border">
-        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-5 text-sm text-muted-foreground sm:px-6">
+        <div className="mx-auto flex w-full max-w-[1344px] flex-wrap items-center justify-between gap-4 px-4 py-5 text-sm text-muted-foreground sm:px-6">
           <p>
             © {new Date().getFullYear()} {ADRESSE.firma}
           </p>

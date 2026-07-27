@@ -3,6 +3,7 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { MessageCircle } from "lucide-react";
 import { BuchungHuelle } from "@/components/buchung/buchung-huelle";
+import { Diagonalstreifen } from "@/components/oeffentlich/diagonalstreifen";
 import { whatsappLink } from "@/lib/einstellungen";
 import { chf, datumLang } from "@/lib/format";
 import { BUCHUNG_COOKIE, buchungLesen } from "@/lib/buchung";
@@ -179,14 +180,7 @@ export default async function AnmeldungBestaetigung({
 
           {/* Diagonalstreifen aus der Vorlage, Referenz an die
               Fahrzeugbeklebung. */}
-          <div
-            aria-hidden="true"
-            className="mt-4 h-2"
-            style={{
-              background:
-                "repeating-linear-gradient(115deg,#121212 0 14px,#121212 14px,transparent 14px,transparent 28px),#FFE500",
-            }}
-          />
+          <Diagonalstreifen className="mt-4 h-2" />
         </aside>
       </div>
     </BuchungHuelle>

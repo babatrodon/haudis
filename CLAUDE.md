@@ -51,6 +51,14 @@ Zahlen von `db:verify` nicht mehr. Der Demo-Seed stellt sie wieder her.
   IDs mit Präfix `demo-`, Buchungen laufen auf `@example.invalid`. Vor dem
   Go-Live mit `db:seed:demo:purge` entfernen.
 
+  Die Kurse mit Präfix `demo-abr-` liegen in den letzten drei Monaten und
+  füllen die Abrechnung. Sie erscheinen öffentlich nicht, weil `kommendeKurse`
+  einen Termin ab heute verlangt. Ihre Buchungen tragen `commissionRate` —
+  ohne den Satz zählt [lib/abrechnung.ts](lib/abrechnung.ts) eine Zuweisung
+  gar nicht, und der Bericht bliebe leer, obwohl Fahrlehrer zugewiesen sind.
+  Ein Teil trägt bewusst den älteren Satz CHF 40, damit im selben Monat zwei
+  Rechenzeilen pro Person entstehen.
+
 **Nach dem Hinzufügen eines Einstellungs-Schlüssels immer `pnpm db:seed`
 ausführen**, sonst steht der Wert nur im Code. Die Anwendung fällt auf den
 Default zurück und sieht deshalb richtig aus, aber die Admin kann den Wert
@@ -149,8 +157,11 @@ in der Datenbank steht, muss der Wert einmalig von Hand nachgezogen werden.
 - **Teilnehmerliste** liegt unter `/druck/...`, ausserhalb von `/admin`, damit
   die Seitenleiste gar nicht erst entsteht; geschützt ist sie trotzdem über
   `requireRole`. Sie ist eine echte `<table>`: `<thead>` wiederholt der Browser
-  auf jeder Druckseite, also steht der Kursname auch auf Blatt zwei. Jede Zeile
-  trägt `break-inside: avoid` — auf einer halben Zeile unterschreibt niemand.
+  auf jeder Druckseite, also steht der Kursname mit allen Terminen auch auf
+  Blatt zwei. Jede Zeile trägt `break-inside: avoid`, damit kein Teilnehmer
+  zwischen zwei Seiten zerfällt. Auf dem Blatt stehen nur Nummer, Name und
+  Telefon — keine Unterschriftenspalten (Kundenentscheid 27.07.2026: es wird
+  nichts unterschrieben), und Geburtsdatum und Ausweisnummer bleiben im Panel.
 - **SARI-Knopf** kopiert die Ausweisnummer und öffnet das Portal, mehr nicht.
   Die Rückmeldung sagt deshalb nur, dass die Nummer kopiert ist. Ein
   "Eingetragen" wäre eine Behauptung über etwas, das diese Anwendung nicht
@@ -180,7 +191,10 @@ in der Datenbank steht, muss der Wert einmalig von Hand nachgezogen werden.
   Multiplikation, die nicht aufgeht.
 - **Abrechnung**: [lib/abrechnung.ts](lib/abrechnung.ts) ist die einzige
   Quelle für Panel, Accounting und Portal. Der Zeitraum läuft wahlweise über
-  das Anmelde- oder das Kursdatum; der gewählte Endtag zählt einschliesslich,
+  das Anmelde- oder das Kursdatum, **Standard ist das Kursdatum**
+  (Kundenentscheid 27.07.2026: das Geld fliesst bar am ersten Kurstag).
+  Der Standard steht als `BASIS_STANDARD` an einer Stelle, gelesen wird er
+  überall über `basisAus`; der gewählte Endtag zählt einschliesslich,
   und die Grenzen liegen je nach Basis auf Zürcher Mitternacht (`createdAt`)
   oder Mitternacht UTC (`@db.Date`). Beides steht in `zeitfensterAus`.
 - **Einstellungen** speichern gruppenweise und rufen danach
@@ -250,7 +264,7 @@ Offen gegenüber PLAN.md, mit Ausilia zu klären:
   [prisma/seed-data/instruktoren.ts](prisma/seed-data/instruktoren.ts), eine
   Korrektur ist eine Zeile. Kürzel-Regel: Nachname+Vorname je zwei Buchstaben,
   Ausnahme `VaSh` für Shala Valon wie im Altsystem.
-- Fahrstunden-Preise für Motorrad, Lastwagen und Anhänger BE. In den
-  Einstellungen leer, die Seite zeigt dafür später "auf Anfrage".
-
+- Fahrstunden-Preise für Motorrad und Anhänger BE. In den Einstellungen leer,
+  die Preiskarte zeigt dafür Gedankenstriche und "Preis folgt". Auto, Taxi und
+  Lastwagen sind hinterlegt.
 @AGENTS.md

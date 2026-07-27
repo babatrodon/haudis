@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
  * Verschwindet im Druck selbst: auf dem Papier waere er ein leerer Kasten.
  */
 export function DruckKnopf({
-  hinweis = "A4, eine Unterschriftenspalte pro Kurstag.",
+  hinweis = "A4, Name und Telefon pro Teilnehmer.",
 }: {
   hinweis?: string;
 }) {

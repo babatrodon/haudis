@@ -104,3 +104,47 @@ export const SCHRITTE: Schritt[] = [
     ],
   },
 ];
+
+/**
+ * Kurzfassung der sieben Schritte fuer die Startseite.
+ *
+ * Text und Reihenfolge aus design/haudis-design.dc.html Screen 02. Bewusst
+ * eine eigene Liste und nicht die gekuerzten SCHRITTE von oben: die
+ * Startseite fasst zusammen, die Seite /fuehrerausweis fuehrt durch. Sie
+ * beginnen deshalb sogar unterschiedlich — die Uebersicht mit dem Sehtest, die
+ * Anleitung mit dem Nothelferkurs, weil dort die Reihenfolge der Formulare
+ * zaehlt.
+ *
+ * Der Gutscheincode steht als Platzhalter, damit er aus den Einstellungen
+ * kommt und nicht an zwei Stellen gepflegt werden muss.
+ */
+export const SCHRITTE_KURZ: { titel: string; text: string }[] = [
+  {
+    titel: "Sehtest machen",
+    text: "Beim Optiker oder Arzt. Das Formular nimmst Du zur Anmeldung mit.",
+  },
+  {
+    titel: "Nothelferkurs besuchen",
+    text: "Bei uns als Intensivkurs an einem Wochenende. Der Ausweis ist 6 Jahre gültig.",
+  },
+  {
+    titel: "Antrag einreichen",
+    text: "Formular bei der Wohngemeinde abgeben, danach folgt die Zulassung zur Theorieprüfung.",
+  },
+  {
+    titel: "Theorieprüfung bestehen",
+    text: "Vorbereitung im BTU oder gratis am Bögle-Abend, jeden Montag von 19.00 bis 21.00.",
+  },
+  {
+    titel: "Lernfahrausweis erhalten",
+    text: "Damit startest Du mit den Fahrstunden. Wir üben von Anfang an im Verkehr.",
+  },
+  {
+    titel: "VKU besuchen und Prüfung fahren",
+    text: "Der VKU ist obligatorisch, 4 Lektionen à 2 Stunden. Danach die praktische Prüfung.",
+  },
+  {
+    titel: "WAB-Kurs",
+    text: "Obligatorisch innert 12 Monaten nach der Prüfung. Buchung beim TCS. Mit Code {{gutschein}} erhältst Du CHF 20 Rabatt.",
+  },
+];
