@@ -54,8 +54,10 @@ beim Typecheck auf.
   canonical verschachtelter Seiten auf sich selbst zeigt statt auf den
   Elternpfad. Braucht einen laufenden Server.
 - `pnpm verify:kopfzeile` misst im Browser, wo der gelbe Streifen der Kopfzeile
-  liegt: dass er das Logo kreuzt, dabei aber über dem gelben Untertitel im Logo
-  bleibt und über den Navigationsbeschriftungen durchläuft statt hindurch.
+  liegt: dass er an der Unterkante sitzt, das Logo auf der Höhe des Untertitels
+  kreuzt und den roten Schriftzug frei lässt, dass die dunkle Tafel unter dem
+  Logo den Streifen deckt — sonst stünde Gelb auf Gelb —, dass das Logo gross
+  genug für den Untertitel bleibt und daneben genug Platz für die Bedienung.
   Braucht einen laufenden Server.
 - `pnpm db:verify` prüft die Zusicherungen des Seeds, unter anderem
   Geschäftsregel 11.
@@ -138,15 +140,21 @@ in der Datenbank steht, muss der Wert einmalig von Hand nachgezogen werden.
   (`--ampel-gruen`, `--ampel-gelb`, `--ampel-rot` je mit Hintergrund und Linie),
   abgelesen aus der Designvorlage.
 - **Gelber Streifen in der Kopfzeile**: Kundenwunsch vom 27.07.2026, ein
-  Erkennungsmerkmal der alten Seite. Er läuft durch
+  Erkennungsmerkmal der alten Seite. Er liegt in
   [components/oeffentlich/kopfzeile.tsx](components/oeffentlich/kopfzeile.tsx)
-  und durch das Logo. Seine Höhe ist nicht frei wählbar: der Untertitel im
-  Logo ist selbst gelb (72,5 % bis 93,9 % der Bildhöhe), darunter verschwände
-  er; die Navigation darunter darf er nicht waagrecht teilen. Deshalb tragen
-  die Knöpfe der Kopfzeile schwarze statt hellgraue Ränder und die aktive
-  Seite eine schwarze statt gelbe Unterstreichung — auf dem Streifen wäre
-  beides unsichtbar. Geprüft mit `pnpm verify:kopfzeile`. Nicht zu verwechseln
-  mit dem Diagonalstreifen aus
+  an der Unterkante und ersetzt dort die Trennlinie zur Hero-Fläche. Wie auf
+  der alten Seite kreuzt er den unteren Teil des Logos auf der Höhe des
+  Untertitels "Fahrschule Verkehrszentrum", nicht den roten Schriftzug
+  darüber. Gemessen am Bild (993x586): roter Schriftzug bis 68 % der
+  Bildhöhe, gelber Untertitel 72,5 % bis 95 %. Das Logo steht mit seiner
+  Unterkante auf der Zeilenunterkante, damit der Streifen von selbst in dieses
+  Band fällt; die Zeilenhöhe ergibt sich aus der Logohöhe und ist nicht
+  gesetzt. Weil der Untertitel selbst gelb ist, steht das Logo auf einer
+  dunklen Tafel und der Streifen läuft dahinter durch — dieselbe Kombination
+  wie im Seitenfuss. Die Knöpfe der Kopfzeile und die aktive Unterstreichung
+  stehen deshalb wieder auf Weiss und tragen die Farben der Vorlage. Geprüft
+  mit `pnpm verify:kopfzeile`. Nicht zu verwechseln mit dem Diagonalstreifen
+  aus
   [components/oeffentlich/diagonalstreifen.tsx](components/oeffentlich/diagonalstreifen.tsx),
   der auf den Flächen liegt.
 - **Kapazität**: [lib/buchung.ts](lib/buchung.ts) sperrt die Kurszeile mit

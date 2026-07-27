@@ -15,10 +15,10 @@ import { ADRESSE, TELEFONNUMMERN } from "@/lib/kontakt";
  * Zwei Zeilen: oben ein dunkler Streifen mit Adresse und Kontakt, darunter
  * Logo links, Navigation und der Knopf fuer die Probelektion rechts.
  *
- * Durch die untere Zeile laeuft der gelbe Streifen der alten Seite. Er ist
- * kein Schmuck, sondern ein Wiedererkennungsmerkmal (Kundenwunsch
- * 27.07.2026), und er bestimmt drei Details weiter unten: seine Hoehe, die
- * Raender der Knoepfe und die Farbe der aktiven Unterstreichung.
+ * An der Unterkante der zweiten Zeile liegt der gelbe Streifen der alten
+ * Seite (Kundenwunsch 27.07.2026). Er ist kein Schmuck, sondern ein
+ * Wiedererkennungsmerkmal, und er ersetzt die Trennlinie zur Hero-Flaeche.
+ * Das Logo steht auf einer dunklen Tafel, hinter der er durchlaeuft.
  *
  * Geschaeftsregel 6: beide Telefonnummern erscheinen hier, als tel:-Links. Auf
  * schmalen Screens steckt die Navigation hinter einem Menue, die Nummern
@@ -77,53 +77,72 @@ export function Kopfzeile({ whatsappUrl }: { whatsappUrl: string }) {
         </div>
       </div>
 
-      <div className="relative border-b border-flaeche-3">
+      <div className="relative bg-card">
         {/*
           Der gelbe Streifen der alten Seite (Kundenwunsch 27.07.2026). Er
-          laeuft durch die ganze Kopfzeile und durch das Logo hindurch — ein
-          Erkennungsmerkmal, das die Kundschaft von frueher kennt.
+          liegt an der Unterkante der Kopfzeile und ersetzt dort die
+          Trennlinie zur Hero-Flaeche.
 
-          DIE HOEHE IST NICHT FREI WAEHLBAR
+          WARUM GENAU DORT
 
-          Im Logo ist der Untertitel "Fahrschule Verkehrszentrum" selbst gelb.
-          Laege der Streifen dort, stuende Gelb auf Gelb und vom Untertitel
-          bliebe nur die dunkle Kontur. Er kreuzt deshalb den roten Schriftzug
-          darueber, genau wie auf der alten Seite.
+          Auf der alten Seite laeuft er durch den unteren Teil des Logos, auf
+          der Hoehe des gelben Untertitels "Fahrschule Verkehrszentrum" — nicht
+          durch den roten Schriftzug darueber. Das H des Schriftzugs bleibt
+          frei.
 
-          Gemessen: der gelbe Untertitel belegt 72,5% bis 93,9% der Bildhoehe.
-          Bei 58px Logo in einer 89px hohen Zeile beginnt er auf 57px.
+          Gemessen am Original public/haudis-logo.png (993x586): der rote
+          Schriftzug endet auf 68% der Bildhoehe, der gelbe Untertitel belegt
+          72,5% bis 95%. Weil das Logo mit seiner Unterkante auf der
+          Zeilenunterkante steht, faellt der Streifen von selbst in dieses
+          Band: bei 96px Logo und 10px Streifen kreuzt er die unteren 10% des
+          Bildes. Die Zeilenhoehe ergibt sich aus dem Logo, sie ist nicht
+          gesetzt — wer das Logo skaliert, verschiebt beides zusammen.
 
-          Nach unten begrenzt ihn ausserdem die Navigation. Lag er tiefer, teilte
-          er jede Beschriftung waagrecht in eine Haelfte auf Gelb und eine auf
-          Weiss. Beide Haelften haben fuer sich genug Kontrast — Schwarz auf
-          Gelb liegt bei 15,9:1 —, aber ein Wort, durch das eine Kante laeuft,
-          liest sich schlechter als eines ohne, und die Zeile sah aus, als waere
-          sie durchgestrichen.
+          GELB AUF GELB
 
-          top-[31%] loest beides: der Streifen liegt auf 23 bis 33px, kreuzt den
-          roten Schriftzug und laeuft knapp ueber den Beschriftungen durch. Wer
-          die Logohoehe, die Schriftgroesse oder die Zeilenhoehe aendert,
-          rechnet den Wert nach — scripts/verify-kopfzeile.mts schlaegt sonst
-          an.
+          Der Untertitel ist selbst gelb. Laege der Streifen sichtbar hinter
+          ihm, bliebe von der Schrift nur die dunkle Kontur. Deshalb steht das
+          Logo auf einer dunklen Tafel (wie auf der alten Seite), und der
+          Streifen laeuft hinter der Tafel durch: der Untertitel steht auf
+          Schwarz, so wie im Fuss der Seite auch. Rechts der Tafel tritt der
+          Streifen auf der Hoehe des Untertitels wieder hervor.
 
-          Nicht der Diagonalstreifen aus diagonalstreifen.tsx: der ist das
-          Element auf den Flaechen, dieser hier ist eine gerade Linie.
+          Wer daran etwas aendert, laesst pnpm verify:kopfzeile laufen. Nicht
+          der Diagonalstreifen aus diagonalstreifen.tsx: der ist das Element
+          auf den Flaechen, dieser hier ist eine gerade Linie.
         */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-[31%] h-2 -translate-y-1/2 bg-brand-gelb lg:h-2.5"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-2 bg-brand-gelb lg:h-2.5"
         />
 
-        {/* relative: die Zeile liegt ueber dem Streifen, sonst deckte er das
-            Logo zur Haelfte zu. */}
-        <div className="relative mx-auto flex w-full max-w-[1344px] items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:h-22 lg:py-0">
-          <Link href="/" onClick={() => setOffen(false)}>
+        {/* items-stretch: die dunkle Tafel reicht von der Oberkante der Zeile
+            bis auf den Streifen hinunter. relative: die Zeile liegt ueber dem
+            Streifen, sonst liefe er ueber die Tafel statt dahinter. */}
+        <div className="relative mx-auto flex w-full max-w-[1344px] items-stretch justify-between gap-4 px-4 sm:px-6">
+          {/*
+            Die dunkle Tafel. Sie schliesst oben an den Kontaktstreifen an und
+            unten an die Hero-Flaeche; das Logo steht mit seiner Unterkante auf
+            der Zeilenunterkante, damit der Streifen es auf der Hoehe des
+            Untertitels kreuzt.
+          */}
+          <Link
+            href="/"
+            onClick={() => setOffen(false)}
+            className="flex items-end bg-brand-schwarz px-4 pt-3 lg:px-6 lg:pt-4"
+          >
             {/*
               Das Schriftlogo der Fahrschule, unveraendert uebernommen
               (Vorlage, Style Tile: "Bestehendes Schriftlogo bleibt
               unveraendert"). width und height sind die echten Bildmasse, damit
               der Platz vor dem Laden reserviert ist und nichts springt.
               priority nur hier: es ist das erste Bild ueber der Falz.
+
+              Die Hoehe steigt in drei Stufen. Nach unten begrenzt sie der
+              Untertitel: unter 64px sind die beiden Zeilen im Bild nur noch
+              zu erahnen. Nach oben begrenzt sie auf dem Handy die Zeile — das
+              Logo darf den Menueknopf nicht bedraengen — und ab 1024px die
+              Navigation, die daneben Platz braucht.
             */}
             <Image
               src="/haudis-logo.png"
@@ -131,7 +150,7 @@ export function Kopfzeile({ whatsappUrl }: { whatsappUrl: string }) {
               width={993}
               height={586}
               priority
-              className="h-10 w-auto lg:h-[58px]"
+              className="h-16 w-auto lg:h-20 xl:h-24"
             />
           </Link>
 
@@ -144,9 +163,10 @@ export function Kopfzeile({ whatsappUrl }: { whatsappUrl: string }) {
           <div className="flex items-center gap-2 lg:gap-8">
             <nav aria-label="Hauptnavigation" className="hidden lg:block">
               {/*
-                Die aktive Seite ist schwarz unterstrichen, nicht mehr gelb:
-                seit der Streifen durch die Zeile laeuft, waere ein gelber
-                Strich auf gelbem Grund kein Hinweis mehr, sondern nichts.
+                Die aktive Seite ist gelb unterstrichen wie in der Vorlage. Der
+                Streifen liegt an der Unterkante der Zeile und beruehrt die
+                Beschriftungen nicht mehr, also steht der gelbe Strich wieder
+                auf Weiss und ist als Hinweis lesbar.
               */}
               <ul className="flex items-center gap-8">
                 {NAVIGATION.map((eintrag) => {
@@ -159,7 +179,7 @@ export function Kopfzeile({ whatsappUrl }: { whatsappUrl: string }) {
                         className={cn(
                           "inline-flex min-h-11 items-center border-b-[3px] text-[15px] transition-colors",
                           aktiv
-                            ? "border-brand-schwarz font-semibold"
+                            ? "border-brand-gelb font-semibold"
                             : "border-transparent hover:text-brand-rot",
                         )}
                       >
@@ -172,16 +192,16 @@ export function Kopfzeile({ whatsappUrl }: { whatsappUrl: string }) {
             </nav>
 
             {/*
-              Die Raender sind schwarz statt flaeche-3: alle drei Knoepfe
-              stehen auf dem gelben Streifen, und eine hellgraue Linie ist dort
-              nicht mehr zu sehen. Beim Probelektion-Knopf verschwaende ohne
-              Rand die Form ganz, weil er dieselbe Farbe hat wie der Streifen.
+              Die Knoepfe stehen wieder auf Weiss, nicht mehr auf dem
+              Streifen: der gelbe Knopf braucht deshalb keinen Rand, der ihn
+              vom Grund abhebt, und die beiden Symbolknoepfe tragen wieder die
+              hellgraue Linie der Vorlage statt einer schwarzen.
             */}
             <a
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden min-h-11 items-center gap-2 border border-brand-schwarz bg-brand-gelb px-4.5 font-semibold text-brand-schwarz transition-colors hover:bg-brand-gelb-dunkel sm:inline-flex"
+              className="hidden min-h-11 items-center gap-2 bg-brand-gelb px-4.5 font-semibold text-brand-schwarz transition-colors hover:bg-brand-gelb-dunkel sm:inline-flex"
             >
               <MessageCircle aria-hidden="true" className="size-[18px]" />
               Probelektion
@@ -190,7 +210,7 @@ export function Kopfzeile({ whatsappUrl }: { whatsappUrl: string }) {
             <a
               href={`tel:${TELEFONNUMMERN[0].tel}`}
               aria-label={`Anrufen: ${TELEFONNUMMERN[0].anzeige}`}
-              className="inline-flex size-11 items-center justify-center border border-brand-schwarz bg-card sm:hidden"
+              className="inline-flex size-11 items-center justify-center border border-flaeche-3 sm:hidden"
             >
               <Phone aria-hidden="true" className="size-5" />
             </a>
@@ -201,7 +221,7 @@ export function Kopfzeile({ whatsappUrl }: { whatsappUrl: string }) {
               aria-expanded={offen}
               aria-controls="hauptmenue"
               aria-label={offen ? "Menü schliessen" : "Menü öffnen"}
-              className="inline-flex size-11 items-center justify-center border border-brand-schwarz bg-card lg:hidden"
+              className="inline-flex size-11 items-center justify-center border border-flaeche-3 lg:hidden"
             >
               {offen ? (
                 <X aria-hidden="true" className="size-5" />
