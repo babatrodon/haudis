@@ -1,3 +1,5 @@
+import { KANONISCHER_HOST } from "@/lib/inhalte/redirects";
+
 /**
  * Der oeffentliche Ursprung der Anwendung.
  *
@@ -17,6 +19,32 @@
 export const SEITEN_URL = (
   process.env.BETTER_AUTH_URL ?? "http://localhost:3000"
 ).replace(/\/+$/, "");
+
+/**
+ * Warnt, wenn der Hostname hier nicht der kanonische ist.
+ *
+ * Genau dieser Fall ist der teuerste beim Umzug: die Weiterleitung schickt
+ * alles auf haudi.ch, waehrend Sitemap, canonical und OpenGraph auf
+ * www.haudi.ch zeigen. Google sieht dann zwei Adressen, die sich gegenseitig
+ * widersprechen, und verteilt die Signale der alten Seite auf beide.
+ *
+ * Nur in der Produktion und nur eine Meldung — localhost soll nicht bei jedem
+ * Start schimpfen.
+ */
+if (process.env.NODE_ENV === "production") {
+  try {
+    const host = new URL(SEITEN_URL).hostname;
+    if (host !== "localhost" && host !== KANONISCHER_HOST) {
+      console.error(
+        `[Seite] BETTER_AUTH_URL zeigt auf "${host}", kanonisch ist ` +
+          `"${KANONISCHER_HOST}". Sitemap, canonical und die ` +
+          `Host-Weiterleitung widersprechen sich damit.`,
+      );
+    }
+  } catch {
+    console.error(`[Seite] BETTER_AUTH_URL ist keine gültige URL: ${SEITEN_URL}`);
+  }
+}
 
 /** Absolute Adresse zu einem Pfad, ohne doppelte Schraegstriche. */
 export function absoluteUrl(pfad: string): string {

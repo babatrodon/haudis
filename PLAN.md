@@ -418,6 +418,21 @@ pnpm dev | pnpm build | pnpm prisma migrate dev | pnpm prisma db seed | pnpm tes
   Die Mechanik steht: [lib/inhalte/redirects.ts](lib/inhalte/redirects.ts) wird
   von [next.config.ts](next.config.ts) gelesen und liefert 301. Zu tun bleibt
   der Crawl und das Eintragen der Paare; Codeänderung braucht es dafür keine.
+- [ ] **Kanonischer Hostname: `haudi.ch` ohne www** (Entscheid 27.07.2026).
+  Die alte Seite ist auf `www.haudi.ch` indexiert; sind beide Namen erreichbar
+  und keiner leitet weiter, teilt Google die Signale auf zwei Adressen auf.
+  Im Code ist der Name `KANONISCHER_HOST` in
+  [lib/inhalte/redirects.ts](lib/inhalte/redirects.ts), und daraus entsteht
+  eine 301 von `www.haudi.ch` auf `haudi.ch` samt Pfad. Beim Einrichten:
+  1. DNS: A- oder ALIAS-Record auf dem Apex, CNAME für `www`
+  2. Beide Namen in Vercel als Domain hinterlegen; falls dort ebenfalls eine
+     Umleitung gesetzt wird, muss sie **dieselbe Richtung** haben, sonst
+     entsteht eine Schleife
+  3. `BETTER_AUTH_URL` auf `https://haudi.ch` setzen — daraus kommen Sitemap,
+     canonical und OpenGraph. Stimmt der Hostname nicht mit
+     `KANONISCHER_HOST` überein, meldet die Anwendung das beim Start im Log
+  4. Prüfen: `curl -I https://www.haudi.ch/kursdaten` gibt 301 auf
+     `https://haudi.ch/kursdaten`, und die Sitemap führt nur `haudi.ch`
 - [ ] Google Business Profile aktualisieren (neue Site, Fotos, Buchungslink)
 - [x] schema.org DrivingSchool (Untertyp von LocalBusiness) in
   [components/strukturierte-daten.tsx](components/strukturierte-daten.tsx),
@@ -469,6 +484,23 @@ protokollieren, Versandvermerk speichern), ein täglicher Cron analog
 - Payrexx: Abklärung läuft kundenseitig, Zahlung bleibt in Welle 2.
 - Systemzugang: ALLE 36 Kursleiter erhalten ein Login (Änderung gegenüber dem früheren Plan mit drei Logins).
 - Bestehende Anmeldungen: ÜBERHOLT, siehe Abschnitt 15.2. Start ohne Altdaten, spätere Übernahme wird separat geprüft.
+
+### Entscheide vom 27.07.2026
+
+- **SMS über ASPSMS: nicht Teil des Go-Live**, bewusst auf Welle 2 verschoben.
+  Details in Abschnitt 11.
+- **Kanonischer Hostname: `haudi.ch` ohne www.** Die alte Seite ist auf
+  `www.haudi.ch` indexiert, aber die Adresse ohne www steht durchgehend im
+  Projekt: `info@haudi.ch`, die Dokumentation, die Launch-Checkliste. Zwei
+  erreichbare Hostnamen ohne Weiterleitung würden die Signale der alten Seite
+  aufteilen, deshalb leitet `www` mit 301 auf den Apex, und derselbe Name steht
+  in Sitemap, canonical und OpenGraph. Umzudrehen ist der Entscheid mit einer
+  Zeile: `KANONISCHER_HOST` in
+  [lib/inhalte/redirects.ts](lib/inhalte/redirects.ts) auf `www.haudi.ch`
+  setzen, den Rest leitet der Code daraus ab.
+- **Alte Adressen**: die öffentliche Seite folgt dem Muster
+  `/[bereich]/default.asp?nav=[nummer]`. Die Form `kurse.asp?id=` gehört zum
+  alten Adminpanel und bekommt keine Weiterleitung.
 
 ### Offen, blockiert aber nichts mehr (Stand 27.07.2026)
 
