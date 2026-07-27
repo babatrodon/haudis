@@ -434,12 +434,24 @@ pnpm dev | pnpm build | pnpm prisma migrate dev | pnpm prisma db seed | pnpm tes
 - [x] Testfälle automatisiert: `test:e2e` (Buchung, ausgebucht mit Warteliste,
   Honigtopf, Frühbucher ausgeschöpft), `verify:buchung`, `verify:kurse`,
   `verify:abrechnung`, `verify:warteliste`, `verify:schueler`, `db:verify`,
-  `verify:breite`. **SMS fehlt**: ASPSMS ist nicht angebunden, `sms.aktiv`
-  steht auf false und das Feld im Buchungsformular erscheint nur, wenn die
-  Einstellung eingeschaltet wird. Entweder vor dem Go-Live anbinden oder
-  bewusst auf später verschieben.
+  `verify:breite`. SMS ist nicht dabei und auch nicht vorgesehen — siehe
+  unten, ASPSMS ist bewusst auf Welle 2 verschoben.
 - [ ] 10-Min-Loom für Ausilia: Kurs anlegen, Buchung erfassen, Abrechnung ziehen
 - [ ] Parallelbetrieb: 1 Woche Testbuchungen intern, erst dann DNS
+
+**Nicht Teil des Go-Live (Entscheid 27.07.2026): SMS-Erinnerung über ASPSMS.**
+Bewusst auf Welle 2 verschoben, nicht vergessen. Der Stand heute: das Feld
+„SMS-Erinnerung" steht im Buchungsformular und die Nummer wird gespeichert,
+aber es gibt keinen Versand und keinen Cron. `sms.aktiv` steht auf `false`,
+und solange es das tut, erscheint das Feld nicht — es wird also niemandem
+etwas versprochen. Das Modell `SmsLog` und die Felder `smsReminder` und
+`smsPhone` auf der Buchung bleiben stehen, damit die Anbindung später kein
+Schema-Umbau ist.
+
+Zum Anbinden nötig: ASPSMS-Konto mit Prepaid-Credits, ein Absenderkennzeichen,
+`lib/sms.ts` nach dem Muster von `lib/mail.ts` (ohne Schlüssel nur
+protokollieren, Versandvermerk speichern), ein täglicher Cron analog
+`/api/cron/wab`, und `sms.aktiv` in den Einstellungen einschalten.
 
 ## 12. Entscheidungen (Stand 26.07.2026)
 
