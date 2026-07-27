@@ -84,23 +84,62 @@ export type Weiterleitung = {
   query?: Record<string, string>;
 };
 
+/**
+ * Die Bereiche der alten Seite mit ihrer nav-Nummer und ihrem neuen Ziel.
+ *
+ * Quelle: die Navigation der alten Seite, geliefert am 27.07.2026. Daraus
+ * entstehen je zwei Regeln — eine mit nav und ein Auffang ohne, weil ein
+ * verirrter Link die Query weglassen kann.
+ *
+ * ZUM EINTRAG "anmeldung"
+ *
+ * Auf der alten Seite heisst der Bereich "Anmeldung" und zeigt Kursdaten mit
+ * Anmeldemoeglichkeit. In der neuen Anwendung ist das `/kursdaten`.
+ * NICHT `/anmeldung/[courseId]`: das ist der Buchungsablauf fuer einen
+ * einzelnen Kurs und braucht eine Kurs-ID. Ein Link ohne ID liefe dort ins
+ * Leere, und mit einer erfundenen ID auf den falschen Kurs.
+ */
+const BEREICHE: { ordner: string; nav: string; ziel: string }[] = [
+  { ordner: "/weg", nav: "2", ziel: "/fuehrerausweis" },
+  { ordner: "/kursangebot", nav: "3", ziel: "/kurse" },
+  { ordner: "/anmeldung", nav: "4", ziel: "/kursdaten" },
+  { ordner: "/vorschriften_auto", nav: "5", ziel: "/vorschriften/auto" },
+  { ordner: "/vorschriften_motorrad", nav: "6", ziel: "/vorschriften/motorrad" },
+  { ordner: "/boegle", nav: "7", ziel: "/boegle" },
+  { ordner: "/kontakt", nav: "10", ziel: "/kontakt" },
+  { ordner: "/bilder", nav: "11", ziel: "/galerie" },
+];
+
 export const WEITERLEITUNGEN: Weiterleitung[] = [
-  /**
-   * Der einzige Eintrag, der ohne die vollstaendige nav-Liste sicher ist: die
-   * Startseite der alten Anwendung.
-   *
-   * Alles Weitere kommt aus dem Crawl. So sehen die Eintraege aus:
-   *
-   *   // Eine bestimmte Seite eines Bereichs
-   *   { von: "/kontakt/default.asp", nach: "/kontakt", query: { nav: "10" } },
-   *   { von: "/kurse/default.asp", nach: "/kurse/vku", query: { nav: "23" } },
-   *   { von: "/kurse/default.asp", nach: "/kurse/btu", query: { nav: "24" } },
-   *
-   *   // Auffang fuer denselben Bereich ohne nav — steht NACH den nav-Regeln,
-   *   // darum kuemmert sich alsNextRedirects
-   *   { von: "/kurse/default.asp", nach: "/kurse" },
-   */
+  // Je Bereich die genaue nav-Regel und der Auffang ohne Query. Die
+  // Reihenfolge im Array spielt keine Rolle, alsNextRedirects sortiert.
+  ...BEREICHE.flatMap((bereich) => [
+    {
+      von: `${bereich.ordner}/default.asp`,
+      nach: bereich.ziel,
+      query: { nav: bereich.nav },
+    },
+    { von: `${bereich.ordner}/default.asp`, nach: bereich.ziel },
+  ]),
+
+  // Startseite der alten Anwendung.
   { von: "/default.asp", nach: "/" },
+
+  /**
+   * Auffang fuer alles Uebrige.
+   *
+   * Die Liste oben stammt aus der Navigation, nicht aus der Search Console.
+   * Es kann also indexierte Adressen geben, die im Menue nie standen — eine
+   * alte Aktionsseite, ein Direktlink aus einem Inserat. Die landen hier
+   * statt auf einem 404.
+   *
+   * Die Startseite ist nicht das beste Ziel, aber das ehrlichste: welche neue
+   * Seite gemeint war, weiss niemand. Ein 404 verliert die Signale ganz, eine
+   * geratene Zuordnung schickt Leute auf die falsche Seite.
+   *
+   * Steht dank `:bereich` automatisch zuletzt, siehe alsNextRedirects.
+   */
+  { von: "/:bereich/default.asp", nach: "/" },
 ];
 
 /**
@@ -114,16 +153,29 @@ export const WEITERLEITUNGEN: Weiterleitung[] = [
  * Seitenumzug per GET gibt es keinen Grund fuer 308.
  */
 export function alsNextRedirects(liste: Weiterleitung[] = WEITERLEITUNGEN) {
-  // Eintraege mit Query zuerst: Next nimmt die erste passende Regel. Stuende
-  // der Auffang-Eintrag fuer /kurse/default.asp vorne, kaeme die Regel fuer
-  // ?nav=23 nie zum Zug und alle Kursarten landeten auf derselben Seite. Die
-  // Sortierung hier erspart es, beim Eintragen daran zu denken.
-  //
-  // Die Liste ist ein Parameter, damit sich Sortierung und Umrechnung nach
-  // `has` pruefen lassen, ohne Testeintraege in die echte Karte zu schreiben.
-  const sortiert = [...liste].sort(
-    (a, b) => (b.query ? 1 : 0) - (a.query ? 1 : 0),
-  );
+  /**
+   * Next nimmt die erste passende Regel, also entscheidet die Reihenfolge.
+   * Drei Stufen, von genau nach allgemein:
+   *
+   *   0  mit Query   /kontakt/default.asp?nav=10
+   *   1  fester Pfad /kontakt/default.asp
+   *   2  Platzhalter /:bereich/default.asp
+   *
+   * Stuende Stufe 1 vor Stufe 0, landete jeder nav-Wert eines Bereichs auf
+   * demselben Ziel. Stuende Stufe 2 vorne, fingen sie alle ab und die ganze
+   * Karte waere wirkungslos — jede alte Adresse ginge auf die Startseite.
+   *
+   * Der Platzhalter wird an `:` erkannt statt an einer Markierung im Eintrag:
+   * so kann man ihn nicht vergessen zu setzen. Innerhalb einer Stufe bleibt
+   * die Reihenfolge des Arrays erhalten, weil Array.sort stabil ist.
+   *
+   * Die Liste ist ein Parameter, damit sich Sortierung und Umrechnung nach
+   * `has` pruefen lassen, ohne Testeintraege in die echte Karte zu schreiben.
+   */
+  const stufe = (eintrag: Weiterleitung) =>
+    eintrag.query ? 0 : eintrag.von.includes(":") ? 2 : 1;
+
+  const sortiert = [...liste].sort((a, b) => stufe(a) - stufe(b));
 
   const pfade = sortiert.map((eintrag) => ({
     source: eintrag.von,

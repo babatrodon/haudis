@@ -24,6 +24,26 @@ import { oeffnungszeitenLesen } from "@/lib/oeffnungszeiten";
  * dann ist die Aenderung sofort sichtbar.
  */
 export const revalidate = 3600;
+
+/**
+ * Selbstbezuegliches canonical fuer jede oeffentliche Seite.
+ *
+ * Der Anlass sind die Weiterleitungen vom alten haudi.ch: Next haengt eine
+ * nicht verwendete Query an das Ziel, aus `/kontakt/default.asp?nav=10` wird
+ * `/kontakt?nav=10`. Ohne canonical kann Google das als eigene Adresse
+ * fuehren, und die Signale verteilen sich auf zwei Fassungen derselben Seite —
+ * dasselbe Problem wie bei www gegen apex, nur eine Ebene tiefer.
+ *
+ * Es hilft darueber hinaus bei allem, was Parameter anhaengt: utm_source aus
+ * einer Kampagne, fbclid aus einem geteilten Link, gclid aus einer Anzeige.
+ *
+ * "./" heisst fuer Next: die aktuelle Adresse, aufgeloest gegen metadataBase
+ * aus app/layout.tsx. Damit gilt die Regel fuer jede Seite dieser Gruppe,
+ * ohne sie in jede Datei zu schreiben.
+ */
+export const metadata = {
+  alternates: { canonical: "./" },
+};
 export default async function OeffentlichLayout({
   children,
 }: {

@@ -414,10 +414,15 @@ pnpm dev | pnpm build | pnpm prisma migrate dev | pnpm prisma db seed | pnpm tes
   nicht statt — still, denn ein nicht laufender Cron meldet sich nicht. Nach
   dem Setzen einmal von Hand auslösen (Admin → Schüler → „Erinnerungen jetzt
   verschicken") und prüfen, dass die Vermerke auf „gesendet" stehen.
-- [ ] Altes haudi.ch crawlen, 301-Redirect-Map für indexierte URLs.
-  Die Mechanik steht: [lib/inhalte/redirects.ts](lib/inhalte/redirects.ts) wird
-  von [next.config.ts](next.config.ts) gelesen und liefert 301. Zu tun bleibt
-  der Crawl und das Eintragen der Paare; Codeänderung braucht es dafür keine.
+- [x] 301-Redirect-Map vom alten haudi.ch, gefüllt am 27.07.2026 aus der
+  Navigation der alten Seite: acht Bereiche mit `nav`-Nummer, je ein Auffang
+  ohne Query, die alte Startseite, und ein Platzhalter für alles Übrige. Steht
+  in [lib/inhalte/redirects.ts](lib/inhalte/redirects.ts), geprüft mit
+  `pnpm verify:redirects` (301 auf ein Ziel, das mit 200 antwortet).
+  **Ohne Search Console entstand die Liste aus dem Menü** — indexierte
+  Adressen ausserhalb davon fängt der Platzhalter auf und schickt sie auf die
+  Startseite. Sobald Zugriff auf die Search Console besteht, die tatsächlich
+  indexierten Adressen gegenprüfen und häufige eigene Ziele geben.
 - [ ] **Kanonischer Hostname: `haudi.ch` ohne www** (Entscheid 27.07.2026).
   Die alte Seite ist auf `www.haudi.ch` indexiert; sind beide Namen erreichbar
   und keiner leitet weiter, teilt Google die Signale auf zwei Adressen auf.
