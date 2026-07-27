@@ -177,7 +177,9 @@ export function BuchungBearbeitenDialog({
             name="email"
             label="E-Mail"
             type="email"
-            defaultValue={buchung.email}
+            required={false}
+            defaultValue={buchung.email ?? ""}
+            hinweis="Darf leer bleiben. Ohne Adresse geht keine Mail hinaus."
           />
 
           <div className="flex flex-col gap-2">

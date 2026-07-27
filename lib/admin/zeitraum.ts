@@ -65,6 +65,26 @@ export function tagePlus(tag: Date, tage: number): Date {
 }
 
 /**
+ * Montag der Woche, in der dieser Kalendertag liegt.
+ *
+ * Fuer den Einsatzplan, der auf @db.Date-Spalten arbeitet. dieseWoche()
+ * daneben liefert echte Zeitpunkte und passt zu Zeitstempeln wie
+ * Booking.createdAt — die beiden sind nicht austauschbar.
+ *
+ * getUTCDay zaehlt den Sonntag als 0, in der Schweiz beginnt die Woche am
+ * Montag.
+ */
+export function wochenStartKalender(tag: Date = kalendertag()): Date {
+  const wochentag = tag.getUTCDay();
+  return tagePlus(tag, -((wochentag + 6) % 7));
+}
+
+/** Die sieben Kalendertage ab diesem Montag. */
+export function kalenderWoche(montag: Date): Date[] {
+  return Array.from({ length: 7 }, (_, versatz) => tagePlus(montag, versatz));
+}
+
+/**
  * Der Moment, in dem in Zuerich der angegebene Tag beginnt.
  * Fuer Vergleiche mit echten Zeitstempeln wie Booking.createdAt.
  */

@@ -331,8 +331,39 @@ async function telefonischPruefen(prisma: PrismaSeedClient) {
         versand.grund ?? "es ging hinaus",
       );
 
+      // Ohne E-Mail-Adresse: am Schalter ein Alltagsfall, vor allem bei den
+      // Nothelferkursen. Telefon bleibt Pflicht, darueber ist die Person
+      // erreichbar.
+      const ohneAdresse = await buchungAnlegen(
+        kursId,
+        { ...person(2), email: undefined },
+        { quelle: "PHONE" },
+      );
+      pruefe(ohneAdresse.erfolg, "Anmeldung ohne E-Mail-Adresse gelingt");
+      if (ohneAdresse.erfolg) {
+        const gespeichert = await prisma.booking.findUniqueOrThrow({
+          where: { id: ohneAdresse.buchungId },
+        });
+        pruefe(
+          gespeichert.email === null,
+          "keine erfundene Adresse gespeichert",
+          gespeichert.email ?? "null",
+        );
+
+        const mitKursOhne = await buchungLesen(ohneAdresse.buchungId);
+        const versandOhne = await bestaetigungSenden({
+          ...mitKursOhne!,
+          source: "ONLINE",
+        });
+        pruefe(
+          !versandOhne.gesendet &&
+            versandOhne.grund === "keine E-Mail-Adresse hinterlegt",
+          "der Mailversand bricht sauber ab statt zu scheitern",
+          versandOhne.grund ?? "er ging hinaus",
+        );
+      }
+
       // Dieselbe Kapazitaetspruefung wie online.
-      await buchungAnlegen(kursId, person(2), { quelle: "PHONE" });
       const dritte = await buchungAnlegen(kursId, person(3), { quelle: "PHONE" });
       pruefe(
         !dritte.erfolg && dritte.fehler === "ausgebucht",

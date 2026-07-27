@@ -199,10 +199,16 @@ export async function kursAbsagenAktion(
     bis: termin.bis,
   }));
 
+  // Wer keine Adresse hinterlegt hat, kann nicht angeschrieben werden. Diese
+  // Leute zaehlen als nicht erreicht, damit im Dialog steht, dass angerufen
+  // werden muss — und nicht stillschweigend niemand etwas erfaehrt.
+  const mitAdresse = ergebnis.betroffene.filter((person) => person.email);
+  const ohneAdresse = ergebnis.betroffene.length - mitAdresse.length;
+
   const versand = await Promise.all(
-    ergebnis.betroffene.map((person) =>
+    mitAdresse.map((person) =>
       absageSenden({
-        an: person.email,
+        an: person.email as string,
         vorname: person.firstName,
         kursName: ergebnis.kursName,
         termine,
@@ -212,7 +218,7 @@ export async function kursAbsagenAktion(
   );
 
   const gesendet = versand.filter((eintrag) => eintrag.gesendet).length;
-  const gescheitert = versand.length - gesendet;
+  const gescheitert = versand.length - gesendet + ohneAdresse;
   if (gescheitert > 0) {
     console.warn(
       `[Absage ${geprueft.data.kursId}] ${gescheitert} von ${versand.length} Benachrichtigungen nicht versendet.`,

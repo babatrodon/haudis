@@ -116,13 +116,25 @@ export function BuchungKarte({
         >
           <MessageCircle aria-hidden="true" className="size-5" />
         </a>
-        <a
-          href={`mailto:${buchung.email}`}
-          aria-label={`${buchung.vorname} ${buchung.nachname} eine E-Mail schreiben`}
-          className="inline-flex size-12 shrink-0 items-center justify-center border border-border bg-card transition-colors hover:bg-flaeche-2"
-        >
-          <Mail aria-hidden="true" className="size-5" />
-        </a>
+        {/* Ohne Adresse gibt es nichts zu oeffnen. Der Platz bleibt trotzdem
+            besetzt, damit die Knopfreihe nicht von Karte zu Karte springt. */}
+        {buchung.email ? (
+          <a
+            href={`mailto:${buchung.email}`}
+            aria-label={`${buchung.vorname} ${buchung.nachname} eine E-Mail schreiben`}
+            className="inline-flex size-12 shrink-0 items-center justify-center border border-border bg-card transition-colors hover:bg-flaeche-2"
+          >
+            <Mail aria-hidden="true" className="size-5" />
+          </a>
+        ) : (
+          <span
+            title="Keine E-Mail-Adresse hinterlegt"
+            className="inline-flex size-12 shrink-0 items-center justify-center border border-dashed border-linie-stark text-muted-foreground"
+          >
+            <Mail aria-hidden="true" className="size-5" />
+            <span className="sr-only">Keine E-Mail-Adresse hinterlegt</span>
+          </span>
+        )}
       </div>
 
       <p className="mt-3 text-sm text-muted-foreground">
@@ -140,7 +152,9 @@ export function BuchungKarte({
           </>
         ) : null}
       </p>
-      <p className="text-sm break-all text-muted-foreground">{buchung.email}</p>
+      <p className="text-sm break-all text-muted-foreground">
+        {buchung.email ?? "Keine E-Mail-Adresse"}
+      </p>
 
       <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-flaeche-3 pt-3">
         <SariKnopf

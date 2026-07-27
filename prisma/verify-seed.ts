@@ -2,6 +2,7 @@ import "dotenv/config";
 import { Decimal } from "../lib/decimal";
 import { aufFuenfRappen, preisBerechnen } from "../lib/preis";
 import { EINSTELLUNG_DEFAULTS } from "../lib/einstellungen-defaults";
+import { GRUPPEN } from "../lib/admin/einstellungen-meta";
 import { INSTRUKTOREN } from "./seed-data/instruktoren";
 import { KURSARTEN } from "./seed-data/kursarten";
 import { prismaOeffnen, type PrismaSeedClient } from "./seed-lib";
@@ -290,6 +291,25 @@ async function einstellungenPruefen(prisma: PrismaSeedClient) {
     fehlend.join(", "),
   );
 
+  // Jeder Schluessel muss in genau einer Gruppe der Verwaltung stehen. Fehlt
+  // er dort, laesst er sich im Panel nicht bearbeiten und niemand merkt es,
+  // weil die Anwendung auf den Default zurueckfaellt und richtig aussieht.
+  const inGruppen = GRUPPEN.flatMap((gruppe) => gruppe.schluessel as string[]);
+  const ohneGruppe = erwartet.filter((k) => !inGruppen.includes(k));
+  const doppelt = inGruppen.filter(
+    (k, i) => inGruppen.indexOf(k) !== i,
+  );
+  pruefe(
+    ohneGruppe.length === 0,
+    "jeder Schlüssel steht in einer Gruppe der Einstellungen",
+    ohneGruppe.join(", "),
+  );
+  pruefe(
+    doppelt.length === 0,
+    "kein Schlüssel steht in zwei Gruppen",
+    doppelt.join(", "),
+  );
+
   const werte = new Map(zeilen.map((z) => [z.key, z.value]));
   // Geschaeftsregel 6: beide Nummern, ueberall.
   pruefe(
@@ -388,8 +408,10 @@ async function demodatenPruefen(prisma: PrismaSeedClient) {
   );
 
   const demoBuchungen = kurse.flatMap((k) => k.bookings);
+  // Seit die Adresse optional ist, darf sie fehlen — erfunden sein darf sie
+  // nicht. Der Seed setzt sie ueberall, deshalb bleibt die Pruefung streng.
   pruefe(
-    demoBuchungen.every((b) => b.email.endsWith("@example.invalid")),
+    demoBuchungen.every((b) => b.email?.endsWith("@example.invalid") === true),
     "alle Demo-Buchungen tragen @example.invalid",
   );
   pruefe(

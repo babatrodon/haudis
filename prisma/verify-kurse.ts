@@ -7,6 +7,7 @@ import {
   kursDuplizieren,
   kursVeroeffentlichen,
 } from "../lib/admin/kurse";
+import { konflikteFinden } from "../lib/admin/einsatzplan";
 import { prismaOeffnen, type PrismaSeedClient } from "./seed-lib";
 
 /**
@@ -430,6 +431,105 @@ async function absagenPruefen(prisma: PrismaSeedClient, entstanden: string[]) {
   );
 }
 
+/**
+ * Konfliktwarnung des Einsatzplans.
+ *
+ * Reine Rechnung, deshalb ohne Datenbank. Der Fall, der zaehlt, ist der
+ * knappe: 18-20 und 20-22 sind kein Konflikt, 18-20 und 19-21 schon.
+ */
+function konfliktePruefen() {
+  console.log("Konfliktwarnung");
+
+  const tag = new Date(Date.UTC(2026, 7, 18));
+  const vaSh = { id: "i1", kuerzel: "VaSh", name: "Shala Valon" };
+  const luBe = { id: "i2", kuerzel: "LuBe", name: "Bernasconi Luca" };
+
+  const termin = (
+    id: string,
+    von: string,
+    bis: string,
+    instruktor: typeof vaSh | null,
+    kursName = "VKU",
+    datum = tag,
+  ) => ({
+    id,
+    datum,
+    von,
+    bis,
+    kursId: `k-${id}`,
+    kursName,
+    instruktor,
+    imKonflikt: false,
+  });
+
+  const anschluss = konflikteFinden([
+    termin("a", "18:00", "20:00", vaSh),
+    termin("b", "20:00", "22:00", vaSh),
+  ]);
+  pruefe(
+    anschluss.konflikte.length === 0,
+    "aneinandergrenzende Blöcke sind kein Konflikt",
+    `${anschluss.konflikte.length}`,
+  );
+
+  const ueberlappung = konflikteFinden([
+    termin("a", "18:00", "20:00", vaSh, "Verkehrskundeunterricht"),
+    termin("b", "19:00", "22:00", vaSh, "Nothelferkurs Intensiv"),
+  ]);
+  pruefe(
+    ueberlappung.konflikte.length === 1,
+    "Überschneidung wird erkannt",
+    `${ueberlappung.konflikte.length}`,
+  );
+  pruefe(
+    ueberlappung.konflikte[0]?.erster.kursName === "Verkehrskundeunterricht" &&
+      ueberlappung.konflikte[0]?.zweiter.kursName === "Nothelferkurs Intensiv",
+    "die Meldung nennt beide Kurse",
+  );
+  pruefe(
+    ueberlappung.betroffene.has("a") && ueberlappung.betroffene.has("b"),
+    "beide Termine sind als betroffen markiert",
+  );
+
+  const verschiedene = konflikteFinden([
+    termin("a", "18:00", "20:00", vaSh),
+    termin("b", "18:00", "20:00", luBe),
+  ]);
+  pruefe(
+    verschiedene.konflikte.length === 0,
+    "zwei verschiedene Personen zur selben Zeit sind kein Konflikt",
+  );
+
+  const andererTag = konflikteFinden([
+    termin("a", "18:00", "20:00", vaSh),
+    termin("b", "18:00", "20:00", vaSh, "VKU", new Date(Date.UTC(2026, 7, 19))),
+  ]);
+  pruefe(
+    andererTag.konflikte.length === 0,
+    "dieselbe Zeit an verschiedenen Tagen ist kein Konflikt",
+  );
+
+  const ohneZuweisung = konflikteFinden([
+    termin("a", "18:00", "20:00", null),
+    termin("b", "18:00", "20:00", null),
+  ]);
+  pruefe(
+    ohneZuweisung.konflikte.length === 0,
+    "unbesetzte Termine kollidieren nicht miteinander",
+  );
+
+  const dreifach = konflikteFinden([
+    termin("a", "18:00", "22:00", vaSh),
+    termin("b", "19:00", "20:00", vaSh),
+    termin("c", "21:00", "23:00", vaSh),
+  ]);
+  pruefe(
+    dreifach.konflikte.length === 2,
+    "drei überlappende Termine ergeben zwei Meldungen",
+    `${dreifach.konflikte.length}`,
+  );
+}
+
 async function main() {
   const prisma = prismaOeffnen();
   const entstanden: string[] = [];
@@ -440,6 +540,7 @@ async function main() {
     await duplizierenPruefen(prisma, quelleId, entstanden);
     await bearbeitenPruefen(prisma, entstanden);
     await absagenPruefen(prisma, entstanden);
+    konfliktePruefen();
   } finally {
     // Buchungen haengen per Cascade an den Kursen und verschwinden mit ihnen.
     await prisma.course.deleteMany({ where: { id: { in: entstanden } } });

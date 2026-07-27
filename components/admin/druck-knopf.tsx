@@ -8,16 +8,18 @@ import { Button } from "@/components/ui/button";
  *
  * Verschwindet im Druck selbst: auf dem Papier waere er ein leerer Kasten.
  */
-export function DruckKnopf() {
+export function DruckKnopf({
+  hinweis = "A4, eine Unterschriftenspalte pro Kurstag.",
+}: {
+  hinweis?: string;
+}) {
   return (
     <div className="mb-6 flex flex-wrap items-center gap-3 print:hidden">
       <Button type="button" onClick={() => window.print()}>
         <Printer aria-hidden="true" className="size-4" />
         Drucken
       </Button>
-      <p className="text-sm text-muted-foreground">
-        A4, eine Unterschriftenspalte pro Kurstag.
-      </p>
+      <p className="text-sm text-muted-foreground">{hinweis}</p>
     </div>
   );
 }

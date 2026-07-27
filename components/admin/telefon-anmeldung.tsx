@@ -152,7 +152,15 @@ export function TelefonAnmeldung({
           </div>
 
           <Feld name="telefon" label="Telefon" type="tel" autoComplete="off" />
-          <Feld name="email" label="E-Mail" type="email" autoComplete="off" />
+          {/* Freiwillig: nicht jede Person am Telefon hat eine Adresse, und
+              eine erfundene waere schlimmer als keine. */}
+          <Feld
+            name="email"
+            label="E-Mail (freiwillig)"
+            type="email"
+            required={false}
+            autoComplete="off"
+          />
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Feld

@@ -138,6 +138,13 @@ export async function bestaetigungSenden(
     return { gesendet: false, grund: "telefonische Anmeldung, keine Mail" };
   }
 
+  // Seit die Adresse optional ist, kann sie fehlen. Das ist kein Fehler,
+  // sondern ein gueltiger Zustand: die Person wurde am Telefon erfasst und ist
+  // ueber ihre Nummer erreichbar.
+  if (!buchung.email) {
+    return { gesendet: false, grund: "keine E-Mail-Adresse hinterlegt" };
+  }
+
   const inhalt = daten(buchung);
   const element = Buchungsbestaetigung(inhalt);
   const html = await render(element);
@@ -214,7 +221,7 @@ export async function interneBenachrichtigungSenden(
     `${buchung.salutation} ${buchung.firstName} ${buchung.lastName}`,
     `${buchung.street}, ${buchung.zip} ${buchung.city}`,
     `Telefon: ${buchung.phone}`,
-    `E-Mail: ${buchung.email}`,
+    `E-Mail: ${buchung.email ?? "keine angegeben"}`,
     `Betrag: ${chf(buchung.priceCharged)}${buchung.earlyBird ? " (Frühbucher)" : ""}`,
     ersterTermin ? `Erster Termin: ${datumLang(ersterTermin.date)}` : "",
   ]
@@ -226,6 +233,6 @@ export async function interneBenachrichtigungSenden(
     betreff: `Neue Anmeldung: ${kurs} — ${buchung.lastName}`,
     html: `<pre style="font-family:inherit;white-space:pre-wrap">${text}</pre>`,
     text,
-    antwortAn: buchung.email,
+    antwortAn: buchung.email ?? undefined,
   });
 }

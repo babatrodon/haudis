@@ -21,7 +21,7 @@ export type BuchungZeile = {
   ort: string;
   geburtsdatum: Date;
   telefon: string;
-  email: string;
+  email: string | null;
   /** null heisst: Ausweisnummer fehlt, und das muss auffallen. */
   lfaNummer: string | null;
   quelle: BookingSource;
@@ -74,7 +74,7 @@ type RohZeile = {
   city: string;
   birthDate: Date;
   phone: string;
-  email: string;
+  email: string | null;
   lfaNumber: string | null;
   source: BookingSource;
   status: BookingStatus;
@@ -253,6 +253,7 @@ export type BuchungAenderung = {
   ort: string;
   geburtsdatum: string;
   telefon: string;
+  /** Leer heisst: keine Adresse hinterlegt, dann geht auch keine Mail hinaus. */
   email: string;
   lfaNummer: string;
   /** Leer heisst: keine Zuweisung, also keine Provision. */
@@ -274,7 +275,7 @@ export async function buchungAendern(
       city: daten.ort,
       birthDate: new Date(daten.geburtsdatum),
       phone: daten.telefon,
-      email: daten.email,
+      email: daten.email.trim() || null,
       lfaNumber: daten.lfaNummer.trim() || null,
       referredById: daten.fahrlehrerId || null,
     },

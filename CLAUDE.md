@@ -146,6 +146,27 @@ in der Datenbank steht, muss der Wert einmalig von Hand nachgezogen werden.
   Die Rückmeldung sagt deshalb nur, dass die Nummer kopiert ist. Ein
   "Eingetragen" wäre eine Behauptung über etwas, das diese Anwendung nicht
   wissen kann, und wer sich darauf verlässt, verpasst die 24-Stunden-Frist.
+- **`Booking.email` ist optional.** Im öffentlichen Formular Pflicht, bei der
+  telefonischen Anmeldung nicht: am Schalter gibt es Leute ohne Adresse, und
+  eine erfundene wäre schlimmer als keine. Telefon bleibt Pflicht
+  (Geschäftsregel 1). Der Mailversand bricht sauber ab, wenn keine Adresse
+  vorliegt, statt zu scheitern.
+- **Konfliktwarnung** im Einsatzplan vergleicht `"HH:MM"` als Zeichenkette;
+  in diesem Format ist das derselbe Vergleich wie ein Zeitvergleich. Blöcke,
+  die aneinandergrenzen (18:00–20:00 und 20:00–22:00), kollidieren dadurch
+  korrekt nicht. Die Erkennung sitzt in `konflikteFinden` als reine Funktion,
+  damit `verify:kurse` sie ohne Datenbank prüfen kann.
+- **Startpasswörter** entstehen in [lib/admin/konten.ts](lib/admin/konten.ts)
+  über `randomInt` aus `node:crypto`, aus einem Alphabet ohne I, l, 1, O und 0.
+  Gespeichert wird nur der Hash; angezeigt wird das Passwort genau einmal.
+  Gehasht wird mit `hashPassword` aus `better-auth/crypto`, derselben Funktion
+  wie in [prisma/seed-lib.ts](prisma/seed-lib.ts) — wird der Algorithmus in
+  [lib/auth.ts](lib/auth.ts) je umgestellt, müssen beide Stellen mitziehen.
+- **Einstellungen** speichern gruppenweise und rufen danach
+  `revalidatePath("/", "layout")` auf. Jeder Schlüssel muss in genau einer
+  Gruppe in [lib/admin/einstellungen-meta.ts](lib/admin/einstellungen-meta.ts)
+  stehen; `db:verify` prüft das. Fehlt er dort, lässt er sich nicht bearbeiten
+  und niemand merkt es, weil die Anwendung auf den Default zurückfällt.
 
 ## Abweichungen von der Prisma-Skizze in PLAN.md Abschnitt 4
 
@@ -191,9 +212,11 @@ Siehe [.env.example](.env.example). `DATABASE_URL` ist die gepoolte Neon-URL
 
 ## Stand
 
-Sprint 0 bis 3 abgeschlossen: Scaffold, Datenmodell, Auth, öffentliche Website
-und die Onlineanmeldung mit Bestätigungsmail. Offen für den Versand: ein
-`RESEND_API_KEY` und die verifizierte Domain haudi.ch.
+Sprint 0 bis 4 abgeschlossen: Scaffold, Datenmodell, Auth, öffentliche Website,
+die Onlineanmeldung mit Bestätigungsmail und das Admin-Panel (Übersicht, Kurse
+mit Wizard, Buchungen mit Teilnehmerliste, Einsatzplan, Konten, Einstellungen).
+Offen für den Versand: ein `RESEND_API_KEY` und die verifizierte Domain
+haudi.ch.
 
 Offen gegenüber PLAN.md, mit Ausilia zu klären:
 

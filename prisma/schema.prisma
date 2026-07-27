@@ -267,7 +267,14 @@ model Booking {
   city          String
   birthDate     DateTime      @db.Date
   phone         String
-  email         String
+  /// Im Onlineformular Pflicht, bei einer telefonischen Anmeldung nicht.
+  ///
+  /// Am Schalter und am Telefon gibt es Leute ohne E-Mail-Adresse, vor allem
+  /// bei den Nothelferkursen. Eine erfundene Adresse waere schlimmer als
+  /// keine: die Bestaetigung ginge ins Leere oder an eine fremde Person.
+  /// Telefon ist und bleibt Pflicht (Geschaeftsregel 1), darueber ist jede
+  /// Anmeldung erreichbar.
+  email         String?
   /// Lernfahrausweis-Nummer, in Schritt 2 erfassbar und spaeter nachreichbar.
   lfaNumber     String?
   agbAcceptedAt DateTime?

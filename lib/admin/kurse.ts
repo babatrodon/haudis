@@ -142,7 +142,8 @@ export type Betroffene = {
   firstName: string;
   lastName: string;
   phone: string;
-  email: string;
+  /** Kann fehlen: telefonisch Angemeldete haben nicht immer eine Adresse. */
+  email: string | null;
 };
 
 /**

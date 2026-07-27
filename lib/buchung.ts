@@ -57,12 +57,22 @@ export type BuchungOptionen = {
   lfaNummer?: string;
 };
 
+/**
+ * Eingabe einer Buchung.
+ *
+ * Wie das Onlineformular, aber mit optionaler E-Mail-Adresse: das Formular
+ * verlangt sie, die telefonische Anmeldung nicht (siehe Booking.email im
+ * Schema).
+ */
+export type BuchungDaten = Omit<BuchungEingabe, "email"> & { email?: string };
+
 export async function buchungAnlegen(
   kursId: string,
-  eingabe: BuchungEingabe,
+  eingabe: BuchungDaten,
   optionen: BuchungOptionen = {},
 ): Promise<BuchungErgebnis> {
   const quelle = optionen.quelle ?? "ONLINE";
+  const email = eingabe.email?.trim() || null;
   return prisma.$transaction(async (tx) => {
     // Sperrt die Kurszeile fuer die Dauer der Transaktion. Alles Weitere in
     // diesem Block sieht einen Stand, den niemand sonst gleichzeitig aendert.
@@ -105,12 +115,12 @@ export async function buchungAnlegen(
     // unter derselben Elternadresse sind ein alltaeglicher Fall. Ein Duplikat
     // steht in der Liste direkt vor Ausilia und ist in einem Griff storniert;
     // eine abgewiesene Zweitanmeldung waere ein Telefonat mehr.
-    if (quelle === "ONLINE") {
+    if (quelle === "ONLINE" && email) {
       const seit = new Date(Date.now() - DOPPELBUCHUNG_MINUTEN * 60 * 1000);
       const schonGebucht = await tx.booking.findFirst({
         where: {
           courseId: kursId,
-          email: eingabe.email,
+          email,
           createdAt: { gte: seit },
           status: { not: "CANCELLED" },
         },
@@ -151,7 +161,7 @@ export async function buchungAnlegen(
         city: eingabe.ort,
         birthDate: new Date(eingabe.geburtsdatum),
         phone: eingabe.telefon,
-        email: eingabe.email,
+        email,
         // Nur wer das Haekchen selbst gesetzt hat, hat den AGB zugestimmt. Bei
         // einer telefonischen Anmeldung bleibt das Feld leer, statt eine
         // Zustimmung zu behaupten, die niemand gegeben hat.
