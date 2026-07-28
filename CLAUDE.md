@@ -55,9 +55,9 @@ beim Typecheck auf.
   canonical verschachtelter Seiten auf sich selbst zeigt statt auf den
   Elternpfad. Braucht einen laufenden Server.
 - `pnpm verify:kopfzeile` misst im Browser, wo das gelbe Band der Kopfzeile
-  liegt: dass es von Kante zu Kante läuft, dass die drei Schichten in der
-  richtigen Reihenfolge liegen (Tafel, Band, Schriftzug) und die Tafel dunkel
-  ist, dass das Band das untere Drittel des roten Schriftzugs kreuzt und über
+  liegt: dass es von Kante zu Kante läuft, dass das Logo keinen Grund hat und
+  über dem Band liegt, dass das Band das untere Drittel des roten Schriftzugs
+  kreuzt und über
   dem gelben Untertitel bleibt — sonst stünde Gelb auf Gelb —, dass das Logo
   gross genug für den Untertitel bleibt und daneben genug Platz für die
   Bedienung. Braucht einen laufenden Server.
@@ -146,10 +146,12 @@ in der Datenbank steht, muss der Wert einmalig von Hand nachgezogen werden.
   die dunkle Kontur um den Untertitel weggefallen: "Fahrschule
   Verkehrszentrum" ist reines `#f2e23c` und steht auf Weiss bei **1,34:1**,
   auf `#121212` bei 14:1. Wo das Logo auf hellem Grund steht, braucht es
-  deshalb eine dunkle Tafel — in der Kopfzeile ist sie gesetzt. Offen sind
-  Anmeldestrecke, Team-Login und die drei Druckansichten; für Papier liegt in
-  [public/haudis-logo-weiss.svg](public/haudis-logo-weiss.svg) nur die weisse
-  Fassung, die schwarze steckt im Vektorisierungs-Paket.
+  deshalb entweder eine dunkle Fläche oder eine Fassung des Logos mit Kontur.
+  Die Kundin will keine dunkle Fläche (28.07.2026, zweimal bestätigt), also
+  steht der Untertitel auf allen hellen Seiten blass da: Kopfzeile,
+  Anmeldestrecke, Team-Login und die drei Druckansichten. Auf Papier ist das
+  am schlimmsten. Die Lösung ist eine Logodatei mit dunkler Kontur, wie sie
+  die alte Fassung hatte — nicht CSS in einzelnen Komponenten.
 - **Symbole**: Favicon, Tab- und iOS-Symbol entstehen mit `pnpm symbole:bauen`
   aus dem Logo — das H, weiss auf dem Rot der Marke. Der Ausschnitt ist am
   Bild ausgemessen und steht in
@@ -163,11 +165,12 @@ in der Datenbank steht, muss der Wert einmalig von Hand nachgezogen werden.
   [components/oeffentlich/kopfzeile.tsx](components/oeffentlich/kopfzeile.tsx)
   läuft es von Kante zu Kante **hinter** dem Logo durch, ungebrochen. Von oben
   nach unten: roter Schriftzug, darin das Band auf dessen unterem Drittel,
-  darunter der gelbe Untertitel "Fahrschule Verkehrszentrum". Drei Schichten,
-  in dieser Reihenfolge: die dunkle Tafel als Grund des Logo-Links, das Band
-  mit `z-10` darüber, das Bild mit `z-20` zuoberst. Kippt sie, unterbricht die
-  Tafel das Band. Gemessen am Bild (1600x1073): roter Schriftzug bis 66,9 %
-  der Bildhöhe, gelber Untertitel ab 72,9 %. Das Band liegt auf 48 %
+  darunter der gelbe Untertitel "Fahrschule Verkehrszentrum". Das Band liegt
+  mit `z-10` über der Zeile, das Bild mit `z-20` darüber; der Logo-Link bleibt
+  **ohne Grund und ohne z-index** — bekäme er einen, wäre das Band dort
+  unterbrochen (Kundenentscheid 28.07.2026, zweimal bestätigt). Gemessen am
+  Bild (1600x1073): roter Schriftzug bis 66,9 % der Bildhöhe, gelber
+  Untertitel ab 72,9 %. Das Band liegt auf 48 %
   bis 70 % der Bildhöhe, in der Zeile gerechnet vom unteren Rand aus: 0,29 mal
   Logohöhe Abstand, 0,22 mal Logohöhe dick. Das Logo steht mit seiner
   Unterkante auf der Zeilenunterkante, die Zeilenhöhe ergibt sich aus der

@@ -18,10 +18,10 @@ import { chromium, webkit, devices } from "@playwright/test";
  * ein anderer Innenabstand, ein zusaetzlicher Knopf. Deshalb wird hier nicht
  * der CSS-Wert geprueft, sondern die Geometrie im Browser.
  *
- * Dazu kommt die Schichtung. Das Logo steht auf einer dunklen Tafel, weil der
- * Untertitel seit der Vektorisierung reines Gelb ohne Kontur ist und auf Weiss
- * bei 1,34:1 verschwindet. Die Tafel liegt HINTER dem Band: kippt die
- * Reihenfolge, unterbricht sie es an dieser Stelle.
+ * Dazu kommt die Schichtung: bekaeme das Logo einen deckenden Grund, waere das
+ * Band an dieser Stelle unterbrochen statt dahinter (Kundenentscheid
+ * 28.07.2026, zweimal bestaetigt). Der Untertitel im Logo steht damit auf
+ * Weiss bei 1,34:1 — das ist bekannt und hier bewusst nicht geprueft.
  *
  * Die Grenzen im Bild stammen aus dem Bild selbst, zeilenweise ausgezaehlt am
  * Original public/haudis-logo.png (1600x1073).
@@ -74,7 +74,7 @@ const AUSWERTUNG = `(() => {
   // Die drei Schichten. Ein positioniertes Element mit z-index auto liegt
   // unter einem mit z-index > 0, deshalb reichen die drei Werte.
   const stapel = {
-    tafel: getComputedStyle(feldEl).zIndex,
+    feld: getComputedStyle(feldEl).zIndex,
     band: getComputedStyle(bandEl).zIndex,
     bild: getComputedStyle(bild).zIndex,
   };
@@ -134,7 +134,7 @@ type Mass = {
   logoHoehe: number;
   logoRechts: number;
   feldGrund: string;
-  stapel: { tafel: string; band: string; bild: string };
+  stapel: { feld: string; band: string; bild: string };
   band: [number, number];
   bandKanten: [number, number];
   bedienUnten: number;
@@ -142,15 +142,10 @@ type Mass = {
   glyphenUnten: number | null;
 };
 
-/** Relative Helligkeit nach WCAG, aus einem rgb()-Wert des Browsers. */
-function helligkeit(farbe: string): number {
-  const teile = farbe.match(/[\d.]+/g)?.map(Number) ?? [255, 255, 255];
-  if ((teile[3] ?? 1) === 0) return 1;
-  const [r, g, b] = teile.slice(0, 3).map((wert) => {
-    const anteil = wert / 255;
-    return anteil <= 0.03928 ? anteil / 12.92 : ((anteil + 0.055) / 1.055) ** 2.4;
-  });
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+/** Alphakanal eines rgb()- oder rgba()-Werts des Browsers. */
+function deckung(farbe: string): number {
+  const teile = farbe.match(/[\d.]+/g)?.map(Number) ?? [0, 0, 0, 0];
+  return teile[3] ?? 1;
 }
 
 async function pruefeBreite(
@@ -174,22 +169,22 @@ async function pruefeBreite(
     `${bandLinks.toFixed(1)}-${bandRechts.toFixed(1)} von ${m.zeilenBreite.toFixed(1)}`,
   );
 
-  // Ohne die Tafel steht der Untertitel bei 1,34:1 auf Weiss.
+  // Ein Grund hinter dem Logo wuerde das Band an dieser Stelle unterbrechen
+  // (Kundenentscheid 28.07.2026: kein Grund).
   pruefe(
-    helligkeit(m.feldGrund) < 0.05,
-    "das Logo steht auf einer dunklen Tafel",
+    deckung(m.feldGrund) === 0,
+    "das Logo hat keinen Grund, das Band laeuft dahinter durch",
     `Grund ${m.feldGrund}`,
   );
 
-  // Liegt die Tafel vor dem Band statt dahinter, ist das Band hier
-  // unterbrochen — genau das, was es nicht sein darf. Und liegt das Bild
-  // nicht zuoberst, laeuft das Band ueber den Schriftzug.
+  // Liegt das Bild nicht ueber dem Band, laeuft das Band ueber den Schriftzug
+  // hinweg statt dahinter.
   const lage = (wert: string) => (wert === "auto" ? 0 : Number(wert));
   pruefe(
-    lage(m.stapel.band) > lage(m.stapel.tafel) &&
-      lage(m.stapel.bild) > lage(m.stapel.band),
-    "die Schichtung stimmt: Tafel, darueber das Band, darueber der Schriftzug",
-    `Tafel ${m.stapel.tafel}, Band ${m.stapel.band}, Bild ${m.stapel.bild}`,
+    lage(m.stapel.bild) > lage(m.stapel.band) &&
+      lage(m.stapel.band) > lage(m.stapel.feld),
+    "die Schichtung stimmt: Band ueber der Zeile, Schriftzug ueber dem Band",
+    `Feld ${m.stapel.feld}, Band ${m.stapel.band}, Bild ${m.stapel.bild}`,
   );
 
   pruefe(

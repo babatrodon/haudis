@@ -108,13 +108,11 @@ export function Kopfzeile({ whatsappUrl }: { whatsappUrl: string }) {
           unten; wer die Logohoehe aendert, rechnet sie nach. pnpm
           verify:kopfzeile schlaegt sonst an.
 
-          DIE DREI SCHICHTEN STEHEN IM CSS
+          DIE SCHICHTUNG STEHT IM CSS
 
-          Die Tafel ist der Grund des Logo-Links, das Band liegt mit z-10
-          darueber, das Bild mit z-20 darueber. Nur in dieser Reihenfolge laeuft
-          das Band ueber die Tafel hinweg statt dahinter, und der Schriftzug
-          bleibt trotzdem obenauf. Keins der drei darf einen eigenen
-          Stapelkontext bekommen, sonst kippt die Reihenfolge.
+          Das Band liegt mit z-10 ueber der Zeile, das Bild mit z-20 darueber.
+          Der Logo-Link bleibt ohne Grund und ohne z-index: bekaeme er einen,
+          waere das Band an dieser Stelle unterbrochen statt dahinter.
 
           Nicht der Diagonalstreifen aus diagonalstreifen.tsx: der ist das
           Element auf den Flaechen, dieser hier ist eine gerade Linie.
@@ -130,19 +128,19 @@ export function Kopfzeile({ whatsappUrl }: { whatsappUrl: string }) {
             ueber den Schriftzug statt dahinter. */}
         <div className="relative mx-auto flex w-full max-w-[1344px] items-end justify-between gap-4 px-4 sm:px-6">
           {/*
-            Die dunkle Tafel. Sie ist nicht Geschmack, sondern Notwendigkeit:
-            der Untertitel im Logo ist reines Gelb (#f2e23c) und hat seit der
-            Vektorisierung keine dunkle Kontur mehr. Auf Weiss steht er bei
-            1,34:1 und ist praktisch unsichtbar, auf der Tafel bei 14:1.
+            Kein Grund hinter dem Logo (Kundenentscheid 28.07.2026, zweimal
+            bestaetigt). Das Band laeuft dadurch ungebrochen weiter, und der
+            Schriftzug steht frei auf der Kopfzeile.
 
-            Der negative Aussenabstand zieht sie in den Seitenrand hinein,
-            damit das Logo trotz Innenabstand buendig mit dem uebrigen Inhalt
-            steht.
+            Preis: der Untertitel im Logo ist seit der Vektorisierung reines
+            Gelb (#f2e23c) ohne dunkle Kontur und steht auf Weiss bei 1,34:1.
+            Wer ihn lesbar haben will, aendert nicht diese Datei, sondern
+            besorgt eine Fassung des Logos mit Kontur.
           */}
           <Link
             href="/"
             onClick={() => setOffen(false)}
-            className="relative -ml-4 flex bg-brand-schwarz px-4 pt-6 sm:-ml-6 sm:px-6 xl:pt-4"
+            className="relative flex pt-6 xl:pt-4"
           >
             {/*
               Das Schriftlogo der Fahrschule, unveraendert uebernommen
