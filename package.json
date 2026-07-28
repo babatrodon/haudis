@@ -25,7 +25,8 @@
     "verify:abrechnung": "cross-env NODE_OPTIONS=--conditions=react-server tsx prisma/verify-abrechnung.ts",
     "verify:breite": "tsx scripts/verify-breite.mts",
     "verify:redirects": "tsx scripts/verify-redirects.mts",
-    "verify:kopfzeile": "tsx scripts/verify-kopfzeile.mts"
+    "verify:kopfzeile": "tsx scripts/verify-kopfzeile.mts",
+    "symbole:bauen": "tsx scripts/symbole-bauen.mts"
   },
   "dependencies": {
     "@better-auth/prisma-adapter": "^1.6.25",

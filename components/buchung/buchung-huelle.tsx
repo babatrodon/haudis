@@ -37,8 +37,8 @@ export function BuchungHuelle({
           <Image
             src="/haudis-logo.png"
             alt="Haudi's Fahrschule & Verkehrsschule"
-            width={993}
-            height={586}
+            width={1600}
+            height={1073}
             priority
             className="h-9 w-auto lg:h-[52px]"
           />

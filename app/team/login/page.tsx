@@ -35,8 +35,8 @@ export default async function LoginSeite({
           <Image
             src="/haudis-logo.png"
             alt={ADRESSE.firma}
-            width={993}
-            height={586}
+            width={1600}
+            height={1073}
             priority
             className="h-12 w-auto"
           />

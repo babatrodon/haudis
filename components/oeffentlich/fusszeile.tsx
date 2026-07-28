@@ -20,8 +20,8 @@ export function Fusszeile({ zeiten }: { zeiten: Oeffnungszeiten }) {
           <Image
             src="/haudis-logo.png"
             alt="Haudi's Fahrschule & Verkehrsschule"
-            width={993}
-            height={586}
+            width={1600}
+            height={1073}
             className="h-11 w-auto"
           />
           <p className="sr-only">{ADRESSE.firma}</p>

@@ -59,8 +59,8 @@ export default async function TeilnehmerlisteSeite({
                 <Image
                   src="/haudis-logo.png"
                   alt={ADRESSE.firma}
-                  width={993}
-                  height={586}
+                  width={1600}
+                  height={1073}
                   priority
                   className="mb-2 h-10 w-auto"
                 />

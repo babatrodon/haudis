@@ -96,10 +96,10 @@ export function Kopfzeile({ whatsappUrl }: { whatsappUrl: string }) {
           DIE LAGE IST NICHT FREI WAEHLBAR
 
           Nach unten begrenzt sie der Untertitel: der ist selbst gelb und
-          beginnt auf 71,5% der Bildhoehe (zeilenweise ausgezaehlt am Original
-          public/haudis-logo.png, 993x586). Laege das Band darauf, bliebe von
-          der Schrift nur die dunkle Kontur. Nach oben begrenzt es die
-          Navigation, die sonst waagrecht geteilt wuerde.
+          beginnt auf 72,9% der Bildhoehe (zeilenweise ausgezaehlt am Original
+          public/haudis-logo.png, 1600x1073). Laege das Band darauf, verschwaende
+          die Schrift darin. Nach oben begrenzt es die Navigation, die sonst
+          waagrecht geteilt wuerde.
 
           Das Band liegt deshalb auf 48% bis 70% der Bildhoehe: es kreuzt das
           untere Drittel der Buchstaben, der Schwung darunter haengt frei. In
@@ -108,16 +108,20 @@ export function Kopfzeile({ whatsappUrl }: { whatsappUrl: string }) {
           unten; wer die Logohoehe aendert, rechnet sie nach. pnpm
           verify:kopfzeile schlaegt sonst an.
 
-          Ein Feld hinter dem Logo gibt es bewusst nicht: es wuerde das Band
-          unterbrechen. Der Untertitel steht auf dem Grund der Kopfzeile, wie
-          das Logo es ueberall sonst auch tut.
+          DIE DREI SCHICHTEN STEHEN IM CSS
+
+          Die Tafel ist der Grund des Logo-Links, das Band liegt mit z-10
+          darueber, das Bild mit z-20 darueber. Nur in dieser Reihenfolge laeuft
+          das Band ueber die Tafel hinweg statt dahinter, und der Schriftzug
+          bleibt trotzdem obenauf. Keins der drei darf einen eigenen
+          Stapelkontext bekommen, sonst kippt die Reihenfolge.
 
           Nicht der Diagonalstreifen aus diagonalstreifen.tsx: der ist das
           Element auf den Flaechen, dieser hier ist eine gerade Linie.
         */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-6 h-[18px] bg-brand-gelb xl:bottom-[29px] xl:h-[21px]"
+          className="pointer-events-none absolute inset-x-0 bottom-6 z-10 h-[18px] bg-brand-gelb xl:bottom-[29px] xl:h-[21px]"
         />
 
         {/* items-end: das Logo steht mit seiner Unterkante auf der
@@ -125,7 +129,21 @@ export function Kopfzeile({ whatsappUrl }: { whatsappUrl: string }) {
             liegt. relative: die Zeile liegt ueber dem Band, sonst liefe es
             ueber den Schriftzug statt dahinter. */}
         <div className="relative mx-auto flex w-full max-w-[1344px] items-end justify-between gap-4 px-4 sm:px-6">
-          <Link href="/" onClick={() => setOffen(false)} className="flex pt-6 xl:pt-4">
+          {/*
+            Die dunkle Tafel. Sie ist nicht Geschmack, sondern Notwendigkeit:
+            der Untertitel im Logo ist reines Gelb (#f2e23c) und hat seit der
+            Vektorisierung keine dunkle Kontur mehr. Auf Weiss steht er bei
+            1,34:1 und ist praktisch unsichtbar, auf der Tafel bei 14:1.
+
+            Der negative Aussenabstand zieht sie in den Seitenrand hinein,
+            damit das Logo trotz Innenabstand buendig mit dem uebrigen Inhalt
+            steht.
+          */}
+          <Link
+            href="/"
+            onClick={() => setOffen(false)}
+            className="relative -ml-4 flex bg-brand-schwarz px-4 pt-6 sm:-ml-6 sm:px-6 xl:pt-4"
+          >
             {/*
               Das Schriftlogo der Fahrschule, unveraendert uebernommen
               (Vorlage, Style Tile: "Bestehendes Schriftlogo bleibt
@@ -133,16 +151,16 @@ export function Kopfzeile({ whatsappUrl }: { whatsappUrl: string }) {
               der Platz vor dem Laden reserviert ist und nichts springt.
               priority nur hier: es ist das erste Bild ueber der Falz.
 
-              Kein Grund hinter dem Bild: das Band soll durch die
-              durchsichtigen Stellen des Schriftzugs zu sehen sein.
+              z-20: der Schriftzug liegt ueber dem Band, das Band ueber der
+              Tafel. Wo das Bild durchsichtig ist, scheint das Band durch.
             */}
             <Image
               src="/haudis-logo.png"
               alt="Haudi's Fahrschule & Verkehrsschule"
-              width={993}
-              height={586}
+              width={1600}
+              height={1073}
               priority
-              className="h-20 w-auto xl:h-24"
+              className="relative z-20 h-20 w-auto xl:h-24"
             />
           </Link>
 
