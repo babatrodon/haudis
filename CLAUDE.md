@@ -57,8 +57,8 @@ beim Typecheck auf.
 - `pnpm verify:kopfzeile` misst im Browser, wo das gelbe Band der Kopfzeile
   liegt: dass es von Kante zu Kante läuft, dass das Logo keinen Grund hat und
   über dem Band liegt, dass das Band das untere Drittel des roten Schriftzugs
-  kreuzt und über
-  dem gelben Untertitel bleibt — sonst stünde Gelb auf Gelb —, dass das Logo
+  kreuzt und über dem gelben Untertitel bleibt — sonst stünde Gelb auf Gelb —,
+  dass das Logo
   gross genug für den Untertitel bleibt und daneben genug Platz für die
   Bedienung. Braucht einen laufenden Server.
 - `pnpm db:verify` prüft die Zusicherungen des Seeds, unter anderem
