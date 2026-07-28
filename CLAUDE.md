@@ -154,7 +154,8 @@ in der Datenbank steht, muss der Wert einmalig von Hand nachgezogen werden.
   Unterkante auf der Zeilenunterkante, die Zeilenhöhe ergibt sich aus der
   Logohöhe. Die Bedienung sitzt mit `self-start` oben in der Zeile, damit das
   Band unter den Beschriftungen durchläuft statt hindurch; sie trägt die
-  Farben der Vorlage. Wer die Logohöhe ändert, rechnet die vier Pixelwerte
+  Farben der Vorlage. Zur Hero-Fläche gibt es keine Trennlinie: das Band ist
+  die Kante. Wer die Logohöhe ändert, rechnet die vier Pixelwerte
   nach — geprüft mit `pnpm verify:kopfzeile`. Nicht zu verwechseln mit dem
   Diagonalstreifen aus
   [components/oeffentlich/diagonalstreifen.tsx](components/oeffentlich/diagonalstreifen.tsx),

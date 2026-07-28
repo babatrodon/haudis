@@ -77,7 +77,9 @@ export function Kopfzeile({ whatsappUrl }: { whatsappUrl: string }) {
         </div>
       </div>
 
-      <div className="relative border-b border-flaeche-3 bg-card">
+      {/* Keine Trennlinie zur Hero-Flaeche: das Band ist die Kante der
+          Kopfzeile, eine graue Linie darunter waere eine zweite. */}
+      <div className="relative bg-card">
         {/*
           Der gelbe Streifen der alten Seite (Kundenwunsch 27.07.2026, Bild der
           alten Kopfzeile vom 28.07.2026).
