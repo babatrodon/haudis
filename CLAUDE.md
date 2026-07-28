@@ -53,12 +53,12 @@ beim Typecheck auf.
   antwortet, dass die Regeln in der richtigen Reihenfolge stehen, und dass das
   canonical verschachtelter Seiten auf sich selbst zeigt statt auf den
   Elternpfad. Braucht einen laufenden Server.
-- `pnpm verify:kopfzeile` misst im Browser, wo der gelbe Streifen der Kopfzeile
-  liegt: dass er an der Unterkante sitzt, das Logo auf der Höhe des Untertitels
-  kreuzt und den roten Schriftzug frei lässt, dass das Feld des Logos deckend
-  ist und den Streifen abfängt — sonst stünde Gelb auf Gelb —, dass das Logo
-  gross genug für den Untertitel bleibt und daneben genug Platz für die
-  Bedienung. Braucht einen laufenden Server.
+- `pnpm verify:kopfzeile` misst im Browser, wo das gelbe Band der Kopfzeile
+  liegt: dass es von Kante zu Kante läuft, dass das Logo keinen Grund hat und
+  das Band dahinter durchläuft, dass es das untere Drittel des roten
+  Schriftzugs kreuzt und über dem gelben Untertitel bleibt — sonst stünde Gelb
+  auf Gelb —, dass das Logo gross genug für den Untertitel bleibt und daneben
+  genug Platz für die Bedienung. Braucht einen laufenden Server.
 - `pnpm db:verify` prüft die Zusicherungen des Seeds, unter anderem
   Geschäftsregel 11.
 
@@ -139,23 +139,24 @@ in der Datenbank steht, muss der Wert einmalig von Hand nachgezogen werden.
 - **Ampel-Farben**: als Tokens in [app/globals.css](app/globals.css) hinterlegt
   (`--ampel-gruen`, `--ampel-gelb`, `--ampel-rot` je mit Hintergrund und Linie),
   abgelesen aus der Designvorlage.
-- **Gelber Streifen in der Kopfzeile**: Kundenwunsch vom 27.07.2026, ein
-  Erkennungsmerkmal der alten Seite. Er liegt in
+- **Gelbes Band in der Kopfzeile**: Kundenwunsch vom 27.07.2026, ein
+  Erkennungsmerkmal der alten Seite; die Schichtung stammt vom Bild der alten
+  Kopfzeile (28.07.2026). In
   [components/oeffentlich/kopfzeile.tsx](components/oeffentlich/kopfzeile.tsx)
-  an der Unterkante und ersetzt dort die Trennlinie zur Hero-Fläche. Wie auf
-  der alten Seite kreuzt er den unteren Teil des Logos auf der Höhe des
-  Untertitels "Fahrschule Verkehrszentrum", nicht den roten Schriftzug
-  darüber. Gemessen am Bild (993x586): roter Schriftzug bis 68 % der
-  Bildhöhe, gelber Untertitel 72,5 % bis 95 %. Das Logo steht mit seiner
-  Unterkante auf der Zeilenunterkante, damit der Streifen von selbst in dieses
-  Band fällt; die Zeilenhöhe ergibt sich aus der Logohöhe und ist nicht
-  gesetzt. Weil der Untertitel selbst gelb ist, läuft der Streifen nicht über
-  das Logo, sondern dahinter: das Feld des Logos trägt den Grund der Kopfzeile
-  und ist deckend, der Streifen setzt links und rechts davon wieder an. Das
-  Feld darf nie durchsichtig werden — das Bild selbst ist es, und dann stünde
-  Gelb auf Gelb. Die Knöpfe der Kopfzeile und die aktive Unterstreichung
-  tragen die Farben der Vorlage. Geprüft mit `pnpm verify:kopfzeile`. Nicht zu
-  verwechseln mit dem Diagonalstreifen aus
+  läuft es von Kante zu Kante **hinter** dem Logo durch, ungebrochen. Von oben
+  nach unten: roter Schriftzug, darin das Band auf dessen unterem Drittel,
+  darunter der gelbe Untertitel "Fahrschule Verkehrszentrum" auf freiem
+  Grund. Das Logo hat deshalb **keinen** Hintergrund — ein deckendes Feld
+  würde das Band unterbrechen. Gemessen am Bild (993x586): roter Schriftzug
+  bis 68 % der Bildhöhe, gelber Untertitel ab 71,5 %. Das Band liegt auf 48 %
+  bis 70 % der Bildhöhe, in der Zeile gerechnet vom unteren Rand aus: 0,29 mal
+  Logohöhe Abstand, 0,22 mal Logohöhe dick. Das Logo steht mit seiner
+  Unterkante auf der Zeilenunterkante, die Zeilenhöhe ergibt sich aus der
+  Logohöhe. Die Bedienung sitzt mit `self-start` oben in der Zeile, damit das
+  Band unter den Beschriftungen durchläuft statt hindurch; sie trägt die
+  Farben der Vorlage. Wer die Logohöhe ändert, rechnet die vier Pixelwerte
+  nach — geprüft mit `pnpm verify:kopfzeile`. Nicht zu verwechseln mit dem
+  Diagonalstreifen aus
   [components/oeffentlich/diagonalstreifen.tsx](components/oeffentlich/diagonalstreifen.tsx),
   der auf den Flächen liegt.
 - **Kapazität**: [lib/buchung.ts](lib/buchung.ts) sperrt die Kurszeile mit

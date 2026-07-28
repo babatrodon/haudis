@@ -77,67 +77,53 @@ export function Kopfzeile({ whatsappUrl }: { whatsappUrl: string }) {
         </div>
       </div>
 
-      <div className="relative bg-card">
+      <div className="relative border-b border-flaeche-3 bg-card">
         {/*
-          Der gelbe Streifen der alten Seite (Kundenwunsch 27.07.2026). Er
-          liegt an der Unterkante der Kopfzeile und ersetzt dort die
-          Trennlinie zur Hero-Flaeche.
+          Der gelbe Streifen der alten Seite (Kundenwunsch 27.07.2026, Bild der
+          alten Kopfzeile vom 28.07.2026).
 
-          WARUM GENAU DORT
+          DIE SCHICHTUNG IST DER PUNKT
 
-          Auf der alten Seite laeuft er durch den unteren Teil des Logos, auf
-          der Hoehe des gelben Untertitels "Fahrschule Verkehrszentrum" — nicht
-          durch den roten Schriftzug darueber. Das H des Schriftzugs bleibt
-          frei.
+          Der Streifen ist ein durchgehendes Band von Kante zu Kante. Es liegt
+          hinter dem Logo, nicht daneben und nicht davor: das Bild ist
+          durchsichtig, der Schriftzug steht darauf und das Band laeuft
+          zwischen seinen Zuegen hindurch. Von oben nach unten: roter
+          Schriftzug, darin das Band auf seinem unteren Drittel, darunter der
+          gelbe Untertitel "Fahrschule Verkehrszentrum" auf freiem Grund.
 
-          Gemessen am Original public/haudis-logo.png (993x586): der rote
-          Schriftzug endet auf 68% der Bildhoehe, der gelbe Untertitel belegt
-          72,5% bis 95%. Weil das Logo mit seiner Unterkante auf der
-          Zeilenunterkante steht, faellt der Streifen von selbst in dieses
-          Band: bei 96px Logo und 10px Streifen kreuzt er die unteren 10% des
-          Bildes. Die Zeilenhoehe ergibt sich aus dem Logo, sie ist nicht
-          gesetzt — wer das Logo skaliert, verschiebt beides zusammen.
+          DIE LAGE IST NICHT FREI WAEHLBAR
 
-          GELB AUF GELB
+          Nach unten begrenzt sie der Untertitel: der ist selbst gelb und
+          beginnt auf 71,5% der Bildhoehe (zeilenweise ausgezaehlt am Original
+          public/haudis-logo.png, 993x586). Laege das Band darauf, bliebe von
+          der Schrift nur die dunkle Kontur. Nach oben begrenzt es die
+          Navigation, die sonst waagrecht geteilt wuerde.
 
-          Der Untertitel ist selbst gelb. Laege der Streifen sichtbar hinter
-          ihm, bliebe von der Schrift nur die dunkle Kontur. Das Logo laeuft
-          deshalb nicht ueber dem Streifen, sondern verdeckt ihn: sein Feld
-          traegt den Grund der Kopfzeile und ist deckend. Der Streifen endet an
-          der linken Kante des Logos und tritt an der rechten auf der Hoehe des
-          Untertitels wieder hervor — er laeuft hinter dem Schriftzug durch.
+          Das Band liegt deshalb auf 48% bis 70% der Bildhoehe: es kreuzt das
+          untere Drittel der Buchstaben, der Schwung darunter haengt frei. In
+          der Zeile gerechnet, vom unteren Rand aus: 0,29 mal Logohoehe
+          Abstand, 0,22 mal Logohoehe dick. Daraus stammen die vier Pixelwerte
+          unten; wer die Logohoehe aendert, rechnet sie nach. pnpm
+          verify:kopfzeile schlaegt sonst an.
 
-          Das Feld muss deckend bleiben. Eine durchsichtige Flaeche liesse den
-          Streifen wieder hinter dem Untertitel erscheinen, und weil das Bild
-          selbst durchsichtig ist, faellt das nicht beim Verschieben auf,
-          sondern erst im fertigen Bild.
+          Ein Feld hinter dem Logo gibt es bewusst nicht: es wuerde das Band
+          unterbrechen. Der Untertitel steht auf dem Grund der Kopfzeile, wie
+          das Logo es ueberall sonst auch tut.
 
-          Wer daran etwas aendert, laesst pnpm verify:kopfzeile laufen. Nicht
-          der Diagonalstreifen aus diagonalstreifen.tsx: der ist das Element
-          auf den Flaechen, dieser hier ist eine gerade Linie.
+          Nicht der Diagonalstreifen aus diagonalstreifen.tsx: der ist das
+          Element auf den Flaechen, dieser hier ist eine gerade Linie.
         */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-2 bg-brand-gelb lg:h-2.5"
+          className="pointer-events-none absolute inset-x-0 bottom-6 h-[18px] bg-brand-gelb xl:bottom-[29px] xl:h-[21px]"
         />
 
-        {/* items-stretch: das Feld des Logos reicht von der Oberkante der Zeile
-            bis auf den Streifen hinunter. relative: die Zeile liegt ueber dem
-            Streifen, sonst liefe er ueber das Logo statt dahinter. */}
-        <div className="relative mx-auto flex w-full max-w-[1344px] items-stretch justify-between gap-4 px-4 sm:px-6">
-          {/*
-            Das Feld des Logos. Es traegt denselben Grund wie die Kopfzeile und
-            ist darum nicht zu sehen; es deckt nur den Streifen ab. Das Logo
-            steht mit seiner Unterkante auf der Zeilenunterkante, damit der
-            Streifen links und rechts auf der Hoehe des Untertitels ansetzt.
-            Seitlich kein Innenabstand: die durchsichtigen Raender des Bildes
-            geben dem Streifen von selbst etwas Luft.
-          */}
-          <Link
-            href="/"
-            onClick={() => setOffen(false)}
-            className="flex items-end bg-card pt-3 lg:pt-4"
-          >
+        {/* items-end: das Logo steht mit seiner Unterkante auf der
+            Zeilenunterkante, damit das Band im gerechneten Abstand darueber
+            liegt. relative: die Zeile liegt ueber dem Band, sonst liefe es
+            ueber den Schriftzug statt dahinter. */}
+        <div className="relative mx-auto flex w-full max-w-[1344px] items-end justify-between gap-4 px-4 sm:px-6">
+          <Link href="/" onClick={() => setOffen(false)} className="flex pt-6 xl:pt-4">
             {/*
               Das Schriftlogo der Fahrschule, unveraendert uebernommen
               (Vorlage, Style Tile: "Bestehendes Schriftlogo bleibt
@@ -145,11 +131,8 @@ export function Kopfzeile({ whatsappUrl }: { whatsappUrl: string }) {
               der Platz vor dem Laden reserviert ist und nichts springt.
               priority nur hier: es ist das erste Bild ueber der Falz.
 
-              Die Hoehe steigt in drei Stufen. Nach unten begrenzt sie der
-              Untertitel: unter 64px sind die beiden Zeilen im Bild nur noch
-              zu erahnen. Nach oben begrenzt sie auf dem Handy die Zeile — das
-              Logo darf den Menueknopf nicht bedraengen — und ab 1024px die
-              Navigation, die daneben Platz braucht.
+              Kein Grund hinter dem Bild: das Band soll durch die
+              durchsichtigen Stellen des Schriftzugs zu sehen sein.
             */}
             <Image
               src="/haudis-logo.png"
@@ -157,7 +140,7 @@ export function Kopfzeile({ whatsappUrl }: { whatsappUrl: string }) {
               width={993}
               height={586}
               priority
-              className="h-16 w-auto lg:h-20 xl:h-24"
+              className="h-20 w-auto xl:h-24"
             />
           </Link>
 
@@ -165,15 +148,18 @@ export function Kopfzeile({ whatsappUrl }: { whatsappUrl: string }) {
             Navigation rechts statt mittig (Kundenwunsch 27.07.2026, wie auf
             der alten Seite). Sie steht mit dem Probelektion-Knopf in einer
             Gruppe, damit zwischen Logo und erstem Menuepunkt eine freie
-            Strecke bleibt, auf der der Streifen sichtbar durchlaeuft.
+            Strecke bleibt, auf der das Band sichtbar durchlaeuft.
+
+            self-start: die Bedienung sitzt oben in der Zeile, das Band laeuft
+            darunter durch. Zentriert waere sie darauf zu liegen gekommen, und
+            ein Wort, durch das eine Kante laeuft, liest sich schlechter.
           */}
-          <div className="flex items-center gap-2 lg:gap-8">
+          <div className="flex items-center gap-2 self-start pt-2.5 lg:gap-8">
             <nav aria-label="Hauptnavigation" className="hidden lg:block">
               {/*
                 Die aktive Seite ist gelb unterstrichen wie in der Vorlage. Der
-                Streifen liegt an der Unterkante der Zeile und beruehrt die
-                Beschriftungen nicht mehr, also steht der gelbe Strich wieder
-                auf Weiss und ist als Hinweis lesbar.
+                gelbe Strich steht auf Weiss, das Band liegt tiefer und
+                beruehrt ihn nicht.
               */}
               <ul className="flex items-center gap-8">
                 {NAVIGATION.map((eintrag) => {
